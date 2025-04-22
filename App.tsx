@@ -4,10 +4,29 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StatusBar, TouchableOpacity } from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Leaderboard from "./pages/Leaderboard";
-import HomeScreen from "./pages/Homescreen";
+import HomeScreen from "./pages/HomeScreen";
+import Login from "./pages/LoginScreen";
+import { useEffect, useState } from "react";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { FIREBASE_AUTH } from "./firebaseconfig";
 
 const Stack = createNativeStackNavigator();
+const InsideStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+const InsideStackNavigator = () => {
+  return (
+    <InsideStack.Navigator>
+      <InsideStack.Screen 
+        name="BottomTabs"
+        component={TabNavigator}
+        options={{ headerShown: false }}
+      />
+      <InsideStack.Screen name="Home" component={HomeScreen}/>
+      <InsideStack.Screen name="Leaderboard" component={Leaderboard}/>
+    </InsideStack.Navigator>
+  );
+};
 
 const TabNavigator = () => {
   return (
@@ -24,17 +43,21 @@ const TabNavigator = () => {
 };
 
 export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    onAuthStateChanged(FIREBASE_AUTH, (user) => {
+      console.log('user', user);
+      setUser(user);
+    });
+  }, [])
+
   return (
     <NavigationContainer>
       <StatusBar translucent={true} barStyle="light-content" />
-      <Stack.Navigator>
-        <Stack.Screen
-          name="BottomTabs"
-          component={TabNavigator}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Leaderboard" component={Leaderboard} />
+      <Stack.Navigator initialRouteName="Login">
+        <Stack.Screen name="Login" component={Login} options={{headerShown: false}}/>
+        <Stack.Screen name="Inside" component={InsideStackNavigator} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
