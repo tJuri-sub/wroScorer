@@ -10,8 +10,11 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~4.0.1",
+    "@expo/vector-icons": "^14.0.4",
+    "@react-navigation/bottom-tabs": "^7.3.2",
     "@react-navigation/native-stack": "^7.3.0",
     "expo": "~52.0.39",
+    "expo-font": "~13.0.4",
     "expo-status-bar": "~2.0.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
