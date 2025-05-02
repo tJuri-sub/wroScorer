@@ -8,10 +8,11 @@ import SignUp from "./SignUpScreenAdmin";
 
 type RootStackParamList = {
     SignUp: undefined;
+    AdminScreen: undefined; // Add HomeAdmin to the route list
     // Add other screens here if needed
 };
 
-const Login = () => {
+const LoginAdmin = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -21,16 +22,22 @@ const Login = () => {
     const signIn = async () => {
         setLoading(true);
         try {
-            const response = await signInWithEmailAndPassword(auth, email, password);
-            console.log(response);
+          const response = await signInWithEmailAndPassword(auth, email, password);
+          console.log(response);
+      
+          // 🧭 Navigate to Admin Home Screen after successful login
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'AdminScreen' }], // this should match the route name in App.tsx
+          });
         } catch (error: any) {
-            console.log(error);
-            alert('Login failed: ' + error.message);
+          console.log(error);
+          alert('Login failed: ' + error.message);
         } finally {
-            setLoading(false);
+          setLoading(false);
         }
-    }
-
+      };
+      
     const signUp = () => {
         console.log('Navigating to SignUpScreenAdmin');// Debugging line
         navigation.navigate('SignUp');
@@ -80,7 +87,7 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default LoginAdmin;
 
 const styles = StyleSheet.create({
     container: {
