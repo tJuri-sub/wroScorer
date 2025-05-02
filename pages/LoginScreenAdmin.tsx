@@ -1,9 +1,18 @@
-import { View, Text, StyleSheet, TextInput, Button, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TextInput, Button, ActivityIndicator, TouchableOpacity, } from "react-native";
 import React, { useState } from "react";
 import { FIREBASE_AUTH } from "../firebaseconfig";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
+import SignUp from "./SignUpScreenAdmin";
+
+
+type RootStackParamList = {
+    SignUp: undefined;
+    // Add other screens here if needed
+};
 
 const Login = () => {
+    const navigation = useNavigation<NavigationProp<RootStackParamList>>();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -22,22 +31,14 @@ const Login = () => {
         }
     }
 
-    const signUp = async () => {
-        setLoading(true);
-        try {
-            const response = await createUserWithEmailAndPassword(auth, email, password);
-            console.log(response);
-            alert('Check your email!');
-        } catch (error: any) {
-            console.log(error);
-            alert('Sign in failed: ' + error.message);
-        } finally {
-            setLoading(false);
-        }
-    }
+    const signUp = () => {
+        console.log('Navigating to SignUpScreenAdmin');// Debugging line
+        navigation.navigate('SignUp');
+    };
 
     return (
         <View style={styles.container}>
+            {/* Email */}
             <TextInput 
             style={styles.input}
             value={email}
@@ -45,6 +46,8 @@ const Login = () => {
             autoCapitalize="none"
             onChangeText={(text) => setEmail(text)}> 
             </TextInput>
+
+            {/* Password */}
             <TextInput 
             style={styles.input}
             secureTextEntry={true}
@@ -54,6 +57,7 @@ const Login = () => {
             onChangeText={(text) => setPassword(text)}> 
             </TextInput>
 
+            {/* Login Button */}
             {loading ? (
                 <ActivityIndicator size="large" color="#0000f"/> 
             ): (
@@ -63,6 +67,15 @@ const Login = () => {
                     onPress={signIn}/>
             </>
             )}
+
+            {/* Sign In Link */}
+            <TouchableOpacity onPress={signUp}>
+                <Text style={styles.textlink}>
+                    Create Account
+                </Text>
+            </TouchableOpacity>
+
+
         </View>
     );
 };
@@ -88,6 +101,11 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 1},
         shadowOpacity: 0.10,
         shadowRadius: 3,
-
+    },
+    textlink: {
+        fontWeight: 'bold',
+        color: 'red',
+        textAlign: 'center',
+        
     }
 });

@@ -5,10 +5,13 @@ import { StatusBar, TouchableOpacity } from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Leaderboard from "./pages/Leaderboard";
 import HomeScreen from "./pages/HomeScreen";
-import Login from "./pages/LoginScreen";
+import Login from "./pages/LoginScreenAdmin";
+import SignUp from "./pages/SignUpScreenAdmin";
+import VerifyEmailScreen from "./pages/accountManage/VerifyEmailScreen";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { FIREBASE_AUTH } from "./firebaseconfig";
+
 
 const Stack = createNativeStackNavigator();
 const InsideStack = createNativeStackNavigator();
@@ -47,7 +50,7 @@ export default function App() {
 
   useEffect(() => {
     onAuthStateChanged(FIREBASE_AUTH, (user) => {
-      console.log('user', user);
+      console.log('Auth state changed, user:', user);
       setUser(user);
     });
   }, [])
@@ -56,8 +59,15 @@ export default function App() {
     <NavigationContainer>
       <StatusBar translucent={true} barStyle="light-content" />
       <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen name="Login" component={Login} options={{headerShown: false}}/>
-        <Stack.Screen name="Inside" component={InsideStackNavigator} options={{ headerShown: false }} />
+        {user ? (
+          <Stack.Screen name="Inside" component={InsideStackNavigator} options={{ headerShown: false }} />
+        ) : (
+          <>
+            <Stack.Screen name="Login" component={Login} options={{headerShown: false}}/>
+            <Stack.Screen name="SignUp" component={SignUp} options={{headerShown: false}}/>
+            <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} options={{headerShown: false}}/>
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
