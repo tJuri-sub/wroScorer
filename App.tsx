@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { FIREBASE_AUTH } from "./firebaseconfig";
 import ProfileAdmin from "./pages/admin/Profile";
+import CategoryScreen from "./pages/admin/CategoryScreen";
 
 
 const Stack = createNativeStackNavigator();
@@ -71,6 +72,7 @@ const AdminInsideStackNavigator = () => {
       />
       <InsideStack.Screen name="HomeAdmin" component={HomeScreenAdmin}/>
       <InsideStack.Screen name="ProfileAdmin" component={ProfileAdmin}/>
+      <Stack.Screen name="CategoryScreen" component={CategoryScreen} />
     </InsideStack.Navigator>
   );
 };
