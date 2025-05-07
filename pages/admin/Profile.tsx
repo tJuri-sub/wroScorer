@@ -1,15 +1,24 @@
+import React, { useEffect, useState } from "react";
 import { Text, StyleSheet, View, Button } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-import { FIREBASE_AUTH } from "../firebaseconfig";
-import Login from "./LoginScreenAdmin";
+import { FIREBASE_AUTH } from "../../firebaseconfig";
 
-export default function HomeScreen({ navigation }: any) {
-  
+export default function ProfileAdmin({ navigation }: any) {
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  // Fetch the current user's email
+  useEffect(() => {
+    const user = FIREBASE_AUTH.currentUser;
+    if (user) {
+      setUserEmail(user.email); // Set the user's email
+    }
+  }, []);
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          <Text style={styles.text}>Hello Judge!</Text>
+          <Text style={styles.text}> User: {userEmail || "Guest"}!</Text>
           <Button
             title="Logout"
             onPress={() => {
