@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "ScoreBotics",
+    "entryPoint": "./App.tsx",
     "slug": "scoreBotics",
     "version": "1.0.0",
     "orientation": "portrait",
