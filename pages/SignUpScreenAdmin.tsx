@@ -18,7 +18,7 @@ const SignUp = () => {
     const auth = FIREBASE_AUTH;
     
     type RootStackParamList = {
-        Login: undefined;
+        LoginAdmin: undefined;
         VerifyEmail: undefined;
         // Add other routes here if needed
     };
@@ -26,7 +26,8 @@ const SignUp = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
     const signIn = () => {
-        navigation.navigate('Login' as never);
+        console.log('Navigating to LoginScreenAdmin');// Debugging line
+        navigation.navigate('LoginAdmin');
     };
 
     // Email Validation Functions
@@ -127,6 +128,7 @@ const SignUp = () => {
                 // Create a new document for the user
                 await setDoc(userDocRef, {
                     email,
+                    role: "admin",
                     previousPasswords: [hashedPassword],
                 });
             }

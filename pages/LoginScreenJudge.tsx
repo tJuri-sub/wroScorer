@@ -3,19 +3,19 @@ import React, { useState } from "react";
 import { FIREBASE_AUTH } from "../firebaseconfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-import SignUp from "./SignUpScreenAdmin";
+import LoginAdmin from "./LoginScreenAdmin";
 
 
 type RootStackParamList = {
     SignUp: undefined;
-    AdminScreen: undefined; // Add HomeAdmin to the route list
-    LoginJudge: undefined; // Add LoginAdmin to the route list
+    JudgeScreen: undefined; // Add HomeAdmin to the route list
+    LoginAdmin: undefined; // Add LoginAdmin to the route list
     // Add other screens here if needed
 };
 
-const LoginAdmin = () => {
+const LoginJudge = () => {
     const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-    const [email, setEmail] = useState('');
+    const [email, setEmail] = useState('');``
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const auth = FIREBASE_AUTH;
@@ -29,7 +29,7 @@ const LoginAdmin = () => {
           // 🧭 Navigate to Admin Home Screen after successful login
           navigation.reset({
             index: 0,
-            routes: [{ name: 'AdminScreen' }], // this should match the route name in App.tsx
+            routes: [{ name: 'JudgeScreen' }], // this should match the route name in App.tsx
           });
         } catch (error: any) {
           console.log(error);
@@ -39,19 +39,14 @@ const LoginAdmin = () => {
         }
       };
       
-    const signUp = () => {
+    const loginAdmin = () => {
         console.log('Navigating to SignUpScreenAdmin');// Debugging line
-        navigation.navigate('SignUp');
-    };
-
-     const loginAdmin = () => {
-        console.log('Navigating to LoginScreenJudge');// Debugging line
-        navigation.navigate('LoginJudge'); // Ensure this matches the route name in App.tsx
+        navigation.navigate('LoginAdmin'); // Ensure this matches the route name in App.tsx
     };
 
     return (
         <View style={styles.container}>
-            <Text style={{ fontSize: 30, textAlign: 'center', marginBottom: 20 }}>Admin Login</Text>
+            <Text style={{ fontSize: 30, textAlign: 'center', marginBottom: 20 }}>Judge Login</Text>
 
             {/* Username */}
             {/* Email */}
@@ -84,16 +79,10 @@ const LoginAdmin = () => {
             </>
             )}
 
-            {/* Sign In Link */}
-            <TouchableOpacity onPress={signUp}>
-                <Text style={styles.textlink}>
-                    Create Account
-                </Text>
-            </TouchableOpacity>
-            {/* Judge Login Screen */}
+            {/* Navigate to Admin */}
             <TouchableOpacity onPress={loginAdmin}>
                 <Text style={styles.textlink}>
-                    Login as Judge
+                    Login as Admin
                 </Text>
             </TouchableOpacity>
 
@@ -102,7 +91,7 @@ const LoginAdmin = () => {
     );
 };
 
-export default LoginAdmin;
+export default LoginJudge;
 
 const styles = StyleSheet.create({
     container: {
