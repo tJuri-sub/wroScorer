@@ -24,7 +24,6 @@ const InsideStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const AdminTab = createBottomTabNavigator();
 
-
 //Judge Bottom Tab Navigator
 const TabNavigator = () => {
   return (
@@ -43,13 +42,13 @@ const TabNavigator = () => {
 const JudgeInsideStackNavigator = () => {
   return (
     <InsideStack.Navigator>
-      <InsideStack.Screen 
+      <InsideStack.Screen
         name="BottomTabs"
         component={TabNavigator}
         options={{ headerShown: false }}
       />
-      <InsideStack.Screen name="Home" component={HomeScreen}/>
-      <InsideStack.Screen name="Leaderboard" component={Leaderboard}/>
+      <InsideStack.Screen name="Home" component={HomeScreen} />
+      <InsideStack.Screen name="Leaderboard" component={Leaderboard} />
     </InsideStack.Navigator>
   );
 };
@@ -68,14 +67,14 @@ const AdminTabNavigator = () => {
 const AdminInsideStackNavigator = () => {
   return (
     <InsideStack.Navigator>
-      <InsideStack.Screen 
+      <InsideStack.Screen
         name="BottomTabsAdmin"
         component={AdminTabNavigator}
         options={{ headerShown: false }}
       />
-      <InsideStack.Screen name="HomeAdmin" component={HomeScreenAdmin}/>
-      <InsideStack.Screen name="ProfileAdmin" component={ProfileAdmin}/>
-      <Stack.Screen name="CategoryScreen" component={CategoryScreen} />
+      <InsideStack.Screen name="HomeAdmin" component={HomeScreenAdmin} />
+      <InsideStack.Screen name="ProfileAdmin" component={ProfileAdmin} />
+      <InsideStack.Screen name="CategoryScreen" component={CategoryScreen} />
     </InsideStack.Navigator>
   );
 };
