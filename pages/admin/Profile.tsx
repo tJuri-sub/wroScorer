@@ -23,7 +23,7 @@ export default function ProfileAdmin({ navigation }: any) {
             title="Logout"
             onPress={() => {
               FIREBASE_AUTH.signOut();
-              navigation.navigate("Login"); // Navigate to Login after logout
+              navigation.navigate("LoginAdmin"); // Navigate to Login after logout
             }}
           />
         </View>

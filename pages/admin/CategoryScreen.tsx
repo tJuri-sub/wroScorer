@@ -85,15 +85,22 @@ export default function CategoryScreen({ route }: any) {
       };
 
       await addDoc(collection(db, `categories/${category}/teams`), newTeam);
-      setTeams([...teams, {
-          id: Date.now().toString(), ...newTeam,
-          countryName: '',
-          teamNumber: 0,
-          podNumber: 0,
-          teamName: '',
-          coachName: '',
-          members: ['', '', ''], // Array for 3 members
-      }]); // Update local state
+      
+      const querySnapshot = await getDocs(collection(db, `categories/${category}/teams`));
+      const teamList = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          countryName: data.country || 'Unknown Country',
+          teamNumber: data.teamNumber || 0,
+          podNumber: data.podNumber || 0,
+          teamName: data.teamName || 'Unknown Team',
+          coachName: data.coachName || 'Unknown Coach',
+          members: data.members || [],
+        };
+      });
+      setTeams(teamList);
+      
       Alert.alert('Success', 'Team created successfully!');
       setModalVisible(false); // Close the modal
       setStep(1); // Reset to step 1

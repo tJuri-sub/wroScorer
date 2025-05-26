@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { FIREBASE_AUTH } from "../firebaseconfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-import LoginAdmin from "./LoginScreenAdmin";
+import Login from "./LoginScreenAdmin";
 
 
 type RootStackParamList = {
