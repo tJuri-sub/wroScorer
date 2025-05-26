@@ -30,7 +30,7 @@ const SignUp = () => {
   const auth = FIREBASE_AUTH;
 
   type RootStackParamList = {
-    Login: undefined;
+    LoginAdmin: undefined;
     VerifyEmail: undefined;
     // Add other routes here if needed
   };
@@ -38,7 +38,7 @@ const SignUp = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const signIn = () => {
-    navigation.navigate("Login" as never);
+    navigation.navigate("LoginAdmin");
   };
 
   // Email Validation Functions
@@ -278,7 +278,7 @@ const SignUp = () => {
             <ActivityIndicator size="large" color="#00000" />
           ) : (
             <>
-              <TouchableOpacity style={styles.signButton} onPress={SignUp}>
+              <TouchableOpacity style={styles.signButton} onPress={signUp}>
                 <Text style={styles.buttonText}>Sign up</Text>
               </TouchableOpacity>
             </>
@@ -286,7 +286,7 @@ const SignUp = () => {
           {/* Login In Link */}
           <View style={styles.signUpbuttonContainer}>
             <Text style={{ fontSize: 16 }}>Already have an account? </Text>
-            <TouchableOpacity onPress={Login}>
+            <TouchableOpacity onPress={signIn}>
               <Text style={styles.textlink}>Sign in</Text>
             </TouchableOpacity>
           </View>
