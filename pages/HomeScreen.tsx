@@ -3,6 +3,7 @@ import { Text, StyleSheet, View, Button, Image, FlatList } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { doc, getDoc } from "firebase/firestore";
+import styles from "../components/styles/HomepageStyle";
 
 export default function HomeScreen({ navigation }: any) {
   const user = FIREBASE_AUTH.currentUser;
@@ -12,12 +13,12 @@ export default function HomeScreen({ navigation }: any) {
   const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
 
   const categorydata = [
-  { label: 'Robomission Elementary', value: 'robo-elem' },
-  { label: 'Robomission Junior', value: 'robo-junior' },
-  { label: 'Robomission Senior', value: 'robo-senior' },
-  { label: 'Future Innovators', value: 'future-innov' },
-  { label: 'Future Engineers', value: 'future-eng' },
-];
+    { label: "Robomission Elementary", value: "robo-elem" },
+    { label: "Robomission Junior", value: "robo-junior" },
+    { label: "Robomission Senior", value: "robo-senior" },
+    { label: "Future Innovators", value: "future-innov" },
+    { label: "Future Engineers", value: "future-eng" },
+  ];
 
   useEffect(() => {
     // Greeting logic
@@ -34,15 +35,19 @@ export default function HomeScreen({ navigation }: any) {
         if (userDoc.exists()) {
           const data = userDoc.data();
           setJudgeName(data.username);
-          setJudgeCategory(data.category || null); 
+          setJudgeCategory(data.category || null);
           setAvatarUrl(
             data.avatarUrl ||
-              `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(user.email || "default")}`
+              `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+                user.email || "default"
+              )}`
           );
         } else {
           setJudgeName(user.email);
           setAvatarUrl(
-            `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(user.email || "default")}`
+            `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+              user.email || "default"
+            )}`
           );
         }
       }
@@ -70,7 +75,8 @@ export default function HomeScreen({ navigation }: any) {
             <Text style={styles.categoryAssigned}>
               {judgeCategory
                 ? `${
-                    categorydata.find((cat) => cat.value === judgeCategory)?.label || judgeCategory
+                    categorydata.find((cat) => cat.value === judgeCategory)
+                      ?.label || judgeCategory
                   }`
                 : "No category assigned"}
             </Text>
@@ -109,57 +115,3 @@ export default function HomeScreen({ navigation }: any) {
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-    marginTop: 30,
-    marginLeft: 20,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginRight: 12,
-    backgroundColor: "#eee",
-  },
-  greeting: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 20,
-  },
-  card: {
-    backgroundColor: '#f9f9f9',
-    padding: 15,
-    marginVertical: 10,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardText: {
-    fontSize: 16,
-  },
-  categoryAssigned: {
-  fontSize: 14,
-  color: "#666",
-  marginTop: 2,
-},
-});

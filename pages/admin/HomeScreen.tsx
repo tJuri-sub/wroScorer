@@ -1,17 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { Text, StyleSheet, View, Button, Alert, Pressable, Modal, TextInput, FlatList, Image } from "react-native";
-import { Dropdown } from 'react-native-element-dropdown';
+import React, { useState, useEffect } from "react";
+import {
+  Text,
+  StyleSheet,
+  View,
+  Button,
+  Alert,
+  Pressable,
+  Modal,
+  TextInput,
+  FlatList,
+  Image,
+  TouchableOpacity,
+} from "react-native";
+import { Dropdown } from "react-native-element-dropdown";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import styles from "../../components/styles/adminStyles/HomescreenStyle";
+
 import { FIREBASE_AUTH, FIREBASE_DB } from "../../firebaseconfig";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { getFirestore, doc, setDoc, collection, getDocs, getDoc, updateDoc } from "firebase/firestore";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  collection,
+  getDocs,
+  getDoc,
+  updateDoc,
+} from "firebase/firestore";
 
 export default function HomeScreenAdmin({ navigation }: any) {
   const [modalVisible, setModalVisible] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [category, setCategory] = useState(null);
-  const [confirmpassword, setConfirmPassword] = useState('');
+  const [confirmpassword, setConfirmPassword] = useState("");
   interface JudgeUser {
     id: string;
     username: string;
@@ -21,8 +44,8 @@ export default function HomeScreenAdmin({ navigation }: any) {
 
   const [judgeUsers, setJudgeUsers] = useState<JudgeUser[]>([]); // State to store judge users
   const [adminName, setAdminName] = useState<string | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string>('');
-  const [greeting, setGreeting] = useState<string>('Hello');
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [greeting, setGreeting] = useState<string>("Hello");
   const [lastLogin, setLastLogin] = useState<number | null>(null);
 
   // Initialize Firebase
@@ -31,26 +54,40 @@ export default function HomeScreenAdmin({ navigation }: any) {
   const user = FIREBASE_AUTH.currentUser;
 
   const categorydata = [
-    { label: 'Robomission Elementary', value: 'robo-elem' },
-    { label: 'Robomission Junior', value: 'robo-junior' },
-    { label: 'Robomission Senior', value: 'robo-senior' },
-    { label: 'Future Innovators', value: 'future-innov' },
-    { label: 'Future Engineers', value: 'future-eng' },
+    {
+      label: "Robo mission ",
+      categoryDesc: "Autonomous robots solve challenges on competition field.",
+      value: "robo-elem",
+    },
+    // { label: "Robomission Junior", value: "robo-junior" },
+    // { label: "Robomission Senior", value: "robo-senior" },
+    // { label: "Future Innovators", value: "future-innov" },
+    // { label: "Future Engineers", value: "future-eng" },
   ];
 
-    // Fetch admin profile info for header
+  // Fetch admin profile info for header
   useEffect(() => {
     const fetchProfile = async () => {
       if (user) {
         if (user.email) {
-          const userDoc = await getDoc(doc(FIREBASE_DB, "admin-users", user.email));
+          const userDoc = await getDoc(
+            doc(FIREBASE_DB, "admin-users", user.email)
+          );
           if (userDoc.exists()) {
             const data = userDoc.data();
             setAdminName(data.name || user.email);
-            setAvatarUrl(data.avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(user.email)}`);
+            setAvatarUrl(
+              data.avatarUrl ||
+                `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+                  user.email
+                )}`
+            );
             setLastLogin(data.lastLogin || null);
             // Greeting logic
-            if (data.lastLogin && Date.now() - data.lastLogin < 24 * 60 * 60 * 1000) {
+            if (
+              data.lastLogin &&
+              Date.now() - data.lastLogin < 24 * 60 * 60 * 1000
+            ) {
               setGreeting("Welcome back");
             } else {
               const hour = new Date().getHours();
@@ -60,7 +97,9 @@ export default function HomeScreenAdmin({ navigation }: any) {
             }
           } else {
             setAdminName(user.email);
-            setAvatarUrl(`https://avatars.dicebear.com/api/identicon/${user.email}.svg`);
+            setAvatarUrl(
+              `https://avatars.dicebear.com/api/identicon/${user.email}.svg`
+            );
           }
         }
       }
@@ -73,11 +112,11 @@ export default function HomeScreenAdmin({ navigation }: any) {
     const fetchJudgeUsers = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "judge-users"));
-        const users = querySnapshot.docs.map(doc => ({
+        const users = querySnapshot.docs.map((doc) => ({
           id: doc.id,
-          username: doc.data().username || '',
-          category: doc.data().category || '',
-          email: doc.data().email || '',
+          username: doc.data().username || "",
+          category: doc.data().category || "",
+          email: doc.data().email || "",
         })) as JudgeUser[];
         setJudgeUsers(users);
       } catch (error) {
@@ -117,7 +156,11 @@ export default function HomeScreenAdmin({ navigation }: any) {
       const currentAdmin = FIREBASE_AUTH.currentUser;
 
       // Create user with email and password
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
       // Store username and category in Firestore
       const user = userCredential.user;
@@ -140,19 +183,19 @@ export default function HomeScreenAdmin({ navigation }: any) {
       Alert.alert("Success", "Judge account created successfully!");
 
       // Reset form fields and close modal
-      setUsername('');
-      setPassword('');
-      setConfirmPassword('');
+      setUsername("");
+      setPassword("");
+      setConfirmPassword("");
       setCategory(null);
       setModalVisible(false);
 
       // Refresh the judge users list
       const querySnapshot = await getDocs(collection(db, "judge-users"));
-      const users = querySnapshot.docs.map(doc => ({
+      const users = querySnapshot.docs.map((doc) => ({
         id: doc.id,
-        username: doc.data().username || '',
-        category: doc.data().category || '',
-        email: doc.data().email || '',
+        username: doc.data().username || "",
+        category: doc.data().category || "",
+        email: doc.data().email || "",
       })) as JudgeUser[];
       setJudgeUsers(users);
     } catch (error) {
@@ -170,10 +213,16 @@ export default function HomeScreenAdmin({ navigation }: any) {
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-           {/* Header with avatar, greeting, and name/email */}
+          {/* Header with avatar, greeting, and name/email */}
           <View style={styles.header}>
             <Image
-              source={{ uri: avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(user?.email || "default")}` }}
+              source={{
+                uri:
+                  avatarUrl ||
+                  `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+                    user?.email || "default"
+                  )}`,
+              }}
               style={styles.avatar}
             />
             <View>
@@ -182,20 +231,44 @@ export default function HomeScreenAdmin({ navigation }: any) {
             </View>
           </View>
 
-           {/* Manage Categories */}
-           <FlatList
+          <Text style={styles.headerTexts}>Manage Team Categories</Text>
+
+          {/* Manage Categories */}
+          <View>
+            <FlatList
               data={categorydata}
               keyExtractor={(item) => item.value}
-              renderItem={({ item }) => (
-                <Pressable
-                  style={styles.card}
-                  onPress={() => navigation.navigate("CategoryScreen", { category: item.value, label: item.label })}
-                >
-                  <Text style={styles.cardText}>{item.label}</Text>
-                </Pressable>
-              )}
+              renderItem={({ item }) => {
+                const [firstWord, ...restWords] = item.label.split(" ");
+                const rest = restWords.join(" ");
+
+                return (
+                  <Pressable
+                    style={styles.card}
+                    onPress={() =>
+                      navigation.navigate("CategoryScreen", {
+                        category: item.value,
+                        label: item.label,
+                      })
+                    }
+                  >
+                    <Image
+                      source={require("../../assets/RoboMissionLogo.png")}
+                      style={styles.sideImage}
+                    />
+                    <View style={styles.text}>
+                      <Text>
+                        <Text style={styles.cardTextThin}>{firstWord}</Text>
+                        <Text style={styles.cardText}>{rest}</Text>
+                      </Text>
+                      <Text style={styles.cardDesc}>{item.categoryDesc}</Text>
+                    </View>
+                  </Pressable>
+                );
+              }}
               ListEmptyComponent={<Text>No categories found.</Text>}
             />
+          </View>
 
           {/* Modal for Creating Judge Account */}
           <Modal
@@ -229,7 +302,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
                   placeholder="Select Category"
                   searchPlaceholder="Search..."
                   value={category}
-                  onChange={item => {
+                  onChange={(item) => {
                     console.log("Dropdown selected:", item.value);
                     setCategory(item.value);
                   }}
@@ -256,124 +329,54 @@ export default function HomeScreenAdmin({ navigation }: any) {
                   style={{ marginTop: 20 }}
                   onPress={() => setModalVisible(!modalVisible)}
                 >
-                  <Text style={{ color: 'blue' }}>Cancel</Text>
+                  <Text style={{ color: "blue" }}>Cancel</Text>
                 </Pressable>
               </View>
             </View>
           </Modal>
 
+          <Text style={styles.headerTexts}>Manage Judges </Text>
           {/* Manage Judge Users */}
           <View>
             <FlatList
               data={judgeUsers}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => {
-                  // Find the label for the stored category value
-                  const categoryLabel = categorydata.find((cat) => cat.value === item.category)?.label || item.category;
+                const categoryLabel =
+                  categorydata.find((cat) => cat.value === item.category)
+                    ?.label || item.category;
 
-                  return (
-                      <View style={styles.card}>
-                          <Text style={styles.cardText}>Username: {item.username}</Text>
-                          <Text style={styles.cardText}>Email: {item.email}</Text>
-                          <Text style={styles.cardText}>Category: {categoryLabel}</Text>
-                          
-                      </View>
-                  );
+                return (
+                  <View style={styles.judgesCard}>
+                    <Image
+                      source={{
+                        uri:
+                          avatarUrl ||
+                          `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+                            user?.email || "default"
+                          )}`,
+                      }}
+                      style={styles.judgesImage}
+                    />
+                    <View>
+                      <Text style={styles.judgesName}>{item.username}</Text>
+                      <Text style={styles.judgesEmail}>{item.email}</Text>
+                      <Text style={styles.judgesCategory}>{categoryLabel}</Text>
+                    </View>
+                  </View>
+                );
               }}
               ListEmptyComponent={<Text>No judge users found.</Text>}
-              style={{ marginTop: 20 }}
-          />
-          <Button onPress={() => setModalVisible(true)} title="+" />
+            />
           </View>
-
         </View>
+        <TouchableOpacity
+          style={styles.addJudgeButton}
+          onPress={() => setModalVisible(true)}
+        >
+          <AntDesign name="plus" size={25} color="white" />
+        </TouchableOpacity>
       </SafeAreaView>
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 20,
-  },
-    header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-    alignSelf: "flex-start",
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginRight: 12,
-    backgroundColor: "#eee",
-  },
-  greeting: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  text: {
-    fontSize: 20,
-    marginBottom: 20,
-  },
-  textinput: {
-    borderWidth: 1,
-    marginBottom: 10,
-    padding: 5,
-  },
-  dropdown: {
-    margin: 16,
-    height: 50,
-    borderBottomColor: 'gray',
-    borderBottomWidth: 0.5,
-  },
-  placeholderStyle: {
-    fontSize: 16,
-  },
-  selectedTextStyle: {
-    fontSize: 16,
-  },
-  inputSearchStyle: {
-    height: 40,
-    fontSize: 16,
-  },
-  modal: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: 300,
-    height: 300,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-  },
-  card: {
-    backgroundColor: '#f9f9f9',
-    padding: 15,
-    marginVertical: 10,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardText: {
-    fontSize: 16,
-  },
-});
