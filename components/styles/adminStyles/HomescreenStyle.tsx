@@ -153,6 +153,93 @@ export default StyleSheet.create({
     width: "80%",
     borderRadius: 10,
     padding: 20,
+    display: "flex",
+    justifyContent: "center",
     alignItems: "center",
+  },
+
+  modalHeader: {
+    display: "flex",
+    //flexDirection: "row",
+    borderBottomWidth: 1,
+    width: "100%",
+    padding: 5,
+    marginBottom: 10,
+  },
+
+  modalImage: {
+    height: "100%",
+    aspectRatio: 1 / 1,
+    borderRadius: "50%",
+    resizeMode: "cover",
+    marginRight: 10,
+    borderWidth: 1,
+  },
+
+  headerTextModal: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+
+  headerSubTextModal: {
+    fontSize: 13,
+    opacity: 50,
+  },
+
+  formContainer: {
+    display: "flex",
+    width: "100%",
+    gap: 20,
+    marginBottom: 20,
+  },
+
+  textinput: {
+    backgroundColor: "#f3f3f3",
+    borderWidth: 1,
+    borderRadius: 4,
+    padding: 5,
+    width: "100%",
+    fontSize: 17,
+  },
+
+  dropdown: {
+    backgroundColor: "#f3f3f3",
+    borderWidth: 1,
+    borderRadius: 4,
+    padding: 5,
+    width: "100%",
+    fontSize: 16,
+  },
+
+  buttonContainer: {
+    display: "flex",
+    flexDirection: "row-reverse",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 10,
+    width: "100%",
+  },
+
+  modalCreateButton: {
+    backgroundColor: "#432344",
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: "#432344",
+    flex: 1,
+    alignItems: "center",
+    padding: 5,
+  },
+
+  buttonText: {
+    color: "#ffffff",
+  },
+
+  modalCancelButton: {
+    borderWidth: 1,
+    borderColor: "#432344",
+    borderRadius: 7,
+    flex: 1,
+    alignItems: "center",
+    padding: 5,
   },
 });

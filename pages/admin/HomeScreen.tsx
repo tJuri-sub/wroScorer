@@ -56,6 +56,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
   const categorydata = [
     {
       label: "Robo mission ",
+      image: require("../../assets/images/RoboMissionLogo.png"),
       categoryDesc: "Autonomous robots solve challenges on competition field.",
       value: "robo-elem",
     },
@@ -252,10 +253,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
                       })
                     }
                   >
-                    <Image
-                      source={require("../../assets/RoboMissionLogo.png")}
-                      style={styles.sideImage}
-                    />
+                    <Image source={item.image} style={styles.sideImage} />
                     <View style={styles.text}>
                       <Text>
                         <Text style={styles.cardTextThin}>{firstWord}</Text>
@@ -282,55 +280,76 @@ export default function HomeScreenAdmin({ navigation }: any) {
           >
             <View style={styles.modal}>
               <View style={styles.modalContent}>
-                <Text>Create User Judge</Text>
-                <TextInput
-                  placeholder="Username"
-                  autoCapitalize="none"
-                  onChangeText={(text) => setUsername(text)}
-                  style={styles.textinput}
-                />
-                <Dropdown
-                  style={styles.dropdown}
-                  placeholderStyle={styles.placeholderStyle}
-                  selectedTextStyle={styles.selectedTextStyle}
-                  inputSearchStyle={styles.inputSearchStyle}
-                  data={categorydata}
-                  search
-                  maxHeight={300}
-                  labelField="label"
-                  valueField="value"
-                  placeholder="Select Category"
-                  searchPlaceholder="Search..."
-                  value={category}
-                  onChange={(item) => {
-                    console.log("Dropdown selected:", item.value);
-                    setCategory(item.value);
-                  }}
-                />
-                <TextInput
-                  placeholder="Password"
-                  secureTextEntry={true}
-                  autoCapitalize="none"
-                  onChangeText={(text) => setPassword(text)}
-                  style={styles.textinput}
-                />
-                <TextInput
-                  placeholder="Confirm Password"
-                  secureTextEntry={true}
-                  autoCapitalize="none"
-                  onChangeText={(text) => setConfirmPassword(text)}
-                  style={styles.textinput}
-                />
-                <Button
-                  title="Create Judge Account"
-                  onPress={createJudgeAccount}
-                />
-                <Pressable
-                  style={{ marginTop: 20 }}
-                  onPress={() => setModalVisible(!modalVisible)}
-                >
-                  <Text style={{ color: "blue" }}>Cancel</Text>
-                </Pressable>
+                <View style={styles.modalHeader}>
+                  {/* <Image
+                    source={require("../../assets/images/user.png")}
+                    style={styles.modalImage}
+                  /> */}
+                  <Text style={styles.headerTextModal}>
+                    Create Judge Account
+                  </Text>
+                  <Text style={styles.headerSubTextModal}>
+                    Create Judge's account and edit access
+                  </Text>
+                </View>
+
+                <View style={styles.formContainer}>
+                  <TextInput
+                    placeholder="Username"
+                    autoCapitalize="none"
+                    onChangeText={(text) => setUsername(text)}
+                    style={styles.textinput}
+                  />
+
+                  <TextInput
+                    placeholder="Password"
+                    secureTextEntry={true}
+                    autoCapitalize="none"
+                    onChangeText={(text) => setPassword(text)}
+                    style={styles.textinput}
+                  />
+                  <TextInput
+                    placeholder="Confirm Password"
+                    secureTextEntry={true}
+                    autoCapitalize="none"
+                    onChangeText={(text) => setConfirmPassword(text)}
+                    style={styles.textinput}
+                  />
+                  <Dropdown
+                    style={styles.dropdown}
+                    // placeholderStyle={styles.placeholderStyle}
+                    // selectedTextStyle={styles.selectedTextStyle}
+                    // inputSearchStyle={styles.inputSearchStyle}
+                    data={categorydata}
+                    search
+                    maxHeight={300}
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Select Category"
+                    searchPlaceholder="Search..."
+                    value={category}
+                    onChange={(item) => {
+                      console.log("Dropdown selected:", item.value);
+                      setCategory(item.value);
+                    }}
+                  />
+                </View>
+
+                <View style={styles.buttonContainer}>
+                  <Pressable
+                    style={styles.modalCreateButton}
+                    onPress={createJudgeAccount}
+                  >
+                    <Text style={styles.buttonText}>Create</Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={styles.modalCancelButton}
+                    onPress={() => setModalVisible(!modalVisible)}
+                  >
+                    <Text>Cancel</Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           </Modal>
