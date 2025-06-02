@@ -18,6 +18,7 @@ import LoginJudge from "./pages/LoginScreenJudge";
 import { doc, getDoc } from "firebase/firestore";
 import { FIREBASE_DB } from "./firebaseconfig";
 import CategoryScreenJudge from "./pages/CategoryScreen";
+import ScorerScreen from "./pages/ScorerScreen";
 
 const Stack = createNativeStackNavigator();
 const InsideStack = createNativeStackNavigator();
@@ -34,6 +35,7 @@ const TabNavigator = () => (
   >
     <Tab.Screen name="Home" component={HomeScreen} />
     <Tab.Screen name="Leaderboard" component={Leaderboard} />
+    <InsideStack.Screen name="Scorer" component={ScorerScreen} />
   </Tab.Navigator>
 );
 
@@ -47,6 +49,7 @@ const JudgeInsideStackNavigator = () => (
     <InsideStack.Screen name="Home" component={HomeScreen} />
     <InsideStack.Screen name="Leaderboard" component={Leaderboard} />
     <InsideStack.Screen name="CategoryScreen" component={CategoryScreenJudge} />
+    <InsideStack.Screen name="Scorer" component={ScorerScreen} />
   </InsideStack.Navigator>
 );
 

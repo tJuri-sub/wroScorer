@@ -45,13 +45,16 @@ export default function CategoryScreenJudge({ route }: any) {
         renderItem={({ item }) =>
           category === judgeCategory ? (
             <View style={styles.card}>
+              <Text style={styles.cardText}>Team Number: {item.teamName || "N/A"}</Text>
+              <Text style={styles.cardText}>Pod Number: {item.podNumber || "N/A"}</Text>
+              <Text style={styles.cardText}>Country: {item.country || "N/A"}</Text>
               <Text style={styles.cardText}>Team Name: {item.teamName || "N/A"}</Text>
               <Text style={styles.cardText}>Coach: {item.coachName || "N/A"}</Text>
-              <Text style={styles.cardText}>Pod: {item.podNumber || "N/A"}</Text>
               <Text style={styles.cardText}>Members: {(item.members && item.members.join(", ")) || "N/A"}</Text>
             </View>
           ) : (
             <View style={styles.card}>
+              <Text style={styles.cardText}>Country: {item.country || "N/A"}</Text>
               <Text style={styles.cardText}>Team Name: {item.teamName || "N/A"}</Text>
             </View>
           )
