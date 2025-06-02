@@ -80,13 +80,44 @@ export default function App() {
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // useEffect(() => {
+  //   const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, async (user) => {
+  //     setUser(user);
+
+  //     if (user) {
+  //       const userDoc = doc(FIREBASE_DB, "users", user.uid);
+  //       const userSnapshot = await getDoc(userDoc);
+
+  //       if (userSnapshot.exists()) {
+  //         const userData = userSnapshot.data();
+  //         setRole(userData.role);
+  //       } else {
+  //         console.error("User document does not exist!");
+  //       }
+  //     } else {
+  //       setRole(null);
+  //     }
+
+  //     setLoading(false);
+  //   });
+
+  //   return () => unsubscribe();
+  // }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, async (user) => {
+      console.log("Auth state changed:", user);
       setUser(user);
 
       if (user) {
         const userDoc = doc(FIREBASE_DB, "users", user.uid);
         const userSnapshot = await getDoc(userDoc);
+
+        console.log(
+          "User doc snapshot:",
+          userSnapshot.exists(),
+          userSnapshot.data()
+        );
 
         if (userSnapshot.exists()) {
           const userData = userSnapshot.data();
@@ -124,11 +155,17 @@ export default function App() {
       >
         {/* Always register all screens */}
         <Stack.Screen name="LoginJudge" component={LoginJudge} />
-        <Stack.Screen name="JudgeScreen" component={JudgeInsideStackNavigator} />
+        <Stack.Screen
+          name="JudgeScreen"
+          component={JudgeInsideStackNavigator}
+        />
         <Stack.Screen name="LoginAdmin" component={Login} />
         <Stack.Screen name="SignUp" component={SignUp} />
         <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
-        <Stack.Screen name="AdminScreen" component={AdminInsideStackNavigator} />
+        <Stack.Screen
+          name="AdminScreen"
+          component={AdminInsideStackNavigator}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -3,6 +3,7 @@ import { Text, StyleSheet, View, Button, Image, FlatList, Modal } from "react-na
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { doc, getDoc } from "firebase/firestore";
+import styles from "../components/styles/HomepageStyle";
 
 export default function HomeScreen({ navigation }: any) {
   const user = FIREBASE_AUTH.currentUser;
@@ -50,14 +51,19 @@ export default function HomeScreen({ navigation }: any) {
           const data = userDoc.data();
           setJudgeName(data.username);
           setJudgeCategory(data.category || null);
+          setJudgeCategory(data.category || null);
           setAvatarUrl(
             data.avatarUrl ||
-              `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(user.email || "default")}`
+              `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+                user.email || "default"
+              )}`
           );
         } else {
           setJudgeName(user.email);
           setAvatarUrl(
-            `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(user.email || "default")}`
+            `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+              user.email || "default"
+            )}`
           );
         }
       }

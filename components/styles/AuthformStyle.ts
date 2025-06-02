@@ -11,7 +11,7 @@ export default StyleSheet.create({
   topLeftBlob: {
     position: "absolute",
     top: -100,
-    left: -60,
+    left: -50,
     width: "34%",
     height: "34%",
     backgroundColor: "#852B88",
