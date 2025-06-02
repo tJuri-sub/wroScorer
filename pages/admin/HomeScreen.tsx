@@ -34,7 +34,10 @@ export default function HomeScreenAdmin({ navigation }: any) {
     { label: 'Robomission Elementary', value: 'robo-elem' },
     { label: 'Robomission Junior', value: 'robo-junior' },
     { label: 'Robomission Senior', value: 'robo-senior' },
-    { label: 'Future Innovators', value: 'future-innov' },
+    { label: 'Robosports', value: 'robosports' },
+    { label: 'Future Innovators Elementary', value: 'fi-elem' },
+    { label: 'Future Innovators Junior', value: 'fi-junior' },
+    { label: 'Future Innovators Senior', value: 'fi-senior' },
     { label: 'Future Engineers', value: 'future-eng' },
   ];
 

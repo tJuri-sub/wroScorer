@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Text, StyleSheet, View, Button, Image, FlatList } from "react-native";
+import { Text, StyleSheet, View, Button, Image, FlatList, Modal } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { doc, getDoc } from "firebase/firestore";
@@ -9,15 +9,30 @@ export default function HomeScreen({ navigation }: any) {
   const [judgeName, setJudgeName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [greeting, setGreeting] = useState<string>("Hello");
+  const [robomissionModalVisible, setRobomissionModalVisible] = useState(false);
+  const [futureInnovatorsModalVisible, setFutureInnovatorsModalVisible] = useState(false);
   const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
 
   const categorydata = [
-  { label: 'Robomission Elementary', value: 'robo-elem' },
-  { label: 'Robomission Junior', value: 'robo-junior' },
-  { label: 'Robomission Senior', value: 'robo-senior' },
-  { label: 'Future Innovators', value: 'future-innov' },
-  { label: 'Future Engineers', value: 'future-eng' },
-];
+    {
+      label: "Robomission",
+      subcategories: [
+        { label: "Elementary", value: "robo-elem" },
+        { label: "Junior", value: "robo-junior" },
+        { label: "Senior", value: "robo-senior" },
+      ],
+    },
+    { label: "Robosports", value: "robosports" },
+    {
+      label: "Future Innovators",
+      subcategories: [
+        { label: "Elementary", value: "fi-elem" },
+        { label: "Junior", value: "fi-junior" },
+        { label: "Senior", value: "fi-senior" },
+      ],
+    },
+    { label: "Future Engineers", value: "future-eng" },
+  ];
 
   useEffect(() => {
     // Greeting logic
@@ -34,7 +49,7 @@ export default function HomeScreen({ navigation }: any) {
         if (userDoc.exists()) {
           const data = userDoc.data();
           setJudgeName(data.username);
-          setJudgeCategory(data.category || null); 
+          setJudgeCategory(data.category || null);
           setAvatarUrl(
             data.avatarUrl ||
               `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(user.email || "default")}`
@@ -50,8 +65,80 @@ export default function HomeScreen({ navigation }: any) {
     fetchProfile();
   }, [user]);
 
+  // Helper to get assigned category label
+  const getAssignedCategoryLabel = () => {
+    if (!judgeCategory) return "No category assigned";
+    // Check top-level
+    const top = categorydata.find((cat) => cat.value === judgeCategory);
+    if (top) return top.label;
+    // Check subcategories
+    for (const cat of categorydata) {
+      if (cat.subcategories) {
+        const sub = cat.subcategories.find((sub) => sub.value === judgeCategory);
+        if (sub) return `${cat.label} ${sub.label}`;
+      }
+    }
+    return judgeCategory;
+  };
+
   return (
     <SafeAreaProvider>
+      {/* Robomission Modal */}
+      <Modal
+        visible={robomissionModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setRobomissionModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 10 }}>Robomission Category</Text>
+            {categorydata[0].subcategories?.map((sub) => (
+              <Button
+                key={sub.value}
+                title={sub.label}
+                onPress={() => {
+                  setRobomissionModalVisible(false);
+                  navigation.navigate("CategoryScreen", {
+                    category: sub.value,
+                    label: `Robomission ${sub.label}`,
+                    judgeCategory,
+                  });
+                }}
+              />
+            ))}
+            <Button title="Cancel" onPress={() => setRobomissionModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
+      {/* Future Innovators Modal */}
+      <Modal
+        visible={futureInnovatorsModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setFutureInnovatorsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 10 }}>Future Innovators Category</Text>
+            {categorydata[2].subcategories?.map((sub) => (
+              <Button
+                key={sub.value}
+                title={sub.label}
+                onPress={() => {
+                  setFutureInnovatorsModalVisible(false);
+                  navigation.navigate("CategoryScreen", {
+                    category: sub.value,
+                    label: `Future Innovators ${sub.label}`,
+                    judgeCategory,
+                  });
+                }}
+              />
+            ))}
+            <Button title="Cancel" onPress={() => setFutureInnovatorsModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <Image
@@ -67,33 +154,43 @@ export default function HomeScreen({ navigation }: any) {
           <View>
             <Text style={styles.greeting}>{greeting}!</Text>
             <Text style={styles.name}>{judgeName}</Text>
-            <Text style={styles.categoryAssigned}>
-              {judgeCategory
-                ? `${
-                    categorydata.find((cat) => cat.value === judgeCategory)?.label || judgeCategory
-                  }`
-                : "No category assigned"}
-            </Text>
+            <Text style={styles.categoryAssigned}>{getAssignedCategoryLabel()}</Text>
           </View>
         </View>
         <View>
           <FlatList
             data={categorydata}
-            keyExtractor={(item) => item.value}
-            renderItem={({ item }) => (
-              <View style={styles.card}>
-                <Button
-                  title={item.label}
-                  onPress={() => {
-                    navigation.navigate("CategoryScreen", {
-                      category: item.value,
-                      label: item.label,
-                      judgeCategory: judgeCategory, // Pass judge's assigned category
-                    });
-                  }}
-                />
-              </View>
-            )}
+            keyExtractor={(item) => item.label}
+            renderItem={({ item }) =>
+              item.label === "Robomission" ? (
+                <View style={styles.card}>
+                  <Button
+                    title={item.label}
+                    onPress={() => setRobomissionModalVisible(true)}
+                  />
+                </View>
+              ) : item.label === "Future Innovators" ? (
+                <View style={styles.card}>
+                  <Button
+                    title={item.label}
+                    onPress={() => setFutureInnovatorsModalVisible(true)}
+                  />
+                </View>
+              ) : (
+                <View style={styles.card}>
+                  <Button
+                    title={item.label}
+                    onPress={() => {
+                      navigation.navigate("CategoryScreen", {
+                        category: item.value,
+                        label: item.label,
+                        judgeCategory,
+                      });
+                    }}
+                  />
+                </View>
+              )
+            }
           />
         </View>
         <View style={styles.container}>
@@ -101,7 +198,7 @@ export default function HomeScreen({ navigation }: any) {
             title="Logout"
             onPress={() => {
               FIREBASE_AUTH.signOut();
-              navigation.navigate("LoginJudge"); // Navigate to Login after logout
+              navigation.navigate("LoginJudge");
             }}
           />
         </View>
@@ -137,6 +234,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
+  categoryAssigned: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 2,
+  },
   container: {
     flex: 1,
     justifyContent: "center",
@@ -157,9 +259,17 @@ const styles = StyleSheet.create({
   cardText: {
     fontSize: 16,
   },
-  categoryAssigned: {
-  fontSize: 14,
-  color: "#666",
-  marginTop: 2,
-},
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    width: 300,
+    alignItems: "center",
+  },
 });
