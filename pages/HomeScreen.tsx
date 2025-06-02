@@ -3,7 +3,7 @@ import { Text, StyleSheet, View, Button, Image, FlatList, Modal } from "react-na
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { doc, getDoc } from "firebase/firestore";
-import styles from "../components/styles/HomepageStyle";
+import style from "../components/styles/HomepageStyle";
 
 export default function HomeScreen({ navigation }: any) {
   const user = FIREBASE_AUTH.currentUser;
