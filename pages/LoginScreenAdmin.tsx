@@ -18,10 +18,10 @@ import styles from "../components/styles/AuthformStyle";
 import SignUp from "./SignUpScreenAdmin";
 
 type RootStackParamList = {
-    SignUp: undefined;
-    AdminScreen: undefined; // Add HomeAdmin to the route list
-    LoginJudge: undefined; // Add LoginJudge to the route list
-    // Add other screens here if needed
+  SignUp: undefined;
+  AdminScreen: undefined; // Add HomeAdmin to the route list
+  LoginJudge: undefined; // Add LoginJudge to the route list
+  // Add other screens here if needed
 };
 
 const LoginAdmin = () => {
@@ -46,34 +46,34 @@ const LoginAdmin = () => {
     return null;
   }
 
-    const signIn = async () => {
-        setLoading(true);
-        try {
-          const response = await signInWithEmailAndPassword(auth, email, password);
-          console.log(response);
-      
-          // 🧭 Navigate to Admin Home Screen after successful login
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'AdminScreen' }], // this should match the route name in App.tsx
-          });
-        } catch (error: any) {
-          console.log(error);
-          alert('Login failed: ' + error.message);
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-    const signUp = () => {
-        console.log('Navigating to SignUpScreenAdmin');// Debugging line
-        navigation.navigate('SignUp');
-    };
+  const signIn = async () => {
+    setLoading(true);
+    try {
+      const response = await signInWithEmailAndPassword(auth, email, password);
+      console.log(response);
 
-     const loginJudge = () => {
-        console.log('Navigating to LoginScreenJudge');// Debugging line
-        navigation.navigate('LoginJudge'); // Ensure this matches the route name in App.tsx
-    };
+      // 🧭 Navigate to Admin Home Screen after successful login
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "AdminScreen" }], // this should match the route name in App.tsx
+      });
+    } catch (error: any) {
+      console.log(error);
+      alert("Login failed: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signUp = () => {
+    console.log("Navigating to SignUpScreenAdmin"); // Debugging line
+    navigation.navigate("SignUp");
+  };
+
+  const loginJudge = () => {
+    console.log("Navigating to LoginScreenJudge"); // Debugging line
+    navigation.navigate("LoginJudge"); // Ensure this matches the route name in App.tsx
+  };
 
   return (
     <View style={styles.container}>
@@ -85,7 +85,6 @@ const LoginAdmin = () => {
           <TouchableOpacity onPress={loginJudge} style={styles.backNav}>
             <AntDesign name="arrowleft" size={24} color="#852B88" />
             <Text style={styles.backText}>Login as scorer</Text>
-
           </TouchableOpacity>
           <View style={styles.titleBox}>
             <Text style={styles.title}>

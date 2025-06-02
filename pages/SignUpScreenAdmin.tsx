@@ -194,6 +194,11 @@ const SignUp = () => {
       );
       console.log(response);
 
+      await setDoc(doc(FIREBASE_DB, "admin-users", response.user.uid), {
+        role: "admin",
+        email: response.user.email,
+      });
+
       // Store the new password in the database
       await storePassword(email, password);
 
