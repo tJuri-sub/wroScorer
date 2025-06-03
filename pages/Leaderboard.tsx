@@ -1,113 +1,84 @@
 import React, { useEffect, useState } from "react";
-import { Text, StyleSheet, View, Image, Pressable } from "react-native";
-import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import * as Font from "expo-font";
+import { Text, View, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
+import { getFirestore, collection, onSnapshot } from "firebase/firestore";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 
 export default function Leaderboard() {
-  const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Define navigation types
+  type RootStackParamList = {
+    Leaderboard: undefined;
+    AllLeaderboardScreen: undefined;
+  };
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const db = getFirestore();
 
   useEffect(() => {
-    async function loadFonts() {
-      await Font.loadAsync({
-        Inter: require("../assets/fonts/Inter-Regular.ttf"),
-      });
-      setFontsLoaded(true);
-    }
-    loadFonts();
+    // Use Firestore's onSnapshot for real-time updates
+    const scoresRef = collection(db, "scores");
+    const unsubscribe = onSnapshot(
+      scoresRef,
+      (querySnapshot) => {
+        const teamMap: Record<string, { teamName: string; overallScore: number; teamId: string }> = {};
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (!teamMap[data.teamId]) {
+            teamMap[data.teamId] = {
+              teamName: data.teamName,
+              overallScore: 0,
+              teamId: data.teamId,
+            };
+          }
+          teamMap[data.teamId].overallScore += data.overallScore; // Sum scores for each team
+        });
+        const leaderboardArr = Object.values(teamMap)
+          .sort((a, b) => b.overallScore - a.overallScore) // Sort by total score
+          .slice(0, 5); // Limit to top 5
+        setLeaderboard(leaderboardArr);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching scores:", error);
+        setLeaderboard([]);
+        setLoading(false);
+      }
+    );
+
+    // Cleanup listener on unmount
+    return () => unsubscribe();
   }, []);
 
-  if (!fontsLoaded) {
-    return null;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={(styles.box, { flex: 1 })}>
-        <View style={styles.container}>
-          {/* Cup */}
-          <Image
-            source={require("../assets/images/champion-cup.png")}
-            style={styles.image}
-          />
-          <Text style={styles.text}>Create your teams first!</Text>
-        </View>
-        {/* Create Button */}
-        <View style={styles.containerButton}>
-          <Pressable style={styles.createButton}>
-            <AntDesign
-              name="arrowright"
-              size={24}
-              color="white"
-              style={{ paddingRight: 10 }}
-            />
-            <Text style={{ color: "#ffffff", fontWeight: "bold" }}>
-              Create Teams
-            </Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    </SafeAreaProvider>
+    <View style={{ flex: 1, padding: 20 }}>
+      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 10 }}>Leaderboard</Text>
+      <TouchableOpacity onPress={() => navigation.navigate("AllLeaderboardScreen")}>
+        <Text style={{ color: "blue", marginBottom: 10 }}>See All</Text>
+      </TouchableOpacity>
+      {leaderboard.length === 0 ? (
+        <Text>No scores yet!</Text>
+      ) : (
+        <FlatList
+          data={leaderboard}
+          keyExtractor={(item) => item.teamId}
+          renderItem={({ item, index }) => (
+            <View style={{ flexDirection: "row", marginBottom: 8 }}>
+              <Text style={{ width: 30 }}>{index + 1}.</Text>
+              <Text style={{ flex: 1 }}>{item.teamName}</Text>
+              <Text>{item.overallScore} pts</Text>
+            </View>
+          )}
+        />
+      )}
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  box: {
-    display: "flex",
-    justifyContent: "center",
-    alignContent: "center",
-  },
-
-  text: {
-    color: "black",
-    fontWeight: "bold",
-    fontFamily: "Inter",
-    fontSize: 18,
-  },
-
-  container: {
-    paddingTop: 10,
-    paddingBottom: 50,
-    backgroundColor: "#ffffff",
-    justifyContent: "center",
-    alignItems: "center",
-    borderBottomLeftRadius: 150,
-    borderBottomRightRadius: 150,
-
-    // iOS Shadow
-    shadowColor: "#000",
-    shadowOffset: { width: 2, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-
-    // Android Shadow
-    elevation: 5,
-  },
-
-  containerButton: {
-    paddingTop: 10,
-    paddingBottom: 50,
-    justifyContent: "center",
-    alignItems: "center",
-    borderBottomLeftRadius: 150,
-    borderBottomRightRadius: 150,
-    marginTop: 300,
-  },
-
-  image: {
-    width: 200,
-    height: 200,
-    resizeMode: "contain",
-  },
-
-  createButton: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "row",
-    backgroundColor: "#432344",
-    width: 150,
-    padding: 10,
-    borderRadius: 5,
-  },
-});

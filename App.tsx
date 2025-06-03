@@ -19,6 +19,9 @@ import { doc, getDoc } from "firebase/firestore";
 import { FIREBASE_DB } from "./firebaseconfig";
 import CategoryScreenJudge from "./pages/CategoryScreen";
 import ScorerScreen from "./pages/ScorerScreen";
+import AllScoresScreen from "./pages/AllScoresScreen";
+import TeamScoresScreen from "./pages/TeamScoresScreen";
+import AllLeaderboardScreen from "./pages/AllLeaderboardScreen";
 
 const Stack = createNativeStackNavigator();
 const InsideStack = createNativeStackNavigator();
@@ -48,8 +51,11 @@ const JudgeInsideStackNavigator = () => (
     />
     <InsideStack.Screen name="Home" component={HomeScreen} />
     <InsideStack.Screen name="Leaderboard" component={Leaderboard} />
+    <InsideStack.Screen name="AllLeaderboardScreen" component={AllLeaderboardScreen} />
     <InsideStack.Screen name="CategoryScreen" component={CategoryScreenJudge} />
     <InsideStack.Screen name="Scorer" component={ScorerScreen} />
+    <InsideStack.Screen name="AllScoresScreen" component={AllScoresScreen} />
+    <InsideStack.Screen name="TeamScoresScreen" component={TeamScoresScreen} />
   </InsideStack.Navigator>
 );
 

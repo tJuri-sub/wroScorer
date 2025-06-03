@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
 
-export default function CategoryScreenJudge({ route }: any) {
+export default function CategoryScreenJudge({ route, navigation }: any) {
   const { category, label, judgeCategory } = route.params;
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,24 +42,23 @@ export default function CategoryScreenJudge({ route }: any) {
       <FlatList
         data={teams}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) =>
-          category === judgeCategory ? (
-            <View style={styles.card}>
-              <Text style={styles.cardText}>Team Number: {item.teamName || "N/A"}</Text>
-              <Text style={styles.cardText}>Pod Number: {item.podNumber || "N/A"}</Text>
-              <Text style={styles.cardText}>Country: {item.country || "N/A"}</Text>
-              <Text style={styles.cardText}>Team Name: {item.teamName || "N/A"}</Text>
-              <Text style={styles.cardText}>Coach: {item.coachName || "N/A"}</Text>
-              <Text style={styles.cardText}>Members: {(item.members && item.members.join(", ")) || "N/A"}</Text>
-            </View>
-          ) : (
-            <View style={styles.card}>
-              <Text style={styles.cardText}>Country: {item.country || "N/A"}</Text>
-              <Text style={styles.cardText}>Team Name: {item.teamName || "N/A"}</Text>
-            </View>
-          )
-        }
-        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20 }}>No teams found.</Text>}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => navigation.navigate("TeamScoresScreen", { team: item, category })}
+          >
+            <Text style={styles.cardText}>Team Number: {item.teamNumber || "N/A"}</Text>
+            <Text style={styles.cardText}>Pod Number: {item.podNumber || "N/A"}</Text>
+            <Text style={styles.cardText}>Country: {item.country || "N/A"}</Text>
+            <Text style={styles.cardText}>Team Name: {item.teamName || "N/A"}</Text>
+            <Text style={styles.cardText}>Coach: {item.coachName || "N/A"}</Text>
+            <Text style={styles.cardText}>
+              Members: {(item.members && item.members.join(", ")) || "N/A"}
+            </Text>
+            <Text style={styles.cardText}>tap to view scores</Text>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={<Text style={{ textAlign: "center", marginTop: 20 }}>No teams found.</Text>}
       />
     </View>
   );

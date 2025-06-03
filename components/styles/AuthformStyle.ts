@@ -74,7 +74,7 @@ export default StyleSheet.create({
   },
 
   highlight: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#740D77",
   },

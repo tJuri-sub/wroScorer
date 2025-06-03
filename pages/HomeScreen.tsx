@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Text, StyleSheet, View, Button, Image, FlatList, Modal } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
+import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import style from "../components/styles/HomepageStyle";
 
@@ -13,6 +14,17 @@ export default function HomeScreen({ navigation }: any) {
   const [robomissionModalVisible, setRobomissionModalVisible] = useState(false);
   const [futureInnovatorsModalVisible, setFutureInnovatorsModalVisible] = useState(false);
   const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
+
+  useEffect(() => {
+  const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
+    if (!user) {
+      // If not logged in, redirect to login screen
+      navigation.replace("LoginScreen");
+    }
+    // else, user is logged in, do nothing
+  });
+  return unsubscribe;
+}, []);
 
   const categorydata = [
     {
