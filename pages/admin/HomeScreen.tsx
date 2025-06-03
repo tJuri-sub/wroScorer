@@ -169,7 +169,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
         username,
         role: "judge", // Example: Assigning a 'judge' role
         category: category, // Store the selected category
-        email,
+        email: email.toLowerCase(), // always store as lowercase
       });
 
       // Sign out the newly created judge account
