@@ -1,4 +1,6 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Dimensions } from "react-native";
+
+const { width: screenWidth } = Dimensions.get("window");
 
 export default StyleSheet.create({
   safeArea: {
@@ -51,6 +53,7 @@ export default StyleSheet.create({
   card: {
     height: 120,
     borderRadius: 10,
+    width: screenWidth,
     backgroundColor: "#E79300",
     display: "flex",
     flexDirection: "row",

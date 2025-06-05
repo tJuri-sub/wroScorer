@@ -15,6 +15,7 @@ import {
 import { Dropdown } from "react-native-element-dropdown";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { Dimensions } from "react-native";
 import styles from "../../components/styles/adminStyles/HomescreenStyle";
 
 import { FIREBASE_AUTH, FIREBASE_DB } from "../../firebaseconfig";
@@ -28,6 +29,9 @@ import {
   getDoc,
   updateDoc,
 } from "firebase/firestore";
+
+const { height: screenHeight } = Dimensions.get("window");
+const { width: screenWidth } = Dimensions.get("window");
 
 export default function HomeScreenAdmin({ navigation }: any) {
   const [modalVisible, setModalVisible] = useState(false);
@@ -60,10 +64,24 @@ export default function HomeScreenAdmin({ navigation }: any) {
       categoryDesc: "Autonomous robots solve challenges on competition field.",
       value: "robo-elem",
     },
-    // { label: "Robomission Junior", value: "robo-junior" },
-    // { label: "Robomission Senior", value: "robo-senior" },
-    // { label: "Future Innovators", value: "future-innov" },
-    // { label: "Future Engineers", value: "future-eng" },
+    {
+      label: "Robo Sports ",
+      image: require("../../assets/images/RoboSportsLogo.png"),
+      categoryDesc: "Teams Compete with 2 Robots in an exciting game. ",
+      value: "robo-sports",
+    },
+    {
+      label: "Future Innovators",
+      image: require("../../assets/images/FutureILogo.png"),
+      categoryDesc: "Work on a project and designa nd build a robot ",
+      value: "future-innov",
+    },
+    {
+      label: "Future Engineers",
+      image: require("../../assets/images/FutureELogo.png"),
+      categoryDesc: "Advanced robotics following current research trends. ",
+      value: "future-eng",
+    },
   ];
 
   // Fetch admin profile info for header
@@ -172,6 +190,11 @@ export default function HomeScreenAdmin({ navigation }: any) {
         email: email.toLowerCase(), // always store as lowercase
       });
 
+      await setDoc(doc(db, "users", user.uid), {
+        role: "judge",
+        email: email.toLowerCase(),
+      });
+
       // Sign out the newly created judge account
       await FIREBASE_AUTH.signOut();
 
@@ -239,6 +262,11 @@ export default function HomeScreenAdmin({ navigation }: any) {
             <FlatList
               data={categorydata}
               keyExtractor={(item) => item.value}
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={screenWidth} // Adjust to your card width + margin
+              decelerationRate="fast"
+              contentContainerStyle={{ paddingHorizontal: 16 }}
               renderItem={({ item }) => {
                 const [firstWord, ...restWords] = item.label.split(" ");
                 const rest = restWords.join(" ");
@@ -356,7 +384,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
 
           <Text style={styles.headerTexts}>Manage Judges </Text>
           {/* Manage Judge Users */}
-          <View>
+          <View style={{ height: screenHeight * 0.4 }}>
             <FlatList
               data={judgeUsers}
               keyExtractor={(item) => item.id}
