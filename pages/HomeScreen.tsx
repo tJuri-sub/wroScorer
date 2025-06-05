@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Text, StyleSheet, View, Button, Image, FlatList, Modal } from "react-native";
+import { Text, StyleSheet, View, Image, FlatList, Modal, TouchableOpacity, Button } from "react-native";
+import { Menu, Provider } from "react-native-paper"; // Import Menu from react-native-paper
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { onAuthStateChanged } from "firebase/auth";
@@ -14,17 +15,16 @@ export default function HomeScreen({ navigation }: any) {
   const [robomissionModalVisible, setRobomissionModalVisible] = useState(false);
   const [futureInnovatorsModalVisible, setFutureInnovatorsModalVisible] = useState(false);
   const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
+  const [menuVisible, setMenuVisible] = useState(false); // State for dropdown menu visibility
 
   useEffect(() => {
-  const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
-    if (!user) {
-      // If not logged in, redirect to login screen
-      navigation.replace("LoginScreen");
-    }
-    // else, user is logged in, do nothing
-  });
-  return unsubscribe;
-}, []);
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
+      if (!user) {
+        navigation.replace("LoginScreen");
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   const categorydata = [
     {
@@ -48,21 +48,18 @@ export default function HomeScreen({ navigation }: any) {
   ];
 
   useEffect(() => {
-    // Greeting logic
     const hour = new Date().getHours();
     const greetings = ["Hello", "Good day", "Hi"];
     if (hour < 12) setGreeting("Good morning");
     else if (hour < 18) setGreeting("Good afternoon");
     else setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
 
-    // Fetch judge profile info
     const fetchProfile = async () => {
       if (user) {
         const userDoc = await getDoc(doc(FIREBASE_DB, "judge-users", user.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
           setJudgeName(data.username);
-          setJudgeCategory(data.category || null);
           setJudgeCategory(data.category || null);
           setAvatarUrl(
             data.avatarUrl ||
@@ -83,13 +80,10 @@ export default function HomeScreen({ navigation }: any) {
     fetchProfile();
   }, [user]);
 
-  // Helper to get assigned category label
   const getAssignedCategoryLabel = () => {
     if (!judgeCategory) return "No category assigned";
-    // Check top-level
     const top = categorydata.find((cat) => cat.value === judgeCategory);
     if (top) return top.label;
-    // Check subcategories
     for (const cat of categorydata) {
       if (cat.subcategories) {
         const sub = cat.subcategories.find((sub) => sub.value === judgeCategory);
@@ -100,128 +94,85 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaProvider>
-      {/* Robomission Modal */}
-      <Modal
-        visible={robomissionModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setRobomissionModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 10 }}>Robomission Category</Text>
-            {categorydata[0].subcategories?.map((sub) => (
-              <Button
-                key={sub.value}
-                title={sub.label}
+    <Provider>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.safeArea}>
+          {/* Header with Dropdown Menu */}
+          <View style={styles.header}>
+            <Image
+              source={{
+                uri:
+                  avatarUrl ||
+                  `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+                    user?.email || "default"
+                  )}`,
+              }}
+              style={styles.avatar}
+            />
+            <View>
+              <Text style={styles.greeting}>{greeting}!</Text>
+              <Text style={styles.name}>{judgeName}</Text>
+              <Text style={styles.categoryAssigned}>{getAssignedCategoryLabel()}</Text>
+            </View>
+            <Menu
+              visible={menuVisible}
+              onDismiss={() => setMenuVisible(false)}
+              anchor={
+                <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.menuButton}>
+                  <Text style={styles.menuText}>⋮</Text>
+                </TouchableOpacity>
+              }
+            >
+              <Menu.Item
                 onPress={() => {
-                  setRobomissionModalVisible(false);
-                  navigation.navigate("CategoryScreen", {
-                    category: sub.value,
-                    label: `Robomission ${sub.label}`,
-                    judgeCategory,
-                  });
+                  FIREBASE_AUTH.signOut();
+                  navigation.navigate("LoginJudge");
                 }}
+                title="Logout"
               />
-            ))}
-            <Button title="Cancel" onPress={() => setRobomissionModalVisible(false)} />
+            </Menu>
           </View>
-        </View>
-      </Modal>
-      {/* Future Innovators Modal */}
-      <Modal
-        visible={futureInnovatorsModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setFutureInnovatorsModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={{ fontWeight: "bold", fontSize: 18, marginBottom: 10 }}>Future Innovators Category</Text>
-            {categorydata[2].subcategories?.map((sub) => (
-              <Button
-                key={sub.value}
-                title={sub.label}
-                onPress={() => {
-                  setFutureInnovatorsModalVisible(false);
-                  navigation.navigate("CategoryScreen", {
-                    category: sub.value,
-                    label: `Future Innovators ${sub.label}`,
-                    judgeCategory,
-                  });
-                }}
-              />
-            ))}
-            <Button title="Cancel" onPress={() => setFutureInnovatorsModalVisible(false)} />
-          </View>
-        </View>
-      </Modal>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <Image
-            source={{
-              uri:
-                avatarUrl ||
-                `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
-                  user?.email || "default"
-                )}`,
-            }}
-            style={styles.avatar}
-          />
+
+          {/* Rest of the content */}
           <View>
-            <Text style={styles.greeting}>{greeting}!</Text>
-            <Text style={styles.name}>{judgeName}</Text>
-            <Text style={styles.categoryAssigned}>{getAssignedCategoryLabel()}</Text>
+            <FlatList
+              data={categorydata}
+              keyExtractor={(item) => item.label}
+              renderItem={({ item }) =>
+                item.label === "Robomission" ? (
+                  <View style={styles.card}>
+                    <Button
+                      title={item.label}
+                      onPress={() => setRobomissionModalVisible(true)}
+                    />
+                  </View>
+                ) : item.label === "Future Innovators" ? (
+                  <View style={styles.card}>
+                    <Button
+                      title={item.label}
+                      onPress={() => setFutureInnovatorsModalVisible(true)}
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.card}>
+                    <Button
+                      title={item.label}
+                      onPress={() => {
+                        navigation.navigate("CategoryScreen", {
+                          category: item.value,
+                          label: item.label,
+                          judgeCategory,
+                        });
+                      }}
+                    />
+                  </View>
+                )
+              }
+            />
           </View>
-        </View>
-        <View>
-          <FlatList
-            data={categorydata}
-            keyExtractor={(item) => item.label}
-            renderItem={({ item }) =>
-              item.label === "Robomission" ? (
-                <View style={styles.card}>
-                  <Button
-                    title={item.label}
-                    onPress={() => setRobomissionModalVisible(true)}
-                  />
-                </View>
-              ) : item.label === "Future Innovators" ? (
-                <View style={styles.card}>
-                  <Button
-                    title={item.label}
-                    onPress={() => setFutureInnovatorsModalVisible(true)}
-                  />
-                </View>
-              ) : (
-                <View style={styles.card}>
-                  <Button
-                    title={item.label}
-                    onPress={() => {
-                      navigation.navigate("CategoryScreen", {
-                        category: item.value,
-                        label: item.label,
-                        judgeCategory,
-                      });
-                    }}
-                  />
-                </View>
-              )
-            }
-          />
-        </View>
-        <View style={styles.container}>
-          <Button
-            title="Logout"
-            onPress={() => {
-              FIREBASE_AUTH.signOut();
-              navigation.navigate("LoginJudge");
-            }}
-          />
-        </View>
-      </SafeAreaView>
-    </SafeAreaProvider>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </Provider>
   );
 }
 
@@ -232,9 +183,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between", // Align items to the edges
     marginBottom: 20,
     marginTop: 30,
-    marginLeft: 20,
+    marginHorizontal: 20,
   },
   avatar: {
     width: 48,
@@ -257,37 +209,22 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 2,
   },
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 20,
+  menuButton: {
+    padding: 10,
+  },
+  menuText: {
+    fontSize: 24,
+    fontWeight: "bold",
   },
   card: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: "#f9f9f9",
     padding: 15,
     marginVertical: 10,
     borderRadius: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 2,
-  },
-  cardText: {
-    fontSize: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    width: 300,
-    alignItems: "center",
   },
 });

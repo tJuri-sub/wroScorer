@@ -165,13 +165,13 @@ export default function ScorerScreen({ navigation }: any) {
         renderItem={({ item }) => (
           <View style={styles.historyCard}>
             <Text style={styles.historyText}>Team Name: {item.teamName}</Text>
-            <Text style={styles.historyText}>Round 1: {item.round1Score}</Text>
+            <Text style={styles.historyText}>Round 1: {item.round1Score} points</Text>
             <Text style={styles.historyText}>Time 1: {item.time1}</Text>
-            <Text style={styles.historyText}>Round 2: {item.round2Score}</Text>
+            <Text style={styles.historyText}>Round 2: {item.round2Score} points</Text>
             <Text style={styles.historyText}>Time 2: {item.time2}</Text>
             <Text style={styles.historyText}>Overall Score: {item.overallScore}</Text>
             <Text style={styles.historyText}>
-              Time: {new Date(item.timestamp).toUTCString().replace("GMT", "PHT")}
+              Scored At: {new Date(item.timestamp).toUTCString().replace("GMT", "PHT")}
             </Text>
           </View>
         )}

@@ -14,10 +14,15 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
       try {
         // Adjust the collection path as needed for your Firestore structure
         const querySnapshot = await getDocs(collection(db, `categories/${category}/teams`));
-        const teamList = querySnapshot.docs.map(doc => ({
+        const teamList = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log("Fetched Team Data:", data); // Debugging log
+        return {
           id: doc.id,
-          ...doc.data(),
-        }));
+          category: category,
+          ...data,
+        };
+      });
         setTeams(teamList);
       } catch (error) {
         console.error('Error fetching teams:', error);
@@ -42,22 +47,33 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
       <FlatList
         data={teams}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => navigation.navigate("TeamScoresScreen", { team: item, category })}
-          >
-            <Text style={styles.cardText}>Team Number: {item.teamNumber || "N/A"}</Text>
-            <Text style={styles.cardText}>Pod Number: {item.podNumber || "N/A"}</Text>
-            <Text style={styles.cardText}>Country: {item.country || "N/A"}</Text>
-            <Text style={styles.cardText}>Team Name: {item.teamName || "N/A"}</Text>
-            <Text style={styles.cardText}>Coach: {item.coachName || "N/A"}</Text>
-            <Text style={styles.cardText}>
-              Members: {(item.members && item.members.join(", ")) || "N/A"}
-            </Text>
-            <Text style={styles.cardText}>tap to view scores</Text>
-          </TouchableOpacity>
-        )}
+        renderItem={({ item }) => {
+          console.log("Item Category:", item.category, "Judge Category:", judgeCategory); // Debugging log
+          return (
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => {
+                if (item.category?.toLowerCase().trim() === judgeCategory?.toLowerCase().trim()) {
+                  navigation.navigate("TeamScoresScreen", { team: item, category });
+                }
+              }}
+            >
+              <Text style={styles.cardText}>Team Name: {item.teamName || "N/A"}</Text>
+              <Text style={styles.cardText}>Coach: {item.coachName || "N/A"}</Text>
+              {item.category?.toLowerCase().trim() === judgeCategory?.toLowerCase().trim() && (
+                <>
+                  <Text style={styles.cardText}>Team Number: {item.teamNumber || "N/A"}</Text>
+                  <Text style={styles.cardText}>Pod Number: {item.podNumber || "N/A"}</Text>
+                  <Text style={styles.cardText}>Country: {item.country || "N/A"}</Text>
+                  <Text style={styles.cardText}>
+                    Members: {(item.members && item.members.join(", ")) || "N/A"}
+                  </Text>
+                  <Text style={styles.cardText}>Tap to view scores</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          );
+        }}
         ListEmptyComponent={<Text style={{ textAlign: "center", marginTop: 20 }}>No teams found.</Text>}
       />
     </View>
