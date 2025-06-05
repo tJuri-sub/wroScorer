@@ -9,6 +9,7 @@ import {
   Modal,
   Pressable,
 } from "react-native";
+import Icon from "react-native-vector-icons/MaterialIcons";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { onAuthStateChanged } from "firebase/auth";
@@ -39,25 +40,36 @@ export default function HomeScreen({ navigation }: any) {
 
   const categorydata = [
     {
-      label: "Robo mission",
+      label: "Robomission",
       image: require("../assets/images/RoboMissionLogo.png"),
-      categoryDesc: "Autonomous robots solve challenges on competition field.",
+      categoryDesc: "Build and program a robot that solves tasks on playing field",
       subcategories: [
         { label: "Elementary", value: "robo-elem" },
         { label: "Junior", value: "robo-junior" },
         { label: "Senior", value: "robo-senior" },
       ],
     },
-    { label: "Robosports", value: "robosports" },
+    { 
+      label: "Robosports", value: "robosports", 
+      image: require("../assets/images/RoboSportsLogo.png"),
+      categoryDesc: "Teams compete with 2 robots in an exciting game",
+    },
+    
     {
       label: "Future Innovators",
+      image: require("../assets/images/FutureILogo.png"),
+      categoryDesc: "Work on project and design and build a robot",
       subcategories: [
         { label: "Elementary", value: "fi-elem" },
         { label: "Junior", value: "fi-junior" },
         { label: "Senior", value: "fi-senior" },
       ],
     },
-    { label: "Future Engineers", value: "future-eng" },
+    { 
+      label: "Future Engineers", value: "future-eng",
+      image: require("../assets/images/FutureELogo.png"),
+      categoryDesc: "Advanced robotics following current research trends", 
+    },
   ];
 
   useEffect(() => {
@@ -114,7 +126,7 @@ export default function HomeScreen({ navigation }: any) {
       <Modal
         visible={robomissionModalVisible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setRobomissionModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
@@ -149,7 +161,7 @@ export default function HomeScreen({ navigation }: any) {
       <Modal
         visible={futureInnovatorsModalVisible}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setFutureInnovatorsModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
@@ -181,6 +193,45 @@ export default function HomeScreen({ navigation }: any) {
         </View>
       </Modal>
 
+      {/* Dropdown Menu */}
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)} // Close dropdown on request
+      >
+        <View style={styles.modalmenuOverlay}>
+          <View style={styles.dropdownContent}>
+            <Pressable
+              style={styles.dropdownItem}
+              onPress={() => {
+                setMenuVisible(false); // Close dropdown
+                FIREBASE_AUTH.signOut();
+                navigation.replace("LoginScreen"); // Navigate to login screen
+              }}
+            >
+              <Text style={styles.dropdownText}>Logout</Text>
+            </Pressable>
+            <Pressable
+              style={styles.dropdownItem}
+              onPress={() => setMenuVisible(false)} // Close dropdown
+            >
+              <Text style={styles.dropdownText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      <View style={styles.topBar}>
+        <Icon
+          name="menu" // Icon name for the menu
+          size={35} // Icon size
+          color="#432344" // Icon color
+          style={styles.menuIcon}
+          onPress={() => setMenuVisible(true)}
+        />
+        <Text style={styles.topBarText}>ScoreBotics</Text>
+      </View>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <Image
@@ -201,66 +252,82 @@ export default function HomeScreen({ navigation }: any) {
             </Text>
           </View>
         </View>
+
+        <View style={styles.categorytitle}>
+          <Text style={styles.categorytitleText}>
+            Competition Categories
+          </Text>
+        </View>
+
         <View style={styles.cardContainer}>
           <FlatList
             data={categorydata}
             keyExtractor={(item) => item.label}
             renderItem={({ item }) => {
-              if (item.label === "Robo mission") {
-                const [firstWord, ...restWords] = item.label.split(" ");
-                const rest = restWords.join(" ");
-                return (
-                  <View style={styles.card}>
-                    <Pressable
-                      style={styles.card}
-                      onPress={() => setRobomissionModalVisible(true)}
-                    >
-                      <Image source={item.image} style={styles.sideImage} />
-                      <View style={styles.text}>
-                        <Text>
-                          <Text style={styles.cardTextThin}>{firstWord} </Text>
-                          <Text style={styles.cardText}>{rest}</Text>
-                        </Text>
-                        <Text style={styles.cardDesc}>{item.categoryDesc}</Text>
-                      </View>
-                    </Pressable>
-                  </View>
-                );
-              } else if (item.label === "Future Innovators") {
-                return (
-                  <View style={styles.card}>
-                    <Button
-                      title={item.label}
-                      onPress={() => setFutureInnovatorsModalVisible(true)}
-                    />
-                  </View>
-                );
-              } else {
-                return (
-                  <View style={styles.card}>
-                    <Button
-                      title={item.label}
-                      onPress={() => {
+              // Define colors for each category
+              const categoryColors: Record<string, string> = {
+                Robomission: "#E79300", // Orange
+                Robosports: "#35A22F", // Green
+                "Future Innovators": "#B01956", // Pink
+                "Future Engineers": "#0270AA", // Blue
+              };
+
+              // Get the color for the current category
+              const cardColor = categoryColors[item.label] || "#333"; // Default to black if no match
+
+              const [firstWord, ...restWords] = item.label.split(" ");
+              const rest = restWords.join(" ");
+
+              return (
+                <View style={[styles.card, { backgroundColor: cardColor }]}>
+                  <Pressable
+                    style={styles.card}
+                    onPress={() => {
+                      if (item.label === "Robomission") {
+                        setRobomissionModalVisible(true);
+                      } else if (item.label === "Future Innovators") {
+                        setFutureInnovatorsModalVisible(true);
+                      } else {
                         navigation.navigate("CategoryScreen", {
                           category: item.value,
                           label: item.label,
                           judgeCategory,
                         });
-                      }}
-                    />
-                  </View>
-                );
-              }
+                      }
+                    }}
+                  >
+                    <Image source={item.image} style={styles.sideImage} />
+                    <View style={styles.text}>
+                      <Text>
+                        <Text
+                          style={styles.cardTextThin}
+                          numberOfLines={2}
+                          adjustsFontSizeToFit 
+                        >
+                          {firstWord}{" "}
+                        </Text>
+                        <Text
+                          style={styles.cardText}
+                          numberOfLines={2} 
+                          adjustsFontSizeToFit 
+                        >
+                          {rest}
+                        </Text>
+                      </Text>
+                      <Text
+                        style={styles.cardDesc}
+                        numberOfLines={3} 
+                        adjustsFontSizeToFit 
+                        ellipsizeMode="tail"
+                      >
+                        {item.categoryDesc}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </View>
+              );
             }}
-          />
-        </View>
-        <View style={styles.container}>
-          <Button
-            title="Logout"
-            onPress={() => {
-              FIREBASE_AUTH.signOut();
-              navigation.navigate("LoginJudge");
-            }}
+            contentContainerStyle={{ paddingBottom: 20 }} // Add padding for better scrolling experience
           />
         </View>
       </SafeAreaView>

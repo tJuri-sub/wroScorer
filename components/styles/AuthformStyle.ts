@@ -49,6 +49,7 @@ export default StyleSheet.create({
   backText: {
     color: "#852B88",
     fontSize: 16,
+    marginLeft: 10,
   },
 
   spacing: {
@@ -60,6 +61,13 @@ export default StyleSheet.create({
     display: "flex",
     justifyContent: "center",
     alignItems: "flex-start",
+  },
+
+  headtitle: {
+    fontSize: 38,
+    fontWeight: "bold",
+    color: "#000000",
+    marginBottom: 5,
   },
 
   title: {
