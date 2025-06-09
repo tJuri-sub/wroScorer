@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import * as Font from "expo-font";
 
 import { FIREBASE_AUTH } from "../firebaseconfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -31,20 +30,6 @@ const LoginAdmin = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const auth = FIREBASE_AUTH;
-
-  useEffect(() => {
-    async function loadFonts() {
-      await Font.loadAsync({
-        Inter: require("../assets/fonts/Inter-Regular.ttf"),
-      });
-      setFontsLoaded(true);
-    }
-    loadFonts();
-  }, []);
-
-  if (!fontsLoaded) {
-    return null;
-  }
 
   const signIn = async () => {
     setLoading(true);

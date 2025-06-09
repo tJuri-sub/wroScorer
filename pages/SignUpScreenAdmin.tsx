@@ -202,18 +202,6 @@ const SignUp = () => {
       // Store the new password in the database
       await storePassword(email, password);
 
-      // Alert.alert(
-      //     'Account created successfully!',
-      //     '',
-      //     [
-      //         {
-      //             text: 'OK',
-      //             onPress: () => {
-      //                 navigation.navigate('Login');
-      //             },
-      //         },
-      //     ]
-      // );
       // Send email verification
       if (response.user) {
         await sendEmailVerification(response.user);

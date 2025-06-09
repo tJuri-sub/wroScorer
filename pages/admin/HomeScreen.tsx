@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Text,
-  StyleSheet,
   View,
-  Button,
   Alert,
   Pressable,
   Modal,
@@ -233,6 +231,10 @@ export default function HomeScreenAdmin({ navigation }: any) {
     }
   };
 
+  const cardWidth = screenWidth * 0.9;
+  const cardGap = 16;
+  const snapInterval = cardWidth + cardGap;
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
@@ -264,9 +266,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
               keyExtractor={(item) => item.value}
               horizontal={true}
               showsHorizontalScrollIndicator={false}
-              snapToInterval={screenWidth} // Adjust to your card width + margin
               decelerationRate="fast"
-              contentContainerStyle={{ paddingHorizontal: 16 }}
               renderItem={({ item }) => {
                 const [firstWord, ...restWords] = item.label.split(" ");
                 const rest = restWords.join(" ");
@@ -285,9 +285,21 @@ export default function HomeScreenAdmin({ navigation }: any) {
                     <View style={styles.text}>
                       <Text>
                         <Text style={styles.cardTextThin}>{firstWord}</Text>
-                        <Text style={styles.cardText}>{rest}</Text>
+                        <Text
+                          style={styles.cardText}
+                          numberOfLines={2}
+                          ellipsizeMode="tail"
+                        >
+                          {rest}
+                        </Text>
                       </Text>
-                      <Text style={styles.cardDesc}>{item.categoryDesc}</Text>
+                      <Text
+                        style={styles.cardDesc}
+                        numberOfLines={2}
+                        ellipsizeMode="tail"
+                      >
+                        {item.categoryDesc}
+                      </Text>
                     </View>
                   </Pressable>
                 );
@@ -301,6 +313,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
             animationType="slide"
             transparent={true}
             visible={modalVisible}
+            aria-hidden={false}
             onRequestClose={() => {
               Alert.alert("Modal has been closed.");
               setModalVisible(!modalVisible);
