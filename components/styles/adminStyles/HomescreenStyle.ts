@@ -52,11 +52,12 @@ export default StyleSheet.create({
 
   card: {
     height: 120,
+    width: screenWidth * 0.9, // Responsive width (80% of screen)
     borderRadius: 10,
-    width: screenWidth,
     backgroundColor: "#E79300",
     display: "flex",
     flexDirection: "row",
+    marginRight: 16, // Gap between cards
   },
 
   sideImage: {
@@ -69,6 +70,8 @@ export default StyleSheet.create({
   text: {
     flex: 1,
     padding: 10,
+    flexShrink: 1,
+    flexWrap: "wrap",
   },
 
   cardTextThin: {
@@ -103,11 +106,7 @@ export default StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "center",
     gap: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+   boxShadow: "0px 2px 4px rgba(0,0,0,0.2)",
   },
 
   judgesImage: {

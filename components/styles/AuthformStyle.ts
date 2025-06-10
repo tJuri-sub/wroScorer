@@ -103,10 +103,7 @@ export default StyleSheet.create({
     borderRadius: 5,
     borderColor: "#f7f7f7",
     borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+  boxShadow: "0px 2px 3px rgba(0,0,0,0.2)",
     alignSelf: "center",
   },
 
