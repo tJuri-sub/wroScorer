@@ -25,7 +25,8 @@ export default function HomeScreen({ navigation }: any) {
   const [futureInnovatorsModalVisible, setFutureInnovatorsModalVisible] =
     useState(false);
   const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
-  const [menuVisible, setMenuVisible] = useState(false); // State for dropdown menu visibility
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
@@ -129,17 +130,24 @@ export default function HomeScreen({ navigation }: any) {
         animationType="fade"
         onRequestClose={() => setRobomissionModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text
-              style={{ fontWeight: "bold", fontSize: 18, marginBottom: 10 }}
+        <View style={styles.modalOverlayCat}>
+          <View style={styles.modalContentCat}>
+            {/* Top-right cancel icon */}
+            <Pressable
+              style={styles.modalCloseIcon}
+              onPress={() => setRobomissionModalVisible(false)}
             >
-              Robomission Category
-            </Text>
+              <Icon name="close" size={25} color="#432344" />
+            </Pressable>
+
+            {/* Modal Title */}
+            <Text style={styles.modalTitleCat}>Robomission Categories</Text>
+
+            {/* Buttons */}
             {categorydata[0].subcategories?.map((sub) => (
-              <Button
+              <Pressable
                 key={sub.value}
-                title={sub.label}
+                style={styles.modalButtonCat}
                 onPress={() => {
                   setRobomissionModalVisible(false);
                   navigation.navigate("CategoryScreen", {
@@ -148,15 +156,14 @@ export default function HomeScreen({ navigation }: any) {
                     judgeCategory,
                   });
                 }}
-              />
+              >
+                <Text style={styles.modalButtonTextCat}>{sub.label}</Text>
+              </Pressable>
             ))}
-            <Button
-              title="Cancel"
-              onPress={() => setRobomissionModalVisible(false)}
-            />
           </View>
         </View>
       </Modal>
+      
       {/* Future Innovators Modal */}
       <Modal
         visible={futureInnovatorsModalVisible}
@@ -164,17 +171,24 @@ export default function HomeScreen({ navigation }: any) {
         animationType="fade"
         onRequestClose={() => setFutureInnovatorsModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text
-              style={{ fontWeight: "bold", fontSize: 18, marginBottom: 10 }}
+        <View style={styles.modalOverlayCat}>
+          <View style={styles.modalContentCat}>
+            {/* Top-right cancel icon */}
+            <Pressable
+              style={styles.modalCloseIcon}
+              onPress={() => setFutureInnovatorsModalVisible(false)}
             >
-              Future Innovators Category
-            </Text>
+              <Icon name="close" size={25} color="#432344" />
+            </Pressable>
+
+             {/* Modal Title */}
+            <Text style={styles.modalTitleCat}>Future Innovators Categories</Text>
+
+            {/* Buttons */}
             {categorydata[2].subcategories?.map((sub) => (
-              <Button
+              <Pressable
                 key={sub.value}
-                title={sub.label}
+                style={[styles.modalButtonCat, { backgroundColor: "#B01956" }]}
                 onPress={() => {
                   setFutureInnovatorsModalVisible(false);
                   navigation.navigate("CategoryScreen", {
@@ -183,12 +197,10 @@ export default function HomeScreen({ navigation }: any) {
                     judgeCategory,
                   });
                 }}
-              />
+              >
+                <Text style={styles.modalButtonTextCat}>{sub.label}</Text>
+              </Pressable>
             ))}
-            <Button
-              title="Cancel"
-              onPress={() => setFutureInnovatorsModalVisible(false)}
-            />
           </View>
         </View>
       </Modal>
@@ -205,10 +217,9 @@ export default function HomeScreen({ navigation }: any) {
             <Pressable
               style={styles.dropdownItem}
               onPress={() => {
-                setMenuVisible(false); // Close dropdown
-                FIREBASE_AUTH.signOut();
-                navigation.replace("LoginScreen"); // Navigate to login screen
-              }}
+                setMenuVisible(false);
+                setLogoutModalVisible(true)
+              }} 
             >
               <Text style={styles.dropdownText}>Logout</Text>
             </Pressable>
@@ -222,115 +233,157 @@ export default function HomeScreen({ navigation }: any) {
         </View>
       </Modal>
 
-      <View style={styles.topBar}>
-        <Icon
-          name="menu" // Icon name for the menu
-          size={35} // Icon size
-          color="#432344" // Icon color
-          style={styles.menuIcon}
-          onPress={() => setMenuVisible(true)}
-        />
-        <Text style={styles.topBarText}>ScoreBotics</Text>
-      </View>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <Image
-            source={{
-              uri:
-                avatarUrl ||
-                `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
-                  user?.email || "default"
-                )}`,
-            }}
-            style={styles.avatar}
-          />
-          <View>
-            <Text style={styles.greeting}>{greeting}!</Text>
-            <Text style={styles.name}>{judgeName}</Text>
-            <Text style={styles.categoryAssigned}>
-              {getAssignedCategoryLabel()}
-            </Text>
+      {/* Logout Confirmation Modal */}
+      <Modal
+        visible={logoutModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLogoutModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Are you sure you want to log out?</Text>
+            <View style={styles.modalButtonContainer}>
+              <Pressable
+                style={[styles.modalButton, { backgroundColor: "#fff", borderWidth: 1, borderColor: "#432344" }]}
+                onPress={() => setLogoutModalVisible(false)} // Close the modal
+              >
+                <Text style={[styles.modalButtonText, { color: "#432344" }]}>Back</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, { backgroundColor: "#D32F2F" }]} // Red button for "Yes"
+                onPress={() => {
+                 FIREBASE_AUTH.signOut();
+                 navigation.replace("LoginJudge");
+                }}
+              >
+                <Text style={styles.modalButtonText}>Yes</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
+      </Modal>
 
-        <View style={styles.categorytitle}>
-          <Text style={styles.categorytitleText}>
-            Competition Categories
-          </Text>
-        </View>
+      <SafeAreaProvider>
+        <View style={{ flex: 1 }}>
+          <View style={styles.topBar}>
+            <Icon
+              name="menu" // Icon name for the menu
+              size={35} // Icon size
+              color="#432344" // Icon color
+              style={styles.menuIcon}
+              onPress={() => setMenuVisible(true)}
+            />
+            <Text style={styles.topBarText}>ScoreBotics</Text>
+          </View>
 
-        <View style={styles.cardContainer}>
-          <FlatList
-            data={categorydata}
-            keyExtractor={(item) => item.label}
-            renderItem={({ item }) => {
-              // Define colors for each category
-              const categoryColors: Record<string, string> = {
-                Robomission: "#E79300", // Orange
-                Robosports: "#35A22F", // Green
-                "Future Innovators": "#B01956", // Pink
-                "Future Engineers": "#0270AA", // Blue
-              };
+          <SafeAreaView style={[styles.safeArea, { flex: 1 }]}>
+            <View style={styles.header}>
+              <Image
+                source={{
+                  uri:
+                    avatarUrl ||
+                    `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+                      user?.email || "default"
+                    )}`,
+                }}
+                style={styles.avatar}
+              />
+              <View>
+                <Text style={styles.greeting}>{greeting}!</Text>
+                <Text style={styles.name}>{judgeName}</Text>
+                <Text style={styles.categoryAssigned}>
+                  {getAssignedCategoryLabel()}
+                </Text>
+              </View>
+            </View>
 
-              // Get the color for the current category
-              const cardColor = categoryColors[item.label] || "#333"; // Default to black if no match
+            <View style={styles.categorytitle}>
+              <Text style={styles.categorytitleText}>Competition Categories</Text>
+            </View>
 
-              const [firstWord, ...restWords] = item.label.split(" ");
-              const rest = restWords.join(" ");
+            {/* Ensure FlatList is scrollable */}
+            <View style={{ flex: 1 }}>
+              <FlatList
+                data={categorydata}
+                keyExtractor={(item) => item.label}
+                renderItem={({ item }) => {
+                  const categoryColors: Record<string, string> = {
+                    Robomission: "#E79300", // Orange
+                    Robosports: "#35A22F", // Green
+                    "Future Innovators": "#B01956", // Pink
+                    "Future Engineers": "#0270AA", // Blue
+                  };
 
-              return (
-                <View style={[styles.card, { backgroundColor: cardColor }]}>
-                  <Pressable
-                    style={styles.card}
-                    onPress={() => {
-                      if (item.label === "Robomission") {
-                        setRobomissionModalVisible(true);
-                      } else if (item.label === "Future Innovators") {
-                        setFutureInnovatorsModalVisible(true);
-                      } else {
-                        navigation.navigate("CategoryScreen", {
-                          category: item.value,
-                          label: item.label,
-                          judgeCategory,
-                        });
-                      }
-                    }}
-                  >
-                    <Image source={item.image} style={styles.sideImage} />
-                    <View style={styles.text}>
-                      <Text>
-                        <Text
-                          style={styles.cardTextThin}
-                          numberOfLines={2}
-                          adjustsFontSizeToFit 
-                        >
-                          {firstWord}{" "}
-                        </Text>
-                        <Text
-                          style={styles.cardText}
-                          numberOfLines={2} 
-                          adjustsFontSizeToFit 
-                        >
-                          {rest}
-                        </Text>
-                      </Text>
-                      <Text
-                        style={styles.cardDesc}
-                        numberOfLines={3} 
-                        adjustsFontSizeToFit 
-                        ellipsizeMode="tail"
+                  const cardColor = categoryColors[item.label] || "#333"; // Default to black if no match
+                  const [firstWord, ...restWords] = item.label.split(" ");
+                  const rest = restWords.join(" ");
+
+                  return (
+                      <Pressable
+                        style={[styles.card, { backgroundColor: cardColor }]}
+                        onPress={() => {
+                          if (item.label === "Robomission") {
+                            setRobomissionModalVisible(true);
+                          } else if (item.label === "Future Innovators") {
+                            setFutureInnovatorsModalVisible(true);
+                          } else {
+                            navigation.navigate("CategoryScreen", {
+                              category: item.value,
+                              label: item.label,
+                              judgeCategory,
+                            });
+                          }
+                        }}
                       >
-                        {item.categoryDesc}
-                      </Text>
-                    </View>
-                  </Pressable>
-                </View>
-              );
-            }}
-            contentContainerStyle={{ paddingBottom: 20 }} // Add padding for better scrolling experience
-          />
+                        {/* Add three dots icon */}
+                        <View style={styles.cardHeader}>
+                          <Icon name="more-vert" size={25} color="#fff" style={styles.cardOptionsIcon} />
+                        </View>
+                        <Image source={item.image} style={styles.sideImage} />
+                        <View style={styles.text}>
+                        <Text>
+                          {item.label === "Robomission" ? (
+                            <>
+                              <Text style={styles.cardTextThin} adjustsFontSizeToFit>Robo</Text>
+                              <Text style={styles.cardText} adjustsFontSizeToFit>mission</Text>
+                            </>
+                          ) : item.label === "Robosports" ? (
+                            <>
+                              <Text style={styles.cardTextThin} adjustsFontSizeToFit>Robo</Text>
+                              <Text style={styles.cardText} adjustsFontSizeToFit>sports</Text>
+                            </>
+                          ) : (
+                            item.label.split(" ").map((word, index) => (
+                              <Text
+                                key={index}
+                                style={index === 0 ? styles.cardTextThin : styles.cardText} // Apply bold style to all words except the first
+                                numberOfLines={2}
+                                adjustsFontSizeToFit
+                              >
+                                {word}{" "}
+                              </Text>
+                            ))
+                          )}
+                        </Text>
+                          <Text
+                            style={styles.cardDesc}
+                            numberOfLines={3}
+                            adjustsFontSizeToFit
+                            ellipsizeMode="tail"
+                          >
+                            {item.categoryDesc}
+                          </Text>
+                        </View>
+                      </Pressable>
+                  );
+                }}
+                contentContainerStyle={{ paddingBottom: 1 }} // Add padding for better scrolling experience
+              />
+            </View>
+          </SafeAreaView>
         </View>
-      </SafeAreaView>
+      </SafeAreaProvider>
     </SafeAreaProvider>
   );
 }

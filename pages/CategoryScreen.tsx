@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import styles from "../components/styles/CategoryStyling";
 
 export default function CategoryScreenJudge({ route, navigation }: any) {
   const { category, label, judgeCategory } = route.params;
@@ -43,7 +44,12 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{label}</Text>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>{label}</Text>
+      </View>
       <FlatList
         data={teams}
         keyExtractor={(item) => item.id}
@@ -79,36 +85,3 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: "#fff",
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  card: {
-    backgroundColor: '#f9f9f9',
-    padding: 15,
-    marginVertical: 10,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardText: {
-    fontSize: 16,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});

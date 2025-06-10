@@ -36,10 +36,14 @@ const AdminTab = createBottomTabNavigator();
 // Judge Bottom Tab Navigator
 const TabNavigator = () => (
   <Tab.Navigator
-    screenOptions={({ route }) => ({
+    screenOptions={{
       headerShown: false,
-      headerStyle: { height: 50 },
-    })}
+      tabBarStyle: { 
+        height: 60, 
+        paddingVertical: 5, 
+      },
+      tabBarActiveTintColor: "#432344",
+    }}
   >
     <Tab.Screen name="Home" component={HomeScreen}   
     options={
@@ -65,7 +69,11 @@ const TabNavigator = () => (
 );
 
 const JudgeInsideStackNavigator = () => (
-  <InsideStack.Navigator>
+  <InsideStack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+    >
     <InsideStack.Screen
       name="BottomTabs"
       component={TabNavigator}
@@ -86,7 +94,15 @@ const JudgeInsideStackNavigator = () => (
 
 // Admin Bottom Tab Navigator
 const AdminTabNavigator = () => (
-  <AdminTab.Navigator screenOptions={{ headerShown: false }}>
+  <AdminTab.Navigator 
+    screenOptions={{ 
+      headerShown: false, 
+      tabBarStyle: { 
+        height: 60, 
+        paddingVertical: 5, 
+      },
+      tabBarActiveTintColor: "#432344",
+    }}>
     <AdminTab.Screen  name="HomeAdmin" component={HomeScreenAdmin} 
     options={
       { tabBarIcon: ({color, size}) => (

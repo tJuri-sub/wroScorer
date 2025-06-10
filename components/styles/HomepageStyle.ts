@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { Modal } from "react-native-paper";
 
 export default StyleSheet.create({
   topBar: {
@@ -23,8 +24,8 @@ export default StyleSheet.create({
 
   menuIcon: {
     position: "absolute",
-    left: 20, // Position the icon on the left
-    top: 25, // Position the icon at the top
+    left: 20,
+    top: 25, 
   },
 
   modalmenuOverlay: {
@@ -41,18 +42,93 @@ export default StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    elevation: 4, // Add shadow for dropdown
+    elevation: 4, 
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
   },
 
   dropdownItem: {
-    paddingVertical: 10,
+    paddingVertical: 15,
     paddingHorizontal: 20,
+    borderRadius: 5, 
+    marginBottom: 5, 
+    backgroundColor: "#fff",
+  },
+
+  dropdownItemPressed: {
+    backgroundColor: "#EDEDED", 
   },
 
   dropdownText: {
     fontSize: 16,
-    color: "#432344", // Text color
+    color: "#432344",
     fontWeight: "bold",
+    textAlign: "center", 
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)", 
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    paddingTop: 30,
+    paddingBottom: 30,
+    width: 300,
+    alignItems: "center",
+  },
+
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#432344",
+    marginBottom: 25,
+    textAlign: "center",
+  },
+
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+
+  modalButton: {
+    flex: 1,
+    paddingVertical: 10,
+    marginHorizontal: 5,
+    marginTop: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    width: "100%", // Adjust width to fit two buttons side by side
+    elevation: 2, 
+  },
+
+  backButton: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#432344",
+  },
+
+  backButtonText: {
+    color: "#432344",
+  },
+
+  yesButton: {
+    backgroundColor: "#AA3D3F", 
+  },
+
+  modalButtonText: {
+    fontSize: 14,
+    color: "#fff",
+    fontWeight: "semibold",
+    letterSpacing: 1,
+    fontFamily: "Roboto",
   },
 
   safeArea: {
@@ -132,7 +208,6 @@ export default StyleSheet.create({
   card: {
     height: 130,
     borderRadius: 10,
-    // backgroundColor: "#E79300",
     display: "flex",
     flexDirection: "row",
     marginBottom: 16,
@@ -140,17 +215,31 @@ export default StyleSheet.create({
     elevation: 2,
   },
 
+  cardHeader: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 1, // Ensure the icon is above other elements
+  },
+
+  cardOptionsIcon: {
+    padding: 5,
+    borderRadius: 15, // Rounded icon background
+  },
+
   sideImage: {
     height: "100%",
     aspectRatio: 1 / 1,
     borderRadius: 10,
-    resizeMode: "cover",
+    resizeMode: "contain",
   },
 
   text: {
     flex: 1,
     padding: 10,
     marginLeft: 5,
+    marginRight: 15,
+    marginTop: 5,
     flexWrap: "wrap",
     flexShrink: 1,
   },
@@ -177,25 +266,68 @@ export default StyleSheet.create({
     fontSize: 12,
     color: "#fff",
     marginVertical: 4,
-   
     fontFamily: "Roboto",
-    letterSpacing: 2,
+    letterSpacing: 1.5,
     flexWrap: "wrap",
     textAlign: "left",
+    flexShrink: 1,
+    lineHeight: 16,
   },
 
-  modalOverlay: {
+  modalOverlayCat: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.2)",
     justifyContent: "center",
     alignItems: "center",
   },
 
-  modalContent: {
+  modalContentCat: {
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 20,
     width: 300,
     alignItems: "center",
+    elevation: 4, 
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
   },
+
+  modalCloseIcon: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 1, // Ensure the close icon is above other elements
+  },
+
+  modalTitleCat: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#432344",
+    marginBottom: 20,
+    textAlign: "center",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    fontFamily: "Roboto",
+  },
+
+  modalButtonCat: {
+    backgroundColor: "#E79300", 
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginVertical: 5, // Space between buttons
+    alignItems: "center",
+    width: "100%", // Full width button
+    elevation: 2, // Add shadow for Android
+  },
+
+  modalButtonTextCat: {
+    fontSize: 16,
+    color: "#fff", // White text for contrast
+    fontWeight: "bold",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+
 });

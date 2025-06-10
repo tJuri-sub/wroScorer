@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
+import styles from "../components/styles/CategoryStyling";
 
-export default function TeamScoresScreen({ route }: any) {
+
+export default function TeamScoresScreen({ route, navigation }: any) {
   const { team, category } = route.params;
   const [scores, setScores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +46,12 @@ export default function TeamScoresScreen({ route }: any) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Scores for {team.teamName}</Text>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>Scores for {team.teamName}</Text>
+      </View>
       <FlatList
         data={scores}
         keyExtractor={(item) => item.id}
@@ -66,17 +73,3 @@ export default function TeamScoresScreen({ route }: any) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#f4f4f4" },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 12 },
-  scoreCard: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
-    elevation: 2,
-  },
-  scoreText: { fontSize: 14, marginBottom: 2 },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
-});
