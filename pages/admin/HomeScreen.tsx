@@ -57,7 +57,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
 
   const categorydata = [
     {
-      label: "Robo mission ",
+      label: "RoboMission Elementary",
       image: require("../../assets/images/RoboMissionLogo.png"),
       categoryDesc: "Autonomous robots solve challenges on competition field.",
       value: "robo-elem",

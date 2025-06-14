@@ -60,6 +60,9 @@ const LoginJudge = () => {
       <View style={styles.widthForm}>
         <View style={styles.innerContainer}>
           <View style={styles.titleBox}>
+            <Text style={styles.headtitle}>
+              Hello
+            </Text>
             <Text style={styles.title}>
               Login your <Text style={styles.highlight}>Judge Account</Text>
             </Text>
