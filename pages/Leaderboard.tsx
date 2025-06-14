@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Text, View, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
 import { getFirestore, collection, onSnapshot } from "firebase/firestore";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
+import styles from "../components/styles/LeaderboardStyling";
+
 
 export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -59,26 +61,31 @@ export default function Leaderboard() {
   }
 
   return (
-    <View style={{ flex: 1, padding: 20 }}>
-      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 10 }}>Leaderboard</Text>
-      <TouchableOpacity onPress={() => navigation.navigate("AllLeaderboardScreen")}>
-        <Text style={{ color: "blue", marginBottom: 10 }}>See All</Text>
-      </TouchableOpacity>
-      {leaderboard.length === 0 ? (
-        <Text>No scores yet!</Text>
-      ) : (
-        <FlatList
-          data={leaderboard}
-          keyExtractor={(item) => item.teamId}
-          renderItem={({ item, index }) => (
-            <View style={{ flexDirection: "row", marginBottom: 8 }}>
-              <Text style={{ width: 30 }}>{index + 1}.</Text>
-              <Text style={{ flex: 1 }}>{item.teamName}</Text>
-              <Text>{item.overallScore} pts</Text>
-            </View>
-          )}
-        />
-      )}
+    <View>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>Leaderboard</Text>
+        </View>
+        <TouchableOpacity onPress={() => navigation.navigate("AllLeaderboardScreen")}>
+          <Text style={{ color: "blue", marginBottom: 10 }}>See All</Text>
+        </TouchableOpacity>
+        {leaderboard.length === 0 ? (
+          <Text>No scores yet!</Text>
+        ) : (
+          <FlatList
+            data={leaderboard}
+            keyExtractor={(item) => item.teamId}
+            renderItem={({ item, index }) => (
+              <View style={{ flexDirection: "row", marginBottom: 8 }}>
+                <Text style={{ width: 30 }}>{index + 1}.</Text>
+                <Text style={{ flex: 1 }}>{item.teamName}</Text>
+                <Text>{item.overallScore} pts</Text>
+              </View>
+            )}
+          />
+        )}
+      </View>
     </View>
   );
 }
