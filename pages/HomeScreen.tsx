@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   Text,
   StyleSheet,
@@ -8,13 +8,14 @@ import {
   FlatList,
   Modal,
   Pressable,
+  TouchableOpacity,
 } from "react-native";
-import Icon from "react-native-vector-icons/MaterialIcons";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import styles from "../components/styles/HomepageStyle";
+import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function HomeScreen({ navigation }: any) {
   const user = FIREBASE_AUTH.currentUser;
@@ -27,6 +28,19 @@ export default function HomeScreen({ navigation }: any) {
   const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => setMenuVisible(!menuVisible)}
+          style={{ marginLeft: 15 }}
+        >
+          <Feather name="menu" size={24} color="black" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, menuVisible]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
@@ -43,19 +57,21 @@ export default function HomeScreen({ navigation }: any) {
     {
       label: "Robomission",
       image: require("../assets/images/RoboMissionLogo.png"),
-      categoryDesc: "Build and program a robot that solves tasks on playing field",
+      categoryDesc:
+        "Build and program a robot that solves tasks on playing field",
       subcategories: [
         { label: "Elementary", value: "robo-elem" },
         { label: "Junior", value: "robo-junior" },
         { label: "Senior", value: "robo-senior" },
       ],
     },
-    { 
-      label: "Robosports", value: "robosports", 
+    {
+      label: "Robosports",
+      value: "robosports",
       image: require("../assets/images/RoboSportsLogo.png"),
       categoryDesc: "Teams compete with 2 robots in an exciting game",
     },
-    
+
     {
       label: "Future Innovators",
       image: require("../assets/images/FutureILogo.png"),
@@ -66,10 +82,11 @@ export default function HomeScreen({ navigation }: any) {
         { label: "Senior", value: "fi-senior" },
       ],
     },
-    { 
-      label: "Future Engineers", value: "future-eng",
+    {
+      label: "Future Engineers",
+      value: "future-eng",
       image: require("../assets/images/FutureELogo.png"),
-      categoryDesc: "Advanced robotics following current research trends", 
+      categoryDesc: "Advanced robotics following current research trends",
     },
   ];
 
@@ -137,7 +154,7 @@ export default function HomeScreen({ navigation }: any) {
               style={styles.modalCloseIcon}
               onPress={() => setRobomissionModalVisible(false)}
             >
-              <Icon name="close" size={25} color="#432344" />
+              <Ionicons name="close" size={24} color="black" />
             </Pressable>
 
             {/* Modal Title */}
@@ -163,7 +180,7 @@ export default function HomeScreen({ navigation }: any) {
           </View>
         </View>
       </Modal>
-      
+
       {/* Future Innovators Modal */}
       <Modal
         visible={futureInnovatorsModalVisible}
@@ -178,11 +195,13 @@ export default function HomeScreen({ navigation }: any) {
               style={styles.modalCloseIcon}
               onPress={() => setFutureInnovatorsModalVisible(false)}
             >
-              <Icon name="close" size={25} color="#432344" />
+              <Ionicons name="close" size={24} color="black" />
             </Pressable>
 
-             {/* Modal Title */}
-            <Text style={styles.modalTitleCat}>Future Innovators Categories</Text>
+            {/* Modal Title */}
+            <Text style={styles.modalTitleCat}>
+              Future Innovators Categories
+            </Text>
 
             {/* Buttons */}
             {categorydata[2].subcategories?.map((sub) => (
@@ -218,8 +237,8 @@ export default function HomeScreen({ navigation }: any) {
               style={styles.dropdownItem}
               onPress={() => {
                 setMenuVisible(false);
-                setLogoutModalVisible(true)
-              }} 
+                setLogoutModalVisible(true);
+              }}
             >
               <Text style={styles.dropdownText}>Logout</Text>
             </Pressable>
@@ -242,19 +261,30 @@ export default function HomeScreen({ navigation }: any) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Are you sure you want to log out?</Text>
+            <Text style={styles.modalTitle}>
+              Are you sure you want to log out?
+            </Text>
             <View style={styles.modalButtonContainer}>
               <Pressable
-                style={[styles.modalButton, { backgroundColor: "#fff", borderWidth: 1, borderColor: "#432344" }]}
+                style={[
+                  styles.modalButton,
+                  {
+                    backgroundColor: "#fff",
+                    borderWidth: 1,
+                    borderColor: "#432344",
+                  },
+                ]}
                 onPress={() => setLogoutModalVisible(false)} // Close the modal
               >
-                <Text style={[styles.modalButtonText, { color: "#432344" }]}>Back</Text>
+                <Text style={[styles.modalButtonText, { color: "#432344" }]}>
+                  Back
+                </Text>
               </Pressable>
               <Pressable
                 style={[styles.modalButton, { backgroundColor: "#D32F2F" }]} // Red button for "Yes"
                 onPress={() => {
-                 FIREBASE_AUTH.signOut();
-                 navigation.replace("LoginJudge");
+                  FIREBASE_AUTH.signOut();
+                  navigation.replace("LoginJudge");
                 }}
               >
                 <Text style={styles.modalButtonText}>Yes</Text>
@@ -266,17 +296,6 @@ export default function HomeScreen({ navigation }: any) {
 
       <SafeAreaProvider>
         <View style={{ flex: 1 }}>
-          <View style={styles.topBar}>
-            <Icon
-              name="menu" // Icon name for the menu
-              size={35} // Icon size
-              color="#432344" // Icon color
-              style={styles.menuIcon}
-              onPress={() => setMenuVisible(true)}
-            />
-            <Text style={styles.topBarText}>ScoreBotics</Text>
-          </View>
-
           <SafeAreaView style={[styles.safeArea, { flex: 1 }]}>
             <View style={styles.header}>
               <Image
@@ -299,7 +318,9 @@ export default function HomeScreen({ navigation }: any) {
             </View>
 
             <View style={styles.categorytitle}>
-              <Text style={styles.categorytitleText}>Competition Categories</Text>
+              <Text style={styles.categorytitleText}>
+                Competition Categories
+              </Text>
             </View>
 
             {/* Ensure FlatList is scrollable */}
@@ -320,44 +341,72 @@ export default function HomeScreen({ navigation }: any) {
                   const rest = restWords.join(" ");
 
                   return (
-                      <Pressable
-                        style={[styles.card, { backgroundColor: cardColor }]}
-                        onPress={() => {
-                          if (item.label === "Robomission") {
-                            setRobomissionModalVisible(true);
-                          } else if (item.label === "Future Innovators") {
-                            setFutureInnovatorsModalVisible(true);
-                          } else {
-                            navigation.navigate("CategoryScreen", {
-                              category: item.value,
-                              label: item.label,
-                              judgeCategory,
-                            });
-                          }
-                        }}
-                      >
-                        {/* Add three dots icon */}
-                        <View style={styles.cardHeader}>
-                          <Icon name="more-vert" size={25} color="#fff" style={styles.cardOptionsIcon} />
-                        </View>
-                        <Image source={item.image} style={styles.sideImage} />
-                        <View style={styles.text}>
+                    <Pressable
+                      style={[styles.card, { backgroundColor: cardColor }]}
+                      onPress={() => {
+                        if (item.label === "Robomission") {
+                          setRobomissionModalVisible(true);
+                        } else if (item.label === "Future Innovators") {
+                          setFutureInnovatorsModalVisible(true);
+                        } else {
+                          navigation.navigate("CategoryScreen", {
+                            category: item.value,
+                            label: item.label,
+                            judgeCategory,
+                          });
+                        }
+                      }}
+                    >
+                      {/* Add three dots icon */}
+                      <View style={styles.cardHeader}>
+                        <MaterialCommunityIcons
+                          name="dots-vertical"
+                          size={24}
+                          color="white"
+                        />
+                      </View>
+                      <Image source={item.image} style={styles.sideImage} />
+                      <View style={styles.text}>
                         <Text>
                           {item.label === "Robomission" ? (
                             <>
-                              <Text style={styles.cardTextThin} adjustsFontSizeToFit>Robo</Text>
-                              <Text style={styles.cardText} adjustsFontSizeToFit>mission</Text>
+                              <Text
+                                style={styles.cardTextThin}
+                                adjustsFontSizeToFit
+                              >
+                                Robo
+                              </Text>
+                              <Text
+                                style={styles.cardText}
+                                adjustsFontSizeToFit
+                              >
+                                mission
+                              </Text>
                             </>
                           ) : item.label === "Robosports" ? (
                             <>
-                              <Text style={styles.cardTextThin} adjustsFontSizeToFit>Robo</Text>
-                              <Text style={styles.cardText} adjustsFontSizeToFit>sports</Text>
+                              <Text
+                                style={styles.cardTextThin}
+                                adjustsFontSizeToFit
+                              >
+                                Robo
+                              </Text>
+                              <Text
+                                style={styles.cardText}
+                                adjustsFontSizeToFit
+                              >
+                                sports
+                              </Text>
                             </>
                           ) : (
                             item.label.split(" ").map((word, index) => (
                               <Text
                                 key={index}
-                                style={index === 0 ? styles.cardTextThin : styles.cardText} // Apply bold style to all words except the first
+                                style={
+                                  index === 0
+                                    ? styles.cardTextThin
+                                    : styles.cardText
+                                } // Apply bold style to all words except the first
                                 numberOfLines={2}
                                 adjustsFontSizeToFit
                               >
@@ -366,16 +415,16 @@ export default function HomeScreen({ navigation }: any) {
                             ))
                           )}
                         </Text>
-                          <Text
-                            style={styles.cardDesc}
-                            numberOfLines={3}
-                            adjustsFontSizeToFit
-                            ellipsizeMode="tail"
-                          >
-                            {item.categoryDesc}
-                          </Text>
-                        </View>
-                      </Pressable>
+                        <Text
+                          style={styles.cardDesc}
+                          numberOfLines={3}
+                          adjustsFontSizeToFit
+                          ellipsizeMode="tail"
+                        >
+                          {item.categoryDesc}
+                        </Text>
+                      </View>
+                    </Pressable>
                   );
                 }}
                 contentContainerStyle={{ paddingBottom: 1 }} // Add padding for better scrolling experience

@@ -1,11 +1,11 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { StatusBar, Text } from "react-native";
+import { StatusBar, View, ActivityIndicator } from "react-native";
 
-import Entypo from '@expo/vector-icons/Entypo';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import Entypo from "@expo/vector-icons/Entypo";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 import Leaderboard from "./pages/Leaderboard";
 import HomeScreen from "./pages/HomeScreen";
@@ -38,33 +38,49 @@ const TabNavigator = () => (
   <Tab.Navigator
     screenOptions={{
       headerShown: false,
-      tabBarStyle: { 
-        height: 60, 
-        paddingVertical: 5, 
+      tabBarStyle: {
+        height: 60,
+        paddingVertical: 5,
       },
       tabBarActiveTintColor: "#432344",
     }}
   >
-    <Tab.Screen name="Home" component={HomeScreen}   
-    options={
-      { tabBarIcon: ({color, size}) => (
+    <Tab.Screen
+      name="Home"
+      component={HomeScreen}
+      options={{
+        headerShown: true,
+        headerTitle: "ScoreBotics",
+        headerTitleAlign: "center",
+        tabBarIcon: ({ color, size }) => (
           <Entypo name="home" size={size} color={color} />
-      ),
-      }}/>
-    <Tab.Screen name="Leaderboard" component={Leaderboard} 
-      options={
-      { tabBarIcon: ({color, size}) => (
-         <MaterialIcons name="leaderboard" size={size} color={color}/>
-      ),
+        ),
       }}
-      />
-    <Tab.Screen name="Scorer" component={ScorerScreen} 
-      options={
-      { tabBarIcon: ({color, size}) => (
-         <MaterialIcons name="scoreboard" size={size} color={color} />
-      ),
+    />
+    <Tab.Screen
+      name="Leaderboard"
+      component={Leaderboard}
+      options={{
+        headerShown: true,
+        headerTitle: "Leaderboard",
+        headerTitleAlign: "center",
+        tabBarIcon: ({ color, size }) => (
+          <MaterialIcons name="leaderboard" size={size} color={color} />
+        ),
       }}
-      />
+    />
+    <Tab.Screen
+      name="Scorer"
+      component={ScorerScreen}
+      options={{
+        headerShown: true,
+        headerTitle: "Scoreboard",
+        headerTitleAlign: "center",
+        tabBarIcon: ({ color, size }) => (
+          <MaterialIcons name="scoreboard" size={size} color={color} />
+        ),
+      }}
+    />
   </Tab.Navigator>
 );
 
@@ -73,7 +89,7 @@ const JudgeInsideStackNavigator = () => (
     screenOptions={{
       headerShown: false,
     }}
-    >
+  >
     <InsideStack.Screen
       name="BottomTabs"
       component={TabNavigator}
@@ -94,31 +110,36 @@ const JudgeInsideStackNavigator = () => (
 
 // Admin Bottom Tab Navigator
 const AdminTabNavigator = () => (
-  <AdminTab.Navigator 
-    screenOptions={{ 
-      headerShown: false, 
-      tabBarStyle: { 
-        height: 60, 
-        paddingVertical: 5, 
+  <AdminTab.Navigator
+    screenOptions={{
+      headerShown: false,
+      tabBarStyle: {
+        height: 60,
+        paddingVertical: 5,
       },
       tabBarActiveTintColor: "#432344",
-    }}>
-    <AdminTab.Screen  name="HomeAdmin" component={HomeScreenAdmin} 
-    options={
-      { tabBarIcon: ({color, size}) => (
+    }}
+  >
+    <AdminTab.Screen
+      name="HomeAdmin"
+      component={HomeScreenAdmin}
+      options={{
+        tabBarIcon: ({ color, size }) => (
           <Entypo name="home" size={size} color={color} />
-      ),
+        ),
       }}
-     />
-    <AdminTab.Screen name="Profile" component={ProfileAdmin} 
-   options={{
-    headerShown: true,
-    headerTitle: "Profile",
-    tabBarIcon: ({color, size}) => (
+    />
+    <AdminTab.Screen
+      name="Profile"
+      component={ProfileAdmin}
+      options={{
+        headerShown: true,
+        headerTitle: "Profile",
+        tabBarIcon: ({ color, size }) => (
           <FontAwesome name="user" size={size} color={color} />
-      ),
+        ),
       }}
-      />
+    />
     {/* <AdminTab.Screen name="Logs" component={LogsAdmin} /> */}
   </AdminTab.Navigator>
 );
@@ -131,10 +152,7 @@ const AdminInsideStackNavigator = () => (
       options={{ headerShown: false }}
     />
     <InsideStack.Screen name="HomeAdmin" component={HomeScreenAdmin} />
-    <InsideStack.Screen
-      name="ProfileAdmin"
-      component={ProfileAdmin}
-    />
+    <InsideStack.Screen name="ProfileAdmin" component={ProfileAdmin} />
     <InsideStack.Screen name="CategoryScreen" component={CategoryScreen} />
   </InsideStack.Navigator>
 );
@@ -200,7 +218,11 @@ export default function App() {
   }, []);
 
   if (loading) {
-    return <Text>Loading...</Text>;
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#852B88" />
+      </View>
+    );
   }
 
   // Decide which screen to show first

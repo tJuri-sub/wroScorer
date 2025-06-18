@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Text, View, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  Text,
+  View,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { getFirestore, collection, onSnapshot } from "firebase/firestore";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import styles from "../components/styles/LeaderboardStyling";
-
 
 export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -23,7 +28,10 @@ export default function Leaderboard() {
     const unsubscribe = onSnapshot(
       scoresRef,
       (querySnapshot) => {
-        const teamMap: Record<string, { teamName: string; overallScore: number; teamId: string }> = {};
+        const teamMap: Record<
+          string,
+          { teamName: string; overallScore: number; teamId: string }
+        > = {};
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           if (!teamMap[data.teamId]) {
@@ -64,10 +72,9 @@ export default function Leaderboard() {
     <View>
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>Leaderboard</Text>
-        </View>
-        <TouchableOpacity onPress={() => navigation.navigate("AllLeaderboardScreen")}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("AllLeaderboardScreen")}
+        >
           <Text style={{ color: "blue", marginBottom: 10 }}>See All</Text>
         </TouchableOpacity>
         {leaderboard.length === 0 ? (
