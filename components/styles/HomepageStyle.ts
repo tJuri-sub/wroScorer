@@ -1,39 +1,38 @@
 import { StyleSheet } from "react-native";
-import { Modal } from "react-native-paper";
 
 export default StyleSheet.create({
   topBar: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center", 
+    justifyContent: "center",
     paddingVertical: 25,
     paddingHorizontal: 15,
-    backgroundColor: "#fff", 
-    elevation: 4, 
+    backgroundColor: "#fff",
+    elevation: 4,
     shadowColor: "#000", // For iOS shadow
-    shadowOffset: { width: 0, height: 2 }, // For iOS 
+    shadowOffset: { width: 0, height: 2 }, // For iOS
     shadowOpacity: 0.1, // For iOS shadow
   },
 
   topBarText: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#432344", 
+    color: "#432344",
     textAlign: "center",
   },
 
   menuIcon: {
     position: "absolute",
     left: 20,
-    top: 25, 
+    top: 25,
   },
 
   modalmenuOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.1)", 
-    justifyContent: "flex-start", 
-    alignItems: "flex-start", 
-    paddingTop: 60, 
+    backgroundColor: "rgba(0,0,0,0.1)",
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
+    paddingTop: 60,
     paddingLeft: 20,
   },
 
@@ -42,7 +41,7 @@ export default StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    elevation: 4, 
+    elevation: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -51,25 +50,25 @@ export default StyleSheet.create({
   dropdownItem: {
     paddingVertical: 15,
     paddingHorizontal: 20,
-    borderRadius: 5, 
-    marginBottom: 5, 
+    borderRadius: 5,
+    marginBottom: 5,
     backgroundColor: "#fff",
   },
 
   dropdownItemPressed: {
-    backgroundColor: "#EDEDED", 
+    backgroundColor: "#EDEDED",
   },
 
   dropdownText: {
     fontSize: 16,
     color: "#432344",
     fontWeight: "bold",
-    textAlign: "center", 
+    textAlign: "center",
   },
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)", 
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -106,7 +105,7 @@ export default StyleSheet.create({
     borderRadius: 5,
     alignItems: "center",
     width: "100%", // Adjust width to fit two buttons side by side
-    elevation: 2, 
+    elevation: 2,
   },
 
   backButton: {
@@ -120,7 +119,7 @@ export default StyleSheet.create({
   },
 
   yesButton: {
-    backgroundColor: "#AA3D3F", 
+    backgroundColor: "#AA3D3F",
   },
 
   modalButtonText: {
@@ -144,7 +143,7 @@ export default StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 10,
     marginBottom: 20,
   },
 
@@ -193,7 +192,7 @@ export default StyleSheet.create({
     fontFamily: "Roboto",
     color: "#432344",
   },
-  
+
   categorytitleText: {
     fontSize: 22,
     fontWeight: "bold",
@@ -287,7 +286,7 @@ export default StyleSheet.create({
     padding: 20,
     width: 300,
     alignItems: "center",
-    elevation: 4, 
+    elevation: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -312,7 +311,7 @@ export default StyleSheet.create({
   },
 
   modalButtonCat: {
-    backgroundColor: "#E79300", 
+    backgroundColor: "#E79300",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
@@ -329,5 +328,4 @@ export default StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1,
   },
-
 });

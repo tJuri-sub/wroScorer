@@ -1,10 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TextInput, Button, FlatList, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Button,
+  FlatList,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  ScrollView,
+} from "react-native";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
-import { collection, getDocs, addDoc, query, where, orderBy } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  query,
+  where,
+  orderBy,
+} from "firebase/firestore";
 import { Ionicons } from "@expo/vector-icons";
 import styles from "../components/styles/ScorerStyling";
-
 
 export default function ScorerScreen({ navigation }: any) {
   const user = FIREBASE_AUTH.currentUser;
@@ -47,7 +64,10 @@ export default function ScorerScreen({ navigation }: any) {
             const teamsSnap = await getDocs(
               collection(FIREBASE_DB, `categories/${data.category}/teams`)
             );
-            const teamList = teamsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const teamList = teamsSnap.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            }));
             setTeams(teamList);
             setFilteredTeams(teamList); // Initialize filtered teams
           }
@@ -71,7 +91,7 @@ export default function ScorerScreen({ navigation }: any) {
           orderBy("timestamp", "desc")
         );
         const snap = await getDocs(q);
-        setHistory(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setHistory(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       } catch (err) {
         console.log("Error fetching history:", err);
       }
@@ -90,8 +110,12 @@ export default function ScorerScreen({ navigation }: any) {
     }
     try {
       const overallScore = Number(round1Score) + Number(round2Score);
-      const formattedTime1 = `${(time1Minutes || "0").padStart(2, "0")}:${(time1Seconds || "0").padStart(2, "0")}:${(time1Milliseconds || "0").padStart(3, "0")}`;
-      const formattedTime2 = `${(time2Minutes || "0").padStart(2, "0")}:${(time2Seconds || "0").padStart(2, "0")}:${(time2Milliseconds || "0").padStart(3, "0")}`;
+      const formattedTime1 = `${(time1Minutes || "0").padStart(2, "0")}:${(
+        time1Seconds || "0"
+      ).padStart(2, "0")}:${(time1Milliseconds || "0").padStart(3, "0")}`;
+      const formattedTime2 = `${(time2Minutes || "0").padStart(2, "0")}:${(
+        time2Seconds || "0"
+      ).padStart(2, "0")}:${(time2Milliseconds || "0").padStart(3, "0")}`;
       // Get Philippine Time
       const now = new Date();
       const philippineTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
@@ -144,204 +168,249 @@ export default function ScorerScreen({ navigation }: any) {
   }
 
   return (
-    <View>
-      {/* Header */}
-        <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>Scorer</Text>
-        </View>
-      <View style={styles.container}>
-        {/* History */}
-        <View style={styles.historyHeader}>
-          <Text style={styles.seeAllText}>Score History</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("AllScoresScreen", { history })}>
-            <Text style={styles.historyText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        <FlatList
-          data={history.slice(0, 5)} // Limit to 5 items
-          horizontal
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.historyCard}>
-              <Text style={styles.historyText}>Team Name: {item.teamName}</Text>
-              <Text style={styles.historyText}>Round 1: {item.round1Score} points</Text>
-              <Text style={styles.historyText}>Time 1: {item.time1}</Text>
-              <Text style={styles.historyText}>Round 2: {item.round2Score} points</Text>
-              <Text style={styles.historyText}>Time 2: {item.time2}</Text>
-              <Text style={styles.historyText}>Overall Score: {item.overallScore}</Text>
-              <Text style={styles.historyText}>
-                Scored At: {new Date(item.timestamp).toUTCString().replace("GMT", "PHT")}
-              </Text>
-            </View>
-          )}
-          ListEmptyComponent={<Text style={{ margin: 10 }}>No history yet.</Text>}
-          style={{ marginBottom: 10 }}
-        />
-
-        {/* Scorer Calculator */}
-        <Text style={styles.sectionTitle}>Scorer Calculator</Text>
-        <View style={styles.scorerCard}>
-          {/* Searchable Dropdown */}
-          <TextInput
-            style={styles.dropdown}
-            placeholder="Select Team"
-            value={searchQuery}
-            onFocus={() => setShowDropdown(true)} // Show dropdown when focused
-            onChangeText={(text) => {
-              setSearchQuery(text);
-              const filtered = teams.filter((team) =>
-                team.teamName.toLowerCase().includes(text.toLowerCase())
-              );
-              setFilteredTeams(filtered);
-            }}
-          />
-          {showDropdown && (
-            <View style={styles.dropdownList}>
-              {filteredTeams.length === 0 && (
-                <Text style={{ padding: 10, color: "#888" }}>No teams available</Text>
-              )}
-              {filteredTeams.map((team) => (
-                <TouchableOpacity
-                  key={team.id}
-                  style={styles.dropdownItem}
-                  onPress={() => {
-                    setSelectedTeam(team);
-                    setSearchQuery(team.teamName); // Set the selected team's name in the input
-                    setShowDropdown(false); // Close dropdown
-                  }}
-                >
-                  <Text>{team.teamName}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          {/* Round 1 Score Input */}
-          <Text style={{ fontSize: 16, fontWeight: "bold", marginVertical: 8 }}>Round 1</Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Round 1 Score"
-            keyboardType="numeric"
-            value={round1Score}
-            onChangeText={(text) => setRound1Score(text.replace(/[^0-9]/g, ""))}
-          />
-
-          {/* Round 1 Time Input */}
-          <View style={styles.timeInputRow}>
-            <TextInput
-              style={styles.timeInput}
-              placeholder="00"
-              keyboardType="numeric"
-              value={time1Minutes}
-              onChangeText={(text) => {
-                const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
-                setTime1Minutes(formatted.length > 2 ? formatted.slice(0, 2) : formatted); // Limit to 2 digits
-              }}
-            />
-            <Text style={styles.timeLabel}>m :</Text>
-            <TextInput
-              style={styles.timeInput}
-              placeholder="00"
-              keyboardType="numeric"
-              value={time1Seconds}
-              onChangeText={(text) => {
-                const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
-                if (Number(formatted) <= 59) {
-                  setTime1Seconds(formatted.length > 2 ? formatted.slice(0, 2) : formatted); // Limit to 2 digits
-                }
-              }}
-            />
-            <Text style={styles.timeLabel}>s :</Text>
-            <TextInput
-              style={styles.timeInput}
-              placeholder="000"
-              keyboardType="numeric"
-              value={time1Milliseconds}
-              onChangeText={(text) => {
-                const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
-                if (Number(formatted) <= 999) {
-                  setTime1Milliseconds(formatted.length > 3 ? formatted.slice(0, 3) : formatted); // Limit to 3 digits
-                }
-              }}
-            />
-            <Text style={styles.timeLabel}>ms</Text>
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <View>
+        {/* Header */}
+        <View style={styles.container}>
+          {/* History */}
+          <View style={styles.historyHeader}>
+            <Text style={styles.seeAllText}>Score History</Text>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("AllScoresScreen", { history })
+              }
+            >
+              <Text style={styles.historyText}>See All</Text>
+            </TouchableOpacity>
           </View>
-
-
-          {/* Round 2 Score Input */}
-          <Text style={{ fontSize: 16, fontWeight: "bold", marginVertical: 8 }}>Round 2</Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Round 2 Score"
-            keyboardType="numeric"
-            value={round2Score}
-            onChangeText={(text) => setRound2Score(text.replace(/[^0-9]/g, ""))}
+          <FlatList
+            data={history.slice(0, 5)} // Limit to 5 items
+            horizontal
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.historyCard}>
+                <Text style={styles.historyMainText}>
+                  Team Name: {item.teamName}
+                </Text>
+                <View style={styles.historyTextContainer}>
+                  <View style={{ flexDirection: "row", gap: 5 }}>
+                    <Text style={styles.historyText}>
+                      Round 1: {item.round1Score} points
+                    </Text>
+                    <Text style={styles.historyText}>Time 1: {item.time1}</Text>
+                  </View>
+                  <View style={{ flexDirection: "row", gap: 5 }}>
+                    <Text style={styles.historyText}>
+                      Round 2: {item.round2Score} points
+                    </Text>
+                    <Text style={styles.historyText}>Time 2: {item.time2}</Text>
+                  </View>
+                  <Text style={styles.historyText}>
+                    Overall Score: {item.overallScore}
+                  </Text>
+                </View>
+                <Text style={styles.historyCreatedText}>
+                  Scored At:{" "}
+                  {new Date(item.timestamp).toUTCString().replace("GMT", "PHT")}
+                </Text>
+              </View>
+            )}
+            ListEmptyComponent={
+              <Text style={{ margin: 10 }}>No history yet.</Text>
+            }
+            style={{ marginBottom: 10, padding: 4 }}
           />
 
-          {/* Round 2 Time Input */}
-          <View style={styles.timeInputRow}>
+          {/* Scorer Calculator */}
+          <Text style={styles.sectionTitle}>Scorer Calculator</Text>
+          <View style={styles.scorerCard}>
+            {/* Searchable Dropdown */}
             <TextInput
-              style={styles.timeInput}
-              placeholder="00"
-              keyboardType="numeric"
-              value={time2Minutes}
+              style={styles.dropdown}
+              placeholder="Select Team"
+              value={searchQuery}
+              onFocus={() => setShowDropdown(true)} // Show dropdown when focused
               onChangeText={(text) => {
-                const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
-                setTime2Minutes(formatted.length > 2 ? formatted.slice(0, 2) : formatted); // Limit to 2 digits
+                setSearchQuery(text);
+                const filtered = teams.filter((team) =>
+                  team.teamName.toLowerCase().includes(text.toLowerCase())
+                );
+                setFilteredTeams(filtered);
               }}
             />
-            <Text style={styles.timeLabel}>m :</Text>
-            <TextInput
-              style={styles.timeInput}
-              placeholder="00"
-              keyboardType="numeric"
-              value={time2Seconds}
-              onChangeText={(text) => {
-                const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
-                if (Number(formatted) <= 59) {
-                  setTime2Seconds(formatted.length > 2 ? formatted.slice(0, 2) : formatted); // Limit to 2 digits
-                }
-              }}
-            />
-            <Text style={styles.timeLabel}>s :</Text>
-            <TextInput
-              style={styles.timeInput}
-              placeholder="000"
-              keyboardType="numeric"
-              value={time2Milliseconds}
-              onChangeText={(text) => {
-                const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
-                if (Number(formatted) <= 999) {
-                  setTime2Milliseconds(formatted.length > 3 ? formatted.slice(0, 3) : formatted); // Limit to 3 digits
-                }
-              }}
-            />
-            <Text style={styles.timeLabel}>ms</Text>
-          </View>
+            {showDropdown && (
+              <View style={styles.dropdownList}>
+                {filteredTeams.length === 0 && (
+                  <Text style={{ padding: 10, color: "#888" }}>
+                    No teams available
+                  </Text>
+                )}
+                {filteredTeams.map((team) => (
+                  <TouchableOpacity
+                    key={team.id}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setSelectedTeam(team);
+                      setSearchQuery(team.teamName); // Set the selected team's name in the input
+                      setShowDropdown(false); // Close dropdown
+                    }}
+                  >
+                    <Text>{team.teamName}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
 
-          <View style={{ flexDirection: "row", marginTop: 10 }}>
-            <Button title="Submit" onPress={handleSubmit} />
-            <View style={{ width: 10 }} />
-            <Button
-              title="Clear"
-              onPress={() => {
-                setRound1Score("");
-                setRound2Score("");
-                setTime1Minutes("");
-                setTime1Seconds("");
-                setTime1Milliseconds("");
-                setTime2Minutes("");
-                setTime2Seconds("");
-                setTime2Milliseconds("");
-                setSelectedTeam(null);
-              }}
-              color="#888"
+            {/* Round 1 Score Input */}
+            <Text
+              style={{ fontSize: 16, fontWeight: "bold", marginVertical: 8 }}
+            >
+              Round 1
+            </Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Round 1 Score"
+              keyboardType="numeric"
+              value={round1Score}
+              onChangeText={(text) =>
+                setRound1Score(text.replace(/[^0-9]/g, ""))
+              }
             />
+
+            {/* Round 1 Time Input */}
+            <View style={styles.timeInputRow}>
+              <TextInput
+                style={styles.timeInput}
+                placeholder="00"
+                keyboardType="numeric"
+                value={time1Minutes}
+                onChangeText={(text) => {
+                  const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
+                  setTime1Minutes(
+                    formatted.length > 2 ? formatted.slice(0, 2) : formatted
+                  ); // Limit to 2 digits
+                }}
+              />
+              <Text style={styles.timeLabel}>m :</Text>
+              <TextInput
+                style={styles.timeInput}
+                placeholder="00"
+                keyboardType="numeric"
+                value={time1Seconds}
+                onChangeText={(text) => {
+                  const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
+                  if (Number(formatted) <= 59) {
+                    setTime1Seconds(
+                      formatted.length > 2 ? formatted.slice(0, 2) : formatted
+                    ); // Limit to 2 digits
+                  }
+                }}
+              />
+              <Text style={styles.timeLabel}>s :</Text>
+              <TextInput
+                style={styles.timeInput}
+                placeholder="000"
+                keyboardType="numeric"
+                value={time1Milliseconds}
+                onChangeText={(text) => {
+                  const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
+                  if (Number(formatted) <= 999) {
+                    setTime1Milliseconds(
+                      formatted.length > 3 ? formatted.slice(0, 3) : formatted
+                    ); // Limit to 3 digits
+                  }
+                }}
+              />
+              <Text style={styles.timeLabel}>ms</Text>
+            </View>
+
+            {/* Round 2 Score Input */}
+            <Text
+              style={{ fontSize: 16, fontWeight: "bold", marginVertical: 8 }}
+            >
+              Round 2
+            </Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Round 2 Score"
+              keyboardType="numeric"
+              value={round2Score}
+              onChangeText={(text) =>
+                setRound2Score(text.replace(/[^0-9]/g, ""))
+              }
+            />
+
+            {/* Round 2 Time Input */}
+            <View style={styles.timeInputRow}>
+              <TextInput
+                style={styles.timeInput}
+                placeholder="00"
+                keyboardType="numeric"
+                value={time2Minutes}
+                onChangeText={(text) => {
+                  const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
+                  setTime2Minutes(
+                    formatted.length > 2 ? formatted.slice(0, 2) : formatted
+                  ); // Limit to 2 digits
+                }}
+              />
+              <Text style={styles.timeLabel}>m :</Text>
+              <TextInput
+                style={styles.timeInput}
+                placeholder="00"
+                keyboardType="numeric"
+                value={time2Seconds}
+                onChangeText={(text) => {
+                  const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
+                  if (Number(formatted) <= 59) {
+                    setTime2Seconds(
+                      formatted.length > 2 ? formatted.slice(0, 2) : formatted
+                    ); // Limit to 2 digits
+                  }
+                }}
+              />
+              <Text style={styles.timeLabel}>s :</Text>
+              <TextInput
+                style={styles.timeInput}
+                placeholder="000"
+                keyboardType="numeric"
+                value={time2Milliseconds}
+                onChangeText={(text) => {
+                  const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
+                  if (Number(formatted) <= 999) {
+                    setTime2Milliseconds(
+                      formatted.length > 3 ? formatted.slice(0, 3) : formatted
+                    ); // Limit to 3 digits
+                  }
+                }}
+              />
+              <Text style={styles.timeLabel}>ms</Text>
+            </View>
+
+            <View style={{ flexDirection: "row", marginTop: 10 }}>
+              <Button title="Submit" onPress={handleSubmit} />
+              <View style={{ width: 10 }} />
+              <Button
+                title="Clear"
+                onPress={() => {
+                  setRound1Score("");
+                  setRound2Score("");
+                  setTime1Minutes("");
+                  setTime1Seconds("");
+                  setTime1Milliseconds("");
+                  setTime2Minutes("");
+                  setTime2Seconds("");
+                  setTime2Milliseconds("");
+                  setSelectedTeam(null);
+                }}
+                color="#888"
+              />
+            </View>
           </View>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
