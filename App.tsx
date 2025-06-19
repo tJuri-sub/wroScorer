@@ -27,6 +27,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { FIREBASE_AUTH } from "./firebaseconfig";
 import { doc, getDoc } from "firebase/firestore";
 import { FIREBASE_DB } from "./firebaseconfig";
+import AllJudgesScreen from "./pages/admin/AllJudgesScreen";
 
 const Stack = createNativeStackNavigator();
 const InsideStack = createNativeStackNavigator();
@@ -121,7 +122,7 @@ const AdminTabNavigator = () => (
     }}
   >
     <AdminTab.Screen
-      name="HomeAdmin"
+      name="Home"
       component={HomeScreenAdmin}
       options={{
         tabBarIcon: ({ color, size }) => (
@@ -135,6 +136,7 @@ const AdminTabNavigator = () => (
       options={{
         headerShown: true,
         headerTitle: "Profile",
+        headerTitleAlign: "center",
         tabBarIcon: ({ color, size }) => (
           <FontAwesome name="user" size={size} color={color} />
         ),
@@ -153,7 +155,8 @@ const AdminInsideStackNavigator = () => (
     />
     <InsideStack.Screen name="HomeAdmin" component={HomeScreenAdmin} />
     <InsideStack.Screen name="ProfileAdmin" component={ProfileAdmin} />
-    <InsideStack.Screen name="CategoryScreen" component={CategoryScreen} />
+    <InsideStack.Screen name="Category" component={CategoryScreen} />
+    <InsideStack.Screen name="Judges" component={AllJudgesScreen} />  
   </InsideStack.Navigator>
 );
 

@@ -60,6 +60,13 @@ export default StyleSheet.create({
     marginRight: 16, // Gap between cards
   },
 
+  cardHeader: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 1, // Ensure the icon is above other elements
+  },
+
   sideImage: {
     height: "100%",
     aspectRatio: 1 / 1,
@@ -143,105 +150,163 @@ export default StyleSheet.create({
     alignItems: "center",
   },
 
-  modal: {
+modal: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "rgba(0,0,0,0.5)",
+},
+
+modalContent: {
+  backgroundColor: "#fff",
+  width: "90%",
+  borderRadius: 16,
+  padding: 28,
+  alignItems: "center",
+  elevation: 6,
+},
+
+modalHeader: {
+  width: "100%",
+  borderBottomWidth: 1,
+  borderColor: "#eee",
+  paddingBottom: 10,
+  marginBottom: 18,
+  alignItems: "flex-start",
+},
+
+headerTextModal: {
+  fontSize: 22,
+  fontWeight: "bold",
+  marginBottom: 2,
+  color: "#222",
+},
+
+headerSubTextModal: {
+  fontSize: 14,
+  color: "#888",
+  marginBottom: 2,
+},
+
+formContainer: {
+  width: "100%",
+  gap: 14,
+  marginBottom: 22,
+},
+
+textinput: {
+  backgroundColor: "#f3f3f3",
+  borderWidth: 1,
+  borderColor: "#e0e0e0",
+  borderRadius: 7,
+  paddingVertical: 10,
+  paddingHorizontal: 12,
+  width: "100%",
+  fontSize: 17,
+  marginBottom: 2,
+},
+
+dropdown: {
+  backgroundColor: "#f3f3f3",
+  borderWidth: 1,
+  borderColor: "#e0e0e0",
+  borderRadius: 7,
+  paddingVertical: 10,
+  paddingHorizontal: 12,
+  width: "100%",
+  fontSize: 16,
+  marginBottom: 2,
+},
+
+buttonContainer: {
+  flexDirection: "row",
+  justifyContent: "flex-end",
+  alignItems: "center",
+  width: "100%",
+  marginTop: 10,
+  gap: 12,
+},
+
+modalCreateButton: {
+  backgroundColor: "#432344",
+  borderRadius: 7,
+  borderWidth: 1,
+  borderColor: "#432344",
+  flex: 1,
+  alignItems: "center",
+  paddingVertical: 10,
+  marginLeft: 8,
+},
+
+buttonText: {
+  color: "#ffffff",
+  fontWeight: "bold",
+  fontSize: 16,
+},
+
+modalCancelButton: {
+  borderWidth: 1,
+  borderColor: "#432344",
+  borderRadius: 7,
+  flex: 1,
+  alignItems: "center",
+  paddingVertical: 10,
+  marginRight: 8,
+},
+
+  modalOverlayCat: {
     flex: 1,
+    backgroundColor: "rgba(0,0,0,0.2)",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
   },
 
-  modalContent: {
+  modalContentCat: {
     backgroundColor: "#fff",
-    width: "80%",
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 20,
-    display: "flex",
-    justifyContent: "center",
+    width: 300,
     alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
   },
 
-  modalHeader: {
-    display: "flex",
-    //flexDirection: "row",
-    borderBottomWidth: 1,
-    width: "100%",
-    padding: 5,
-    marginBottom: 10,
+  modalCloseIcon: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 1, // Ensure the close icon is above other elements
   },
 
-  modalImage: {
-    height: "100%",
-    aspectRatio: 1 / 1,
-    borderRadius: "50%",
-    resizeMode: "cover",
-    marginRight: 10,
-    borderWidth: 1,
-  },
-
-  headerTextModal: {
+  modalTitleCat: {
     fontSize: 20,
     fontWeight: "bold",
-  },
-
-  headerSubTextModal: {
-    fontSize: 13,
-    opacity: 50,
-  },
-
-  formContainer: {
-    display: "flex",
-    width: "100%",
-    gap: 20,
+    color: "#432344",
     marginBottom: 20,
+    textAlign: "center",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    fontFamily: "Roboto",
   },
 
-  textinput: {
-    backgroundColor: "#f3f3f3",
-    borderWidth: 1,
-    borderRadius: 4,
-    padding: 5,
-    width: "100%",
-    fontSize: 17,
+  modalButtonCat: {
+    backgroundColor: "#E79300",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginVertical: 5, // Space between buttons
+    alignItems: "center",
+    width: "100%", // Full width button
+    elevation: 2, // Add shadow for Android
   },
 
-  dropdown: {
-    backgroundColor: "#f3f3f3",
-    borderWidth: 1,
-    borderRadius: 4,
-    padding: 5,
-    width: "100%",
+  modalButtonTextCat: {
     fontSize: 16,
-  },
-
-  buttonContainer: {
-    display: "flex",
-    flexDirection: "row-reverse",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 10,
-    width: "100%",
-  },
-
-  modalCreateButton: {
-    backgroundColor: "#432344",
-    borderRadius: 7,
-    borderWidth: 1,
-    borderColor: "#432344",
-    flex: 1,
-    alignItems: "center",
-    padding: 5,
-  },
-
-  buttonText: {
-    color: "#ffffff",
-  },
-
-  modalCancelButton: {
-    borderWidth: 1,
-    borderColor: "#432344",
-    borderRadius: 7,
-    flex: 1,
-    alignItems: "center",
-    padding: 5,
+    color: "#fff", // White text for contrast
+    fontWeight: "bold",
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
 });

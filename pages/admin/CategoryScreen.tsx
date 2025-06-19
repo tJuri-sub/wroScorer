@@ -8,13 +8,19 @@ import {
   Alert,
   Modal,
   TextInput,
+  TouchableOpacity,
 } from "react-native";
 import CountryPicker from "rn-country-dropdown-picker"; // Import the new country picker
 import { getFirestore, collection, getDocs, addDoc } from "firebase/firestore";
 import styles from "../../components/styles/adminStyles/CategorycreenStyle";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 
 export default function CategoryScreen({ route }: any) {
   const { category, label } = route.params; // Get category and label from navigation params
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 5;
+
   const [teams, setTeams] = useState<
     {
       id: string;
@@ -39,6 +45,22 @@ export default function CategoryScreen({ route }: any) {
   });
 
   const db = getFirestore();
+
+  // Filter teams by search (team name or coach)
+  const filteredTeams = teams.filter(team =>
+    team.teamName.toLowerCase().includes(search.toLowerCase()) ||
+    team.coachName.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Pagination
+  const totalRecords = filteredTeams.length;
+  const totalPages = Math.ceil(totalRecords / PAGE_SIZE);
+  const paginatedTeams = filteredTeams.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   // Fetch teams for the selected category
   useEffect(() => {
@@ -147,40 +169,82 @@ export default function CategoryScreen({ route }: any) {
     <View style={styles.container}>
       <Text style={styles.title}>{label}</Text>
       <Text style={styles.subtitle}>Teams in {label}</Text>
+      <TextInput
+        placeholder="Search team"
+        value={search}
+        onChangeText={setSearch}
+        style={styles.searchInput}
+      />
+      <View style={styles.paginationContainer}>
+        <TouchableOpacity
+          onPress={() => setPage(page - 1)}
+          disabled={page === 1}
+          style={[styles.paginationButton, page === 1 && styles.paginationButtonDisabled]}
+        >
+          <Text style={styles.paginationButtonText}>Previous</Text>
+        </TouchableOpacity>
+        {totalRecords === 0 ? (
+          <Text style={styles.paginationInfo}>No teams</Text>
+        ) : (
+          <Text style={styles.paginationInfo}>
+            Page {page} of {totalPages} | {totalRecords} teams
+          </Text>
+        )}
+        <TouchableOpacity
+          onPress={() => setPage(page + 1)}
+          disabled={page === totalPages || totalPages === 0}
+          style={[styles.paginationButton, (page === totalPages || totalPages === 0) && styles.paginationButtonDisabled]}
+        >
+          <Text style={styles.paginationButtonText}>Next</Text>
+        </TouchableOpacity>
+      </View>
       {loading ? (
         <Text>Loading teams...</Text>
       ) : (
         <FlatList
-          data={teams}
+          data={paginatedTeams}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Text style={styles.cardText}>
-                Country: {item.countryName || "N/A"}
-              </Text>
-              <Text style={styles.cardText}>
-                Team Number: {item.teamNumber || "N/A"}
-              </Text>
-              <Text style={styles.cardText}>
-                Pod Number: {item.podNumber || "N/A"}
-              </Text>
-              <Text style={styles.cardText}>
-                Team Name: {item.teamName || "N/A"}
-              </Text>
-              <Text style={styles.cardText}>
-                Coach Name: {item.coachName || "N/A"}
-              </Text>
+            <View style={styles.teamCard}>
+              {/* Header Row */}
+              <View style={styles.teamCardHeader}>
+                <Text style={styles.teamCardHeaderText}>Team Number {item.teamNumber}</Text>
+                <Text style={styles.teamCardHeaderText}>Pod Number {item.podNumber}</Text>
+              </View>
+
+              {/* Country and Team Name Row */}
+              <View style={styles.teamCardRow}>
+                {/* Replace with your flag component or Image */}
+                {/* <Image source={require('../assets/flags/ph.png')} style={styles.teamCardFlag} /> */}
+                <Text style={styles.teamCardTeamName} numberOfLines={1}>{item.teamName}</Text>
+                <Text style={styles.teamCardCountry}>{item.countryName}</Text>
+                
+              </View>
+
+              {/* Members */}
               {item.members.map((member, index) => (
-                <Text key={index} style={styles.cardText}>
+                <Text style={styles.teamCardMember} key={index}>
                   Member {index + 1}: {member || "N/A"}
                 </Text>
               ))}
+
+              {/* Coach */}
+              <Text style={styles.teamCardCoach}>Coach Name: {item.coachName}</Text>
+
+              {/* Edit Icon (optional) */}
+              {/* <TouchableOpacity style={styles.editIcon} onPress={() => onEdit(team)}>
+                <MaterialIcons name="edit" size={22} color="#432344" />
+              </TouchableOpacity> */}
             </View>
           )}
           ListEmptyComponent={<Text>No teams found.</Text>}
         />
       )}
-      <Button title="Create Team" onPress={() => setModalVisible(true)} />
+      {/* <Button title="Create Team" onPress={() => setModalVisible(true)} /> */}
+      <TouchableOpacity style={styles.createTeamButton} onPress={() => setModalVisible(true)}>
+        <FontAwesome name="plus" size={18} color="#fff" />
+        <Text style={styles.createTeamButtonText}>Add Team</Text>
+      </TouchableOpacity> 
 
       {/* Modal for Team Creation */}
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
@@ -188,11 +252,22 @@ export default function CategoryScreen({ route }: any) {
           <View style={styles.modalContent}>
             {step === 1 && (
               <>
-                <Text style={styles.title}>Create Team</Text>
-                <Text style={styles.label}>Country</Text>
+                <View style={styles.modalHeader}>
+                  {/* <Image
+                    source={require("../../assets/images/user.png")}
+                    style={styles.modalImage}
+                  /> */}
+                  <Text style={styles.headerTextModal}>
+                    Create Team
+                  </Text>
+                  <Text style={styles.headerSubTextModal}>
+                    Enter team information
+                  </Text>
+                </View>
+                <Text style={styles.modalLabel}>Country</Text>
                 <CountryPicker
-                  InputFieldStyle={styles.countryPicker}
-                  Placeholder="Select a country"
+                  InputFieldStyle={styles.modalInput}
+                  Placeholder="Enter Country"
                   flagSize={24}
                   selectedItem={(countryName) => {
                     console.log(countryName); // Debugging log
@@ -202,9 +277,9 @@ export default function CategoryScreen({ route }: any) {
                     }); // Store the country label or adjust based on actual property
                   }}
                 />
-                <Text style={styles.label}>Team Number</Text>
+                <Text style={styles.modalLabel}>Team Number</Text>
                 <TextInput
-                  placeholder="Team Number"
+                  placeholder="Enter Team Number"
                   value={String(formData.teamNumber)}
                   onChangeText={(text) =>
                     setFormData({
@@ -212,84 +287,144 @@ export default function CategoryScreen({ route }: any) {
                       teamNumber: parseInt(text) || 0,
                     })
                   }
-                  style={styles.input}
+                  style={styles.modalInput}
                   keyboardType="numeric"
                 />
-                <Text style={styles.label}>Pod Number</Text>
+                <Text style={styles.modalLabel}>Pod Number</Text>
                 <TextInput
-                  placeholder="Pod Number"
+                  placeholder="Enter Pod Number"
                   value={String(formData.podNumber)}
                   onChangeText={(text) =>
                     setFormData({ ...formData, podNumber: parseInt(text) || 0 })
                   }
-                  style={styles.input}
+                  style={styles.modalInput}
                   keyboardType="numeric"
                 />
+                <Text style={styles.modalLabel}>Team Name</Text>
                 <TextInput
-                  placeholder="Team Name"
+                  placeholder="Enter Team Name"
                   value={formData.teamName}
                   onChangeText={(text) =>
                     setFormData({ ...formData, teamName: text })
                   }
-                  style={styles.input}
+                  style={styles.modalInput}
                 />
-                <View style={styles.buttonContainer}>
-                  <Button
-                    title="Cancel"
-                    onPress={() => setModalVisible(false)}
-                  />
-                  <Button title="Next" onPress={handleNext} />
+
+                <View style={styles.pageIndicatorContainer}>
+                  <Text style={styles.pageIndicatorText}>
+                    Page 1 of 3
+                  </Text>
+                </View>
+                
+                <View style={styles.modalButtonRow}>
+                  <TouchableOpacity style={[styles.modalButton, styles.modalButton]}>
+                    <Text 
+                      style={[styles.modalButtonText, styles.modalButtonText]}
+                      onPress={() => setModalVisible(false)}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.modalButtonNext}>
+                    <Text 
+                    style={styles.modalButtonText}
+                    onPress={handleNext}>Next</Text>
+                  </TouchableOpacity>
                 </View>
               </>
             )}
 
             {step === 2 && (
               <>
-                <Text style={styles.title}>Add Team Members</Text>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.headerTextModal}>
+                    Create Team
+                  </Text>
+                  <Text style={styles.headerSubTextModal}>
+                    Add team members and coach
+                  </Text>
+                </View>
+                <Text style={styles.modalLabel}>Coach Name</Text>
                 <TextInput
-                  placeholder="Coach Name"
+                  placeholder="Enter Coach Name"
                   value={formData.coachName}
                   onChangeText={(text) =>
                     setFormData({ ...formData, coachName: text })
                   }
-                  style={styles.input}
+                  style={styles.modalInput}
                 />
+                <Text style={styles.modalLabel}>Team Members</Text>
                 {formData.members.map((member, index) => (
                   <TextInput
                     key={index}
-                    placeholder={`Member ${index + 1} Name`}
+                    placeholder={`Enter Member ${index + 1} Name`}
                     value={member}
                     onChangeText={(text) => {
                       const updatedMembers = [...formData.members];
                       updatedMembers[index] = text;
                       setFormData({ ...formData, members: updatedMembers });
                     }}
-                    style={styles.input}
+                    style={styles.modalInput}
                   />
                 ))}
-                <View style={styles.buttonContainer}>
-                  <Button title="Back" onPress={handleBack} />
-                  <Button title="Next" onPress={handleNext} />
+
+                <View style={styles.pageIndicatorContainer}>
+                  <Text style={styles.pageIndicatorText}>
+                    Page 2 of 3
+                  </Text>
+                </View>
+
+                <View style={styles.modalButtonRow}>
+                  <TouchableOpacity style={[styles.modalButton, styles.modalButton]}>
+                    <Text 
+                      style={[styles.modalButtonText, styles.modalButtonText]}
+                      onPress={handleBack}>Back</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.modalButtonNext}>
+                    <Text 
+                    style={styles.modalButtonText}
+                    onPress={handleNext}>Next</Text>
+                  </TouchableOpacity>
                 </View>
               </>
             )}
 
             {step === 3 && (
               <>
-                <Text style={styles.title}>Review Team Details</Text>
-                <Text>Country: {formData.countryName}</Text>
-                <Text>Team Number: {formData.teamNumber}</Text>
-                <Text>Pod Number: {formData.podNumber}</Text>
-                <Text>Team Name: {formData.teamName}</Text>
-                <Text>Coach Name: {formData.coachName}</Text>
-                {formData.members.map((member, index) => (
-                  <Text key={index}>
-                    Member {index + 1}: {member}
+                <View style={styles.modalHeader}>
+                  <Text style={styles.headerTextModal}>
+                    Create Team
                   </Text>
-                ))}
-                <View style={styles.buttonContainer}>
-                  <Button title="Back" onPress={handleBack} />
-                  <Button title="Create" onPress={handleSubmit} />
+                  <Text style={styles.headerSubTextModal}>
+                    Review team details
+                  </Text>
+                </View>
+                  <Text style={styles.modalLabel}>Country: {formData.countryName}</Text>
+                  <Text style={styles.modalLabel}>Team Number: {formData.teamNumber}</Text>
+                  <Text style={styles.modalLabel}>Pod Number: {formData.podNumber}</Text>
+                  <Text style={styles.modalLabel}>Team Name: {formData.teamName}</Text>
+                  <Text style={styles.modalLabel}>Coach Name: {formData.coachName}</Text>
+                  {formData.members.map((member, index) => (
+                    <Text key={index}>
+                      Member {index + 1}: {member}
+                    </Text>
+                  ))}
+                
+
+                <View style={styles.pageIndicatorContainer}>
+                  <Text style={styles.pageIndicatorText}>
+                    Page 3 of 3
+                  </Text>
+                </View>
+
+                <View style={styles.modalButtonRow}>
+                  <TouchableOpacity style={[styles.modalButton, styles.modalButton]}>
+                    <Text 
+                      style={[styles.modalButtonText, styles.modalButtonText]}
+                     onPress={handleBack}>Back</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.modalButtonCreate}>
+                    <Text 
+                    style={styles.modalButtonCreateText}
+                    onPress={handleSubmit}>Create</Text>
+                  </TouchableOpacity>
                 </View>
               </>
             )}

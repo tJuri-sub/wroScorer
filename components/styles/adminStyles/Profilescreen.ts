@@ -17,10 +17,12 @@ export default StyleSheet.create({
   },
 
   profileTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "bold",
     marginBottom: 16,
     color: "#333",
+    justifyContent: "center",
+    alignItems: "center", 
   },
 
   avatarContainer: {
@@ -116,4 +118,68 @@ export default StyleSheet.create({
     marginBottom: 16,
     fontSize: 16,
   },
+
+    modalOverlayLogout: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+  
+    modalContentLogout: {
+      backgroundColor: "#fff",
+      borderRadius: 12,
+      padding: 20,
+      paddingTop: 30,
+      paddingBottom: 30,
+      width: 300,
+      alignItems: "center",
+    },
+  
+    modalTitle: {
+      fontSize: 16,
+      fontWeight: "bold",
+      color: "#432344",
+      marginBottom: 25,
+      textAlign: "center",
+    },
+  
+    modalButtonContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      width: "100%",
+    },
+  
+    modalButton: {
+      flex: 1,
+      paddingVertical: 10,
+      marginHorizontal: 5,
+      marginTop: 10,
+      borderRadius: 5,
+      alignItems: "center",
+      width: "100%", // Adjust width to fit two buttons side by side
+      elevation: 2,
+    },
+  
+    backButton: {
+      backgroundColor: "#fff",
+      borderWidth: 1,
+      borderColor: "#432344",
+    },
+  
+    backButtonText: {
+      color: "#432344",
+    },
+  
+    yesButton: {
+      backgroundColor: "#AA3D3F",
+    },
+  
+    modalButtonText: {
+      fontSize: 14,
+      color: "#fff",
+      fontWeight: "semibold",
+      letterSpacing: 1,
+      fontFamily: "Roboto",
+    },
 });

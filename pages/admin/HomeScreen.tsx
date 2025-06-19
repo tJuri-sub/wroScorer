@@ -12,7 +12,10 @@ import {
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Dimensions } from "react-native";
 import styles from "../../components/styles/adminStyles/HomescreenStyle";
 
@@ -31,17 +34,43 @@ import {
 const { height: screenHeight } = Dimensions.get("window");
 const { width: screenWidth } = Dimensions.get("window");
 
+async function updateJudgeAvatars() {
+  const db = getFirestore();
+  const querySnapshot = await getDocs(collection(db, "judge-users"));
+  querySnapshot.forEach(async (judgeDoc) => {
+    const data = judgeDoc.data();
+    if (!data.avatarUrl && data.username) {
+      const avatarUrl = getRandomAvatar(data.username);
+      await updateDoc(doc(db, "judge-users", judgeDoc.id), { avatarUrl });
+    }
+  });
+}
+
+function getRandomAvatar(username: string): string {
+  return `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+    username
+  )}`;
+}
+
+
 export default function HomeScreenAdmin({ navigation }: any) {
   const [modalVisible, setModalVisible] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [category, setCategory] = useState(null);
+  type CategoryType = typeof categorydata[number];
+  const [subcategory, setSubcategory] = useState<string | null>(null);
+  const [robomissionModalVisible, setRobomissionModalVisible] = useState(false);
+    const [futureInnovatorsModalVisible, setFutureInnovatorsModalVisible] =
+      useState(false);
   const [confirmpassword, setConfirmPassword] = useState("");
   interface JudgeUser {
     id: string;
     username: string;
     category: string;
     email: string;
+    avatarUrl: string;
+    createdAt?: any; // Add createdAt property, type can be improved if needed
   }
 
   const [judgeUsers, setJudgeUsers] = useState<JudgeUser[]>([]); // State to store judge users
@@ -55,32 +84,80 @@ export default function HomeScreenAdmin({ navigation }: any) {
   const db = getFirestore();
   const user = FIREBASE_AUTH.currentUser;
 
-  const categorydata = [
+const categorydata = [
     {
-      label: "RoboMission Elementary",
+      label: "Robomission",
+      value: "robomission",
       image: require("../../assets/images/RoboMissionLogo.png"),
-      categoryDesc: "Autonomous robots solve challenges on competition field.",
-      value: "robo-elem",
+      categoryDesc:
+        "Build and program a robot that solves tasks on playing field",
+      subcategories: [
+        { label: "Elementary", value: "robo-elem" },
+        { label: "Junior", value: "robo-junior" },
+        { label: "Senior", value: "robo-senior" },
+      ],
     },
     {
-      label: "Robo Sports ",
+      label: "Robosports",
+      value: "robosports",
       image: require("../../assets/images/RoboSportsLogo.png"),
-      categoryDesc: "Teams Compete with 2 Robots in an exciting game. ",
-      value: "robo-sports",
+      categoryDesc: "Teams compete with 2 robots in an exciting game",
     },
+
     {
       label: "Future Innovators",
+      value: "future-innovators",
       image: require("../../assets/images/FutureILogo.png"),
-      categoryDesc: "Work on a project and designa nd build a robot ",
-      value: "future-innov",
+      categoryDesc: "Work on project and design and build a robot",
+      subcategories: [
+        { label: "Elementary", value: "fi-elem" },
+        { label: "Junior", value: "fi-junior" },
+        { label: "Senior", value: "fi-senior" },
+      ],
     },
     {
       label: "Future Engineers",
-      image: require("../../assets/images/FutureELogo.png"),
-      categoryDesc: "Advanced robotics following current research trends. ",
       value: "future-eng",
+      image: require("../../assets/images/FutureELogo.png"),
+      categoryDesc: "Advanced robotics following current research trends",
     },
   ];
+
+  function getCategoryDisplayLabel(categoryValue: string) {
+  for (const mainCat of categorydata) {
+    if (mainCat.value === categoryValue) {
+      return mainCat.label;
+    }
+    if (mainCat.subcategories) {
+      const sub = mainCat.subcategories.find(subcat => subcat.value === categoryValue);
+      if (sub) {
+        return `${mainCat.label} ${sub.label}`;
+      }
+    }
+  }
+  return categoryValue;
+}
+
+    useFocusEffect(
+    React.useCallback(() => {
+      const fetchAdminAvatar = async () => {
+        const user = FIREBASE_AUTH.currentUser;
+        if (user && user.email) {
+          const userDoc = await getDoc(doc(FIREBASE_DB, "admin-users", user.email));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            setAvatarUrl(
+              data.avatarUrl ||
+                `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+                  user.email
+                )}`
+            );
+          }
+        }
+      };
+      fetchAdminAvatar();
+    }, [])
+  );
 
   // Fetch admin profile info for header
   useEffect(() => {
@@ -134,6 +211,8 @@ export default function HomeScreenAdmin({ navigation }: any) {
           username: doc.data().username || "",
           category: doc.data().category || "",
           email: doc.data().email || "",
+          avatarUrl: doc.data().avatarUrl || getRandomAvatar(doc.data().username || ""),
+          createdAt: doc.data().createdAt, // Add createdAt from Firestore
         })) as JudgeUser[];
         setJudgeUsers(users);
       } catch (error) {
@@ -159,8 +238,13 @@ export default function HomeScreenAdmin({ navigation }: any) {
         Alert.alert("Error", "Passwords do not match!");
         return;
       }
-      if (!category) {
-        Alert.alert("Error", "Please select a category!");
+      if (
+        !category ||
+        (["Robomission", "Future Innovators"].includes(
+          (categorydata.find((cat: any) => cat.value === category)?.label || "")
+        ) && !subcategory)
+      ) {
+        Alert.alert("Error", "Please select a category and subcategory!");
         return;
       }
 
@@ -179,13 +263,19 @@ export default function HomeScreenAdmin({ navigation }: any) {
         password
       );
 
+      
+      // Update the user's profile with the avatar URL
+      const avatarUrl = getRandomAvatar(username);
+
       // Store username and category in Firestore
       const user = userCredential.user;
       await setDoc(doc(db, "judge-users", user.uid), {
         username,
         role: "judge", // Example: Assigning a 'judge' role
-        category: category, // Store the selected category
+        category: subcategory || category, // Store the selected category
         email: email.toLowerCase(), // always store as lowercase
+        avatarUrl,
+        createdAt: new Date(),
       });
 
       await setDoc(doc(db, "users", user.uid), {
@@ -209,6 +299,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
       setPassword("");
       setConfirmPassword("");
       setCategory(null);
+      setSubcategory(null); 
       setModalVisible(false);
 
       // Refresh the judge users list
@@ -218,6 +309,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
         username: doc.data().username || "",
         category: doc.data().category || "",
         email: doc.data().email || "",
+        avatarUrl: doc.data().avatarUrl || getRandomAvatar(doc.data().username || ""),
       })) as JudgeUser[];
       setJudgeUsers(users);
     } catch (error) {
@@ -235,8 +327,98 @@ export default function HomeScreenAdmin({ navigation }: any) {
   const cardGap = 16;
   const snapInterval = cardWidth + cardGap;
 
+  const sortedJudges = [...judgeUsers].sort(
+  (a, b) => b.createdAt?.toDate?.() - a.createdAt?.toDate?.()
+  );
+  const latestJudges = sortedJudges.slice(0, 5);
+
   return (
     <SafeAreaProvider>
+
+      {/* Robomission Modal */}
+      <Modal
+        visible={robomissionModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRobomissionModalVisible(false)}
+      >
+        <View style={styles.modalOverlayCat}>
+          <View style={styles.modalContentCat}>
+            {/* Top-right cancel icon */}
+            <Pressable
+              style={styles.modalCloseIcon}
+              onPress={() => setRobomissionModalVisible(false)}
+            >
+              <Ionicons name="close" size={24} color="black" />
+            </Pressable>
+
+            {/* Modal Title */}
+            <Text style={styles.modalTitleCat}>Robomission Categories</Text>
+
+            {/* Buttons */}
+            {categorydata[0].subcategories?.map((sub) => (
+              <Pressable
+                key={sub.value}
+                style={styles.modalButtonCat}
+                onPress={() => {
+                  setRobomissionModalVisible(false);
+                  navigation.navigate("Category", {
+                    category: sub.value,
+                    label: `Robomission ${sub.label}`,
+                    
+                  });
+                }}
+              >
+                <Text style={styles.modalButtonTextCat}>{sub.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Future Innovators Modal */}
+      <Modal
+        visible={futureInnovatorsModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFutureInnovatorsModalVisible(false)}
+      >
+        <View style={styles.modalOverlayCat}>
+          <View style={styles.modalContentCat}>
+            {/* Top-right cancel icon */}
+            <Pressable
+              style={styles.modalCloseIcon}
+              onPress={() => setFutureInnovatorsModalVisible(false)}
+            >
+              <Ionicons name="close" size={24} color="black" />
+            </Pressable>
+
+            {/* Modal Title */}
+            <Text style={styles.modalTitleCat}>
+              Future Innovators Categories
+            </Text>
+
+            {/* Buttons */}
+            {categorydata[2].subcategories?.map((sub) => (
+              <Pressable
+                key={sub.value}
+                style={[styles.modalButtonCat, { backgroundColor: "#B01956" }]}
+                onPress={() => {
+                  setFutureInnovatorsModalVisible(false);
+                  navigation.navigate("Category", {
+                    category: sub.value,
+                    label: `Future Innovators ${sub.label}`,
+                   
+                  });
+                }}
+              >
+                <Text style={styles.modalButtonTextCat}>{sub.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      </Modal>
+
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           {/* Header with avatar, greeting, and name/email */}
@@ -263,24 +445,45 @@ export default function HomeScreenAdmin({ navigation }: any) {
           <View>
             <FlatList
               data={categorydata}
-              keyExtractor={(item) => item.value}
+              keyExtractor={(item) => item.label}
               horizontal={true}
               showsHorizontalScrollIndicator={false}
               decelerationRate="fast"
               renderItem={({ item }) => {
+                const categoryColors: Record<string, string> = {
+                    Robomission: "#E79300", // Orange
+                    Robosports: "#35A22F", // Green
+                    "Future Innovators": "#B01956", // Pink
+                    "Future Engineers": "#0270AA", // Blue
+                  };
+
+                const cardColor = categoryColors[item.label] || "#333";
                 const [firstWord, ...restWords] = item.label.split(" ");
                 const rest = restWords.join(" ");
 
                 return (
                   <Pressable
-                    style={styles.card}
-                    onPress={() =>
-                      navigation.navigate("CategoryScreen", {
-                        category: item.value,
-                        label: item.label,
-                      })
-                    }
+                    style={[styles.card, { backgroundColor: cardColor }]}
+                    onPress={() =>{
+                      if (item.label === "Robomission") {
+                          setRobomissionModalVisible(true);
+                        } else if (item.label === "Future Innovators") {
+                          setFutureInnovatorsModalVisible(true);
+                        } else {
+                          navigation.navigate("Category", {
+                            category: item.value,
+                            label: item.label,
+                          });
+                        }
+                    }}
                   >
+                    <View style={styles.cardHeader}>
+                        <MaterialCommunityIcons
+                          name="dots-vertical"
+                          size={24}
+                          color="white"
+                        />
+                    </View>
                     <Image source={item.image} style={styles.sideImage} />
                     <View style={styles.text}>
                       <Text>
@@ -336,7 +539,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
 
                 <View style={styles.formContainer}>
                   <TextInput
-                    placeholder="Username"
+                    placeholder="Name"
                     autoCapitalize="none"
                     onChangeText={(text) => setUsername(text)}
                     style={styles.textinput}
@@ -370,10 +573,26 @@ export default function HomeScreenAdmin({ navigation }: any) {
                     searchPlaceholder="Search..."
                     value={category}
                     onChange={(item) => {
-                      console.log("Dropdown selected:", item.value);
                       setCategory(item.value);
+                      // Reset subcategory if not Robomission or Future Innovators
+                      if (!item.subcategories) setSubcategory(null);
                     }}
                   />
+                  {["Robomission", "Future Innovators"].includes(
+                    categorydata.find((cat: any) => cat.value === category)?.label || ""
+                  ) && (
+                    <Dropdown
+                      style={styles.dropdown}
+                      data={
+                        categorydata.find((cat: any) => cat.value === category)?.subcategories || []
+                      }
+                      labelField="label"
+                      valueField="value"
+                      placeholder="Select Subcategory"
+                      value={subcategory}
+                      onChange={(item) => setSubcategory(item.value)}
+                    />
+                  )}
                 </View>
 
                 <View style={styles.buttonContainer}>
@@ -395,29 +614,23 @@ export default function HomeScreenAdmin({ navigation }: any) {
             </View>
           </Modal>
 
-          <Text style={styles.headerTexts}>Manage Judges </Text>
           {/* Manage Judge Users */}
-          <View style={{ height: screenHeight * 0.4 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <Text style={styles.headerTexts}>Manage Judges</Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Judges")}>
+              <Text style={{ color: "#6c63ff" }}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ height: screenHeight * 1 }}>
             <FlatList
-              data={judgeUsers}
+              data={latestJudges}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => {
-                const categoryLabel =
-                  categorydata.find((cat) => cat.value === item.category)
-                    ?.label || item.category;
+                const categoryLabel = getCategoryDisplayLabel(item.category);
 
                 return (
                   <View style={styles.judgesCard}>
-                    <Image
-                      source={{
-                        uri:
-                          avatarUrl ||
-                          `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
-                            user?.email || "default"
-                          )}`,
-                      }}
-                      style={styles.judgesImage}
-                    />
+                   <Image source={{ uri: item.avatarUrl || getRandomAvatar(item.username) }} style={styles.judgesImage} />
                     <View>
                       <Text style={styles.judgesName}>{item.username}</Text>
                       <Text style={styles.judgesEmail}>{item.email}</Text>
