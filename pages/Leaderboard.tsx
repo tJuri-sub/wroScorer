@@ -10,6 +10,13 @@ import { getFirestore, collection, onSnapshot } from "firebase/firestore";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import styles from "../components/styles/LeaderboardStyling";
 
+// Helper to parse "mm:ss:ms" to milliseconds
+function parseTimeString(timeStr: string) {
+  if (!timeStr) return Infinity;
+  const [mm, ss, ms] = timeStr.split(":").map(Number);
+  return (mm || 0) * 60000 + (ss || 0) * 1000 + (ms || 0);
+}
+
 export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,22 +37,60 @@ export default function Leaderboard() {
       (querySnapshot) => {
         const teamMap: Record<
           string,
-          { teamName: string; overallScore: number; teamId: string }
+          {
+            teamName: string;
+            teamId: string;
+            round1Score?: number;
+            round2Score?: number;
+            time1?: string;
+            time2?: string;
+            bestScore?: number;
+            bestTime?: string;
+            bestTimeMs?: number;
+          }
         > = {};
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           if (!teamMap[data.teamId]) {
             teamMap[data.teamId] = {
               teamName: data.teamName,
-              overallScore: 0,
               teamId: data.teamId,
+              round1Score: data.round1Score,
+              round2Score: data.round2Score,
+              time1: data.time1,
+              time2: data.time2,
             };
           }
-          teamMap[data.teamId].overallScore += data.overallScore; // Sum scores for each team
         });
+
+        // Calculate best score and best time for each team
+        Object.values(teamMap).forEach((team) => {
+          const r1 = team.round1Score ?? null;
+          const r2 = team.round2Score ?? null;
+          const t1 = team.time1 ?? "";
+          const t2 = team.time2 ?? "";
+          if (r1 !== null && (r2 === null || r1 >= r2)) {
+            team.bestScore = r1;
+            team.bestTime = t1;
+            team.bestTimeMs = parseTimeString(t1);
+          }
+          if (r2 !== null && (r1 === null || r2 > r1)) {
+            team.bestScore = r2;
+            team.bestTime = t2;
+            team.bestTimeMs = parseTimeString(t2);
+          }
+        });
+
         const leaderboardArr = Object.values(teamMap)
-          .sort((a, b) => b.overallScore - a.overallScore) // Sort by total score
-          .slice(0, 5); // Limit to top 5
+          .filter((team) => team.bestScore !== undefined)
+          .sort((a, b) => {
+            const aScore = a.bestScore ?? -Infinity;
+            const bScore = b.bestScore ?? -Infinity;
+            if (bScore !== aScore) return bScore - aScore;
+            return (a.bestTimeMs ?? Infinity) - (b.bestTimeMs ?? Infinity);
+          })
+          .slice(0, 5); // Top 5
+
         setLeaderboard(leaderboardArr);
         setLoading(false);
       },
@@ -71,11 +116,15 @@ export default function Leaderboard() {
   return (
     <View>
       <View style={styles.container}>
+        {/* Help text for ranking logic */}
+        <Text style={{ color: "#888", fontSize: 14, marginBottom: 8 }}>
+          Ranking is based on the best score; if tied, the best time wins!
+        </Text>
         {/* Header */}
         <TouchableOpacity
           onPress={() => navigation.navigate("AllLeaderboardScreen")}
         >
-          <Text style={{ color: "blue", marginBottom: 10 }}>See All</Text>
+          <Text style={{ color: "blue", marginBottom: 10 }}>See All Ranking</Text>
         </TouchableOpacity>
         {leaderboard.length === 0 ? (
           <Text>No scores yet!</Text>
@@ -100,8 +149,11 @@ export default function Leaderboard() {
                   <Text style={{ flex: 1, color: textColor }}>
                     {item.teamName}
                   </Text>
-                  <Text style={{ color: textColor }}>
-                    {item.overallScore} pts
+                  <Text style={{ color: textColor, fontWeight: "bold" }}>
+                    {item.bestScore} pts
+                  </Text>
+                  <Text style={{ color: textColor, marginLeft: 10 }}>
+                    {item.bestTime}
                   </Text>
                 </View>
               );
