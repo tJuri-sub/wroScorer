@@ -626,8 +626,8 @@ const categorydata = [
               data={latestJudges}
               keyExtractor={(item) => item.id}
               scrollEnabled={true}
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}
+              // horizontal={true}
+              // showsHorizontalScrollIndicator={false}
               renderItem={({ item }) => {
                 const categoryLabel = getCategoryDisplayLabel(item.category);
 
