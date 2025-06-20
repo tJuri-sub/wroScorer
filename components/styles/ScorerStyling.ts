@@ -37,7 +37,8 @@ export default StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 12,
-    width: "100%",
+    width: 270,
+    marginRight: 14,
     boxShadow: "0px 2px 3px rgba(0,0,0,0.2)",
   },
 

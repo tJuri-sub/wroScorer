@@ -1,7 +1,12 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { StatusBar, View, ActivityIndicator } from "react-native";
+import {
+  StatusBar,
+  View,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 
 import Entypo from "@expo/vector-icons/Entypo";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -28,6 +33,7 @@ import { FIREBASE_AUTH } from "./firebaseconfig";
 import { doc, getDoc } from "firebase/firestore";
 import { FIREBASE_DB } from "./firebaseconfig";
 import AllJudgesScreen from "./pages/admin/AllJudgesScreen";
+import { AntDesign } from "@expo/vector-icons";
 
 const Stack = createNativeStackNavigator();
 const InsideStack = createNativeStackNavigator();
@@ -101,10 +107,43 @@ const JudgeInsideStackNavigator = () => (
     <InsideStack.Screen
       name="AllLeaderboardScreen"
       component={AllLeaderboardScreen}
+      options={({ navigation }) => ({
+        headerShown: true,
+        headerTitle: "Profile",
+        headerTitleAlign: "center",
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={{ marginLeft: 15 }}
+          >
+            <AntDesign name="arrowleft" size={24} color="#432344" />
+          </TouchableOpacity>
+        ),
+      })}
     />
-    <InsideStack.Screen name="CategoryScreen" component={CategoryScreenJudge} />
+    <InsideStack.Screen
+      name="CategoryScreen"
+      component={CategoryScreenJudge}
+      options={{ headerShown: true }}
+    />
     <InsideStack.Screen name="Scorer" component={ScorerScreen} />
-    <InsideStack.Screen name="AllScoresScreen" component={AllScoresScreen} />
+    <InsideStack.Screen
+      name="AllScoresScreen"
+      component={AllScoresScreen}
+      options={({ navigation }) => ({
+        headerShown: true,
+        headerTitle: "Profile",
+        headerTitleAlign: "center",
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={{ marginLeft: 15 }}
+          >
+            <AntDesign name="arrowleft" size={24} color="#432344" />
+          </TouchableOpacity>
+        ),
+      })}
+    />
     <InsideStack.Screen name="TeamScoresScreen" component={TeamScoresScreen} />
   </InsideStack.Navigator>
 );
@@ -156,7 +195,7 @@ const AdminInsideStackNavigator = () => (
     <InsideStack.Screen name="HomeAdmin" component={HomeScreenAdmin} />
     <InsideStack.Screen name="ProfileAdmin" component={ProfileAdmin} />
     <InsideStack.Screen name="Category" component={CategoryScreen} />
-    <InsideStack.Screen name="Judges" component={AllJudgesScreen} />  
+    <InsideStack.Screen name="Judges" component={AllJudgesScreen} />
   </InsideStack.Navigator>
 );
 
