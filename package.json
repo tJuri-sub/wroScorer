@@ -31,7 +31,8 @@
     "react-native-screens": "~4.10.0",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "^0.20.0",
-    "rn-country-dropdown-picker": "^2.1.8"
+    "rn-country-dropdown-picker": "^2.1.8",
+    "expo-web-browser": "~14.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

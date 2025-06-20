@@ -10,39 +10,35 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Modal,
 } from "react-native";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import {
   collection,
   getDocs,
-  addDoc,
+  doc,
+  updateDoc,
   query,
   where,
   orderBy,
 } from "firebase/firestore";
-import { AntDesign, Ionicons } from "@expo/vector-icons";
 import styles from "../components/styles/ScorerStyling";
 
 export default function ScorerScreen({ navigation }: any) {
   const user = FIREBASE_AUTH.currentUser;
   const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
   const [teams, setTeams] = useState<any[]>([]);
-  const [filteredTeams, setFilteredTeams] = useState<any[]>([]);
-  const [selectedTeam, setSelectedTeam] = useState<any>(null);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Scoring form
-  const [round1Score, setRound1Score] = useState("");
-  const [round2Score, setRound2Score] = useState("");
-  const [time1Minutes, setTime1Minutes] = useState("");
-  const [time1Seconds, setTime1Seconds] = useState("");
-  const [time1Milliseconds, setTime1Milliseconds] = useState("");
-  const [time2Minutes, setTime2Minutes] = useState("");
-  const [time2Seconds, setTime2Seconds] = useState("");
-  const [time2Milliseconds, setTime2Milliseconds] = useState("");
-  const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Modal state
+  const [scoreModalVisible, setScoreModalVisible] = useState(false);
+  const [scoringTeam, setScoringTeam] = useState<any>(null);
+  const [scoringStep, setScoringStep] = useState<1 | 2>(1);
+  const [inputScore, setInputScore] = useState("");
+  const [inputMinute, setInputMinute] = useState("");
+  const [inputSecond, setInputSecond] = useState("");
+  const [inputMs, setInputMs] = useState("");
+  const [search, setSearch] = useState("");
 
   // Fetch judge's assigned category and teams
   useEffect(() => {
@@ -69,7 +65,6 @@ export default function ScorerScreen({ navigation }: any) {
               ...doc.data(),
             }));
             setTeams(teamList);
-            setFilteredTeams(teamList); // Initialize filtered teams
           }
         } catch (err) {
           console.log("Error fetching judge or teams:", err);
@@ -80,82 +75,90 @@ export default function ScorerScreen({ navigation }: any) {
     fetchJudgeAndTeams();
   }, [user]);
 
-  // Fetch scoring history
-  const fetchHistory = async () => {
-    if (user && judgeCategory) {
-      try {
-        const q = query(
-          collection(FIREBASE_DB, "scores"),
-          where("judge", "==", user.email),
-          where("category", "==", judgeCategory),
-          orderBy("timestamp", "desc")
-        );
-        const snap = await getDocs(q);
-        setHistory(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-      } catch (err) {
-        console.log("Error fetching history:", err);
-      }
+  // Card status helpers
+  const getCardStatus = (team: any) => {
+    if (!team.round1Score && !team.round2Score) return "no-score";
+    if (team.round1Score && !team.round2Score) return "round1-only";
+    if (team.round1Score && team.round2Score) return "complete";
+    return "no-score";
+  };
+
+  const getCardColor = (status: string) => {
+    switch (status) {
+      case "no-score": return "#faf9f6";
+      case "round1-only": return "#fff9c4";
+      case "complete": return "#c8e6c9";
+      default: return "#faf9f6";
     }
   };
 
-  useEffect(() => {
-    fetchHistory();
-  }, [user, judgeCategory]);
+  // Best score/time
+  function getBestScoreAndTime(team: any) {
+  const r1 = team.round1Score ?? null;
+  const r2 = team.round2Score ?? null;
+  if (r1 == null && r2 == null) return { bestScore: null, bestTime: null, bestRound: null };
 
-  // Handle scoring submit
-  const handleSubmit = async () => {
-    if (!selectedTeam) {
-      Alert.alert("Please select a team.");
+  if (r2 == null || (r1 != null && r1 >= r2)) {
+    return { bestScore: r1, bestTime: team.time1, bestRound: 1 };
+  } else {
+    return { bestScore: r2, bestTime: team.time2, bestRound: 2 };
+  }
+}
+
+  // Modal open
+  const openScoreModal = (team: any) => {
+    if (getCardStatus(team) === "complete") return;
+    setScoringTeam(team);
+    setScoringStep(!team.round1Score ? 1 : 2);
+    setInputScore("");
+    setInputMinute("");
+    setInputSecond("");
+    setInputMs("");
+    setScoreModalVisible(true);
+  };
+
+  // Modal submit
+  const handleScoreSubmit = async () => {
+    if (!scoringTeam) return;
+    const mm = (inputMinute || "0").padStart(2, "0");
+    const ss = (inputSecond || "0").padStart(2, "0");
+    const ms = (inputMs || "0").padStart(2, "0");
+    const inputTime = `${mm}:${ss}:${ms}`;
+    if (!inputScore || !inputMinute || !inputSecond || !inputMs) {
+      Alert.alert("Please input both score and time.");
       return;
     }
     try {
-      const overallScore = Number(round1Score) + Number(round2Score);
-      const formattedTime1 = `${(time1Minutes || "0").padStart(2, "0")}:${(
-        time1Seconds || "0"
-      ).padStart(2, "0")}:${(time1Milliseconds || "0").padStart(3, "0")}`;
-      const formattedTime2 = `${(time2Minutes || "0").padStart(2, "0")}:${(
-        time2Seconds || "0"
-      ).padStart(2, "0")}:${(time2Milliseconds || "0").padStart(3, "0")}`;
-      // Get Philippine Time
-      const now = new Date();
-      const philippineTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
-
-      if (!user) {
-        Alert.alert("User not authenticated.");
-        return;
+      const update: any = {};
+      if (scoringStep === 1) {
+        update.round1Score = Number(inputScore);
+        update.time1 = inputTime;
+        // Close modal after round 1 submit
+        setScoreModalVisible(false);
+        setScoringTeam(null);
+      } else {
+        update.round2Score = Number(inputScore);
+        update.time2 = inputTime;
+        setScoreModalVisible(false);
+        setScoringTeam(null);
       }
-      await addDoc(collection(FIREBASE_DB, "scores"), {
-        teamId: selectedTeam.id,
-        teamName: selectedTeam.teamName,
-        coachName: selectedTeam.coachName,
-        round1Score: Number(round1Score),
-        round2Score: Number(round2Score),
-        time1: formattedTime1,
-        time2: formattedTime2,
-        overallScore,
-        judge: user.email,
-        category: judgeCategory,
-        timestamp: philippineTime.toISOString(),
-      });
-
-      // Clear form
-      setRound1Score("");
-      setRound2Score("");
-      setTime1Minutes("");
-      setTime1Seconds("");
-      setTime1Milliseconds("");
-      setTime2Minutes("");
-      setTime2Seconds("");
-      setTime2Milliseconds("");
-      setSelectedTeam(null);
-
-      // Show success notification
-      Alert.alert("Success", "Score submitted!");
-
-      // Refresh history immediately
-      fetchHistory();
+      // Update Firestore
+      const teamRef = doc(FIREBASE_DB, `categories/${judgeCategory}/teams`, scoringTeam.id);
+      await updateDoc(teamRef, update);
+      // Update local state
+      setTeams(teams =>
+        teams.map(t =>
+          t.id === scoringTeam.id ? { ...t, ...update } : t
+        )
+      );
+      // Reset inputs
+      setInputScore("");
+      setInputMinute("");
+      setInputSecond("");
+      setInputMs("");
+      // If you want to keep the modal open for round 2, remove setScoreModalVisible(false) from the round 1 block above.
     } catch (e) {
-      Alert.alert("Error", "Error submitting score.");
+      Alert.alert("Error", "Failed to save score.");
     }
   };
 
@@ -170,334 +173,150 @@ export default function ScorerScreen({ navigation }: any) {
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View>
-        {/* Header */}
-        <View style={styles.container}>
-          {/* History */}
-          <View style={styles.historyHeader}>
-            <Text style={styles.seeAllText}>Score History</Text>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate("AllScoresScreen", { history })
-              }
-            >
-              <Text style={styles.historyText}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          <FlatList
-            data={history.slice(0, 5)} // Limit to 5 items
-            horizontal
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.historyCard}>
-                <Text style={styles.historyMainText}>
-                  <Text style={{ fontWeight: "bold" }}>Team Name: </Text>
-                  {item.teamName}
-                </Text>
-                <View style={styles.historyTextContainer}>
-                  <View style={{ flexDirection: "row", gap: 5 }}>
-                    <Text style={styles.historyText}>
-                      <Text style={{ fontWeight: "bold" }}>Round 1: </Text>
-                      {item.round1Score} points
+        <View style={{ flexDirection: "row", alignItems: "center", marginHorizontal: 16, marginTop: 10, marginBottom: 10 }}>
+          <Text style={styles.header}>Score Teams</Text>
+          <Text style={{ marginLeft: 25, color: "#888", fontSize: 15 }}>
+            Tap a team card to score
+          </Text>
+        </View>
+        <View style={{ marginHorizontal: 16, marginBottom: 10 }}>
+          <TextInput
+            style={{
+              backgroundColor: "#f3f3f3",
+              borderWidth: 1,
+              borderColor: "#A7A5AC",
+              borderRadius: 10,
+              paddingVertical: 10,
+              paddingHorizontal: 16,
+              fontSize: 16,
+            }}
+            placeholder="Search team name..."
+            value={search}
+            onChangeText={setSearch}
+          />
+        </View>
+        <FlatList
+          data={teams.filter(team =>
+            team.teamName?.toLowerCase().includes(search.toLowerCase())
+          )}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => {
+            const status = getCardStatus(item);
+            const isComplete = status === "complete";
+            const { bestScore, bestTime, bestRound } = getBestScoreAndTime(item);
+
+            return (
+              <TouchableOpacity
+                disabled={isComplete}
+                onPress={() => openScoreModal(item)}
+                style={[
+                  styles.teamCard,
+                  { backgroundColor: getCardColor(status), opacity: isComplete ? 1 : 1 }
+                ]}
+              >
+                <Text style={styles.teamCardTitle}>{item.teamName}</Text>
+                <View style={{ flexDirection: "row",  marginBottom: 2 }}>
+                  <Text style={styles.teamData}>
+                    Round 1:{" "}
+                    <Text style={bestRound === 1 ? { color: "#388e3c", fontWeight: "bold" } : {}}>
+                      {item.round1Score ?? "—"}
                     </Text>
-                    <Text style={styles.historyText}>
-                      <Text style={{ fontWeight: "bold" }}>Time 1: </Text>
-                      {item.time1}
+                  </Text>
+                  <View style={{ width: 24 }} /> {/* Spacer for more space */}
+                  <Text style={styles.teamData}>
+                    Time 1:{" "}
+                    <Text style={bestRound === 1 ? { color: "#1976d2", fontWeight: "bold" } : {}}>
+                      {item.time1 ?? "—"}
                     </Text>
-                  </View>
-                  <View style={{ flexDirection: "row", gap: 5 }}>
-                    <Text style={styles.historyText}>
-                      <Text style={{ fontWeight: "bold" }}>Round 2: </Text>
-                      {item.round2Score} points
-                    </Text>
-                    <Text style={styles.historyText}>
-                      <Text style={{ fontWeight: "bold" }}>Time 2: </Text>
-                      {item.time2}
-                    </Text>
-                  </View>
-                  <Text style={styles.historyText}>
-                    <Text style={{ fontWeight: "bold" }}>Overall Score: </Text>
-                    {item.overallScore}
                   </Text>
                 </View>
-                <Text style={styles.historyCreatedText}>
-                  Scored At:{" "}
-                  {new Date(item.timestamp).toUTCString().replace("GMT", "PHT")}
-                </Text>
-              </View>
-            )}
-            ListEmptyComponent={
-              <Text style={{ margin: 10 }}>No history yet.</Text>
-            }
-            contentContainerStyle={{ paddingLeft: 8 }}
-            style={{
-              marginBottom: 10,
-              padding: 4,
-            }}
-          />
-
-          {/* Scorer Calculator */}
-          <Text style={styles.sectionTitle}>Scorer Calculator</Text>
-          <View style={styles.scorerCard}>
-            {/* Searchable Dropdown */}
-            {/* <TextInput
-              style={styles.dropdown}
-              placeholder="Select Team"
-               placeholderTextColor="#a9a9a9"
-              value={searchQuery}
-              onFocus={() => setShowDropdown(true)} // Show dropdown when focused
-              onChangeText={(text) => {
-                setSearchQuery(text);
-                const filtered = teams.filter((team) =>
-                  team.teamName.toLowerCase().includes(text.toLowerCase())
-                );
-                setFilteredTeams(filtered);
-              }}
-            /> */}
-            <View style={{ position: "relative", justifyContent: "center" }}>
-              <TextInput
-                style={[styles.dropdown, { paddingRight: 36 }]} // add right padding for the icon
-                placeholder="Select Team"
-                placeholderTextColor="#a9a9a9"
-                value={searchQuery}
-                onFocus={() => setShowDropdown(true)}
-                onChangeText={(text) => {
-                  setSearchQuery(text);
-                  const filtered = teams.filter((team) =>
-                    team.teamName.toLowerCase().includes(text.toLowerCase())
-                  );
-                  setFilteredTeams(filtered);
-                }}
-              />
-              <TouchableOpacity
-                style={{
-                  position: "absolute",
-                  right: 10,
-                  top: 0,
-                  bottom: 4,
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-                onPress={() => setShowDropdown((prev) => !prev)}
-                activeOpacity={0.7}
-              >
-                <AntDesign name="down" size={24} color="black" />
-              </TouchableOpacity>
-            </View>
-            {showDropdown && (
-              <View style={[styles.dropdownList, { maxHeight: 48 * 5 }]}>
-                {filteredTeams.length === 0 ? (
-                  <Text style={{ padding: 10, color: "#888" }}>
-                    No teams available
+                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 2 }}>
+                  <Text style={styles.teamData}>
+                    Round 2:{" "}
+                    <Text style={bestRound === 2 ? { color: "#388e3c", fontWeight: "bold" } : {}}>
+                      {item.round2Score ?? "—"}
+                    </Text>
                   </Text>
-                ) : (
-                  <ScrollView>
-                    {filteredTeams.map((team) => (
-                      <TouchableOpacity
-                        key={team.id}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setSelectedTeam(team);
-                          setSearchQuery(team.teamName);
-                          setShowDropdown(false);
-                        }}
-                      >
-                        <Text>{team.teamName}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                )}
-              </View>
-            )}
-            {/* Round 1 Score Input */}
-            <Text
-              style={{ fontSize: 16, fontWeight: "bold", marginVertical: 8 }}
-            >
-              Round 1
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Round 1 Score"
-              placeholderTextColor="#a9a9a9"
-              keyboardType="numeric"
-              value={round1Score}
-              onChangeText={(text) =>
-                setRound1Score(text.replace(/[^0-9]/g, ""))
-              }
-            />
-            {/* Round 1 Time Input */}
-            <View style={styles.timeInputRow}>
-              <TextInput
-                style={styles.timeInput}
-                placeholder="00"
-                placeholderTextColor="#a9a9a9"
-                keyboardType="numeric"
-                value={time1Minutes}
-                onChangeText={(text) => {
-                  const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
-                  setTime1Minutes(
-                    formatted.length > 2 ? formatted.slice(0, 2) : formatted
-                  ); // Limit to 2 digits
-                }}
-              />
-              <Text style={styles.timeLabel}>m</Text>
-              <TextInput
-                style={styles.timeInput}
-                placeholder="00"
-                placeholderTextColor="#a9a9a9"
-                keyboardType="numeric"
-                value={time1Seconds}
-                onChangeText={(text) => {
-                  const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
-                  if (Number(formatted) <= 59) {
-                    setTime1Seconds(
-                      formatted.length > 2 ? formatted.slice(0, 2) : formatted
-                    ); // Limit to 2 digits
-                  }
-                }}
-              />
-              <Text style={styles.timeLabel}>s</Text>
-              <TextInput
-                style={styles.timeInput}
-                placeholder="000"
-                placeholderTextColor="#a9a9a9"
-                keyboardType="numeric"
-                value={time1Milliseconds}
-                onChangeText={(text) => {
-                  const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
-                  if (Number(formatted) <= 999) {
-                    setTime1Milliseconds(
-                      formatted.length > 3 ? formatted.slice(0, 3) : formatted
-                    ); // Limit to 3 digits
-                  }
-                }}
-              />
-              <Text style={styles.timeLabel}>ms</Text>
-            </View>
-            {/* Round 2 Score Input */}
-            <Text
-              style={{ fontSize: 16, fontWeight: "bold", marginVertical: 8 }}
-            >
-              Round 2
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Round 2 Score"
-              placeholderTextColor="#a9a9a9"
-              keyboardType="numeric"
-              value={round2Score}
-              onChangeText={(text) =>
-                setRound2Score(text.replace(/[^0-9]/g, ""))
-              }
-            />
-            {/* Round 2 Time Input */}
-            <View style={styles.timeInputRow}>
-              <TextInput
-                style={styles.timeInput}
-                placeholder="00"
-                placeholderTextColor="#a9a9a9"
-                keyboardType="numeric"
-                value={time2Minutes}
-                onChangeText={(text) => {
-                  const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
-                  setTime2Minutes(
-                    formatted.length > 2 ? formatted.slice(0, 2) : formatted
-                  ); // Limit to 2 digits
-                }}
-              />
-              <Text style={styles.timeLabel}>m</Text>
-              <TextInput
-                style={styles.timeInput}
-                placeholder="00"
-                placeholderTextColor="#a9a9a9"
-                keyboardType="numeric"
-                value={time2Seconds}
-                onChangeText={(text) => {
-                  const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
-                  if (Number(formatted) <= 59) {
-                    setTime2Seconds(
-                      formatted.length > 2 ? formatted.slice(0, 2) : formatted
-                    ); // Limit to 2 digits
-                  }
-                }}
-              />
-              <Text style={styles.timeLabel}>s</Text>
-              <TextInput
-                style={styles.timeInput}
-                placeholder="000"
-                placeholderTextColor="#a9a9a9"
-                keyboardType="numeric"
-                value={time2Milliseconds}
-                onChangeText={(text) => {
-                  const formatted = text.replace(/[^0-9]/g, ""); // Allow only numbers
-                  if (Number(formatted) <= 999) {
-                    setTime2Milliseconds(
-                      formatted.length > 3 ? formatted.slice(0, 3) : formatted
-                    ); // Limit to 3 digits
-                  }
-                }}
-              />
-              <Text style={styles.timeLabel}>ms</Text>
-            </View>
-            <View style={{ flexDirection: "row", marginTop: 10 }}>
-              {/* <Button title="Submit" onPress={handleSubmit} />
-              <View style={{ width: 10 }} />
-              <Button
-                title="Clear"
-                onPress={() => {
-                  setRound1Score("");
-                  setRound2Score("");
-                  setTime1Minutes("");
-                  setTime1Seconds("");
-                  setTime1Milliseconds("");
-                  setTime2Minutes("");
-                  setTime2Seconds("");
-                  setTime2Milliseconds("");
-                  setSelectedTeam(null);
-                }}
-                color="#888"
-              /> */}
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "#432344",
-                  paddingVertical: 10,
-                  paddingHorizontal: 24,
-                  borderRadius: 6,
-                  alignItems: "center",
-                }}
-                onPress={handleSubmit}
-              >
-                <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                  Submit
+                  <View style={{ width: 24 }} />
+                  <Text style={styles.teamData}>
+                    Time 2:{" "}
+                    <Text style={bestRound === 2 ? { color: "#1976d2", fontWeight: "bold" } : {}}>
+                      {item.time2 ?? "—"}
+                    </Text>
+                  </Text>
+                </View>
+                <Text style={{ fontStyle: "italic", color: "#888" }}>
+                  Status: {status === "no-score" ? "No Score yet" : status === "round1-only" ? "Round 1 Done" : "Complete"}
                 </Text>
               </TouchableOpacity>
+            );
+          }}
+          ListEmptyComponent={<Text style={{ margin: 16 }}>No teams found.</Text>}
+          contentContainerStyle={{ padding: 8 }}
+        />
 
-              <View style={{ width: 10 }} />
-
-              <TouchableOpacity
-                style={{
-                  backgroundColor: "#eee",
-                  paddingVertical: 10,
-                  paddingHorizontal: 24,
-                  borderRadius: 6,
-                  alignItems: "center",
-                }}
-                onPress={() => {
-                  setRound1Score("");
-                  setRound2Score("");
-                  setTime1Minutes("");
-                  setTime1Seconds("");
-                  setTime1Milliseconds("");
-                  setTime2Minutes("");
-                  setTime2Seconds("");
-                  setTime2Milliseconds("");
-                  setSelectedTeam(null);
-                }}
-              >
-                <Text style={{ color: "#888", fontWeight: "bold" }}>Clear</Text>
-              </TouchableOpacity>
+        {/* Score Calculator Modal */}
+        <Modal
+          visible={scoreModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setScoreModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>
+                {scoringTeam?.teamName}
+              </Text>
+              <TextInput
+                style={styles.scoreinput}
+                placeholder={`Enter Round ${scoringStep} Score`}
+                keyboardType="numeric"
+                value={inputScore}
+                onChangeText={text => setInputScore(text.replace(/[^0-9]/g, ""))}
+              />
+              <View style={styles.timeInputContainer}>
+                <TextInput
+                  style={[styles.input, { flex: 1, marginRight: 4 }]}
+                  placeholder="mm"
+                  keyboardType="numeric"
+                  value={inputMinute}
+                  onChangeText={text => setInputMinute(text.replace(/[^0-9]/g, ""))}
+                  maxLength={2}
+                />
+                <Text style={{ fontSize: 18, color: "#888" }}>:</Text>
+                <TextInput
+                  style={[styles.input, { flex: 1, marginHorizontal: 4 }]}
+                  placeholder="ss"
+                  keyboardType="numeric"
+                  value={inputSecond}
+                  onChangeText={text => setInputSecond(text.replace(/[^0-9]/g, ""))}
+                  maxLength={2}
+                />
+                <Text style={{ fontSize: 18, color: "#888" }}>:</Text>
+                <TextInput
+                  style={[styles.input, { flex: 1, marginLeft: 4 }]}
+                  placeholder="ms"
+                  keyboardType="numeric"
+                  value={inputMs}
+                  onChangeText={text => setInputMs(text.replace(/[^0-9]/g, ""))}
+                  maxLength={2}
+                />
+              </View>
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setScoreModalVisible(false)}>
+                  <Text style={[styles.buttonText, {color: "#432344",}]}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.submitButton}
+                  onPress={handleScoreSubmit}>
+                  <Text style={styles.buttonText}>Submit</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
+        </Modal>
       </View>
     </ScrollView>
   );

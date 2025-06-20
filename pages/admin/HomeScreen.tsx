@@ -625,6 +625,9 @@ const categorydata = [
             <FlatList
               data={latestJudges}
               keyExtractor={(item) => item.id}
+              scrollEnabled={true}
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
               renderItem={({ item }) => {
                 const categoryLabel = getCategoryDisplayLabel(item.category);
 
