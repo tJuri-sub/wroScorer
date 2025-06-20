@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+} from "react-native";
+import styles from "../components/styles/AllScoreScreen";
 
 export default function AllScoresScreen({ route }: any) {
   const { history } = route.params;
@@ -37,24 +44,54 @@ export default function AllScoresScreen({ route }: any) {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.historyCard}>
-            <Text style={styles.historyText}>Team Name: {item.teamName}</Text>
-            <Text style={styles.historyText}>Round 1: {item.round1Score} points</Text>
-            <Text style={styles.historyText}>Time 1: {item.time1}</Text>
-            <Text style={styles.historyText}>Round 2: {item.round2Score} points</Text>
-            <Text style={styles.historyText}>Time 2: {item.time2}</Text>
-            <Text style={styles.historyText}>Overall Score: {item.overallScore}</Text>
+            <Text style={styles.historyMainText}>
+              <Text style={{ fontWeight: "bold" }}>Team Name: </Text>
+              {item.teamName}
+            </Text>
+            <View>
+              <View style={styles.historyScoreContainer}>
+                <Text style={styles.historyText}>
+                  <Text style={{ fontWeight: "bold" }}>Round 1: </Text>
+                  {item.round1Score} points
+                </Text>
+                <Text style={styles.historyText}>
+                  <Text style={{ fontWeight: "bold" }}>Time 1: </Text>
+                  {item.time1}
+                </Text>
+              </View>
+              <View style={styles.historyScoreContainer}>
+                <Text style={styles.historyText}>
+                  <Text style={{ fontWeight: "bold" }}>Round 2: </Text>
+                  {item.round2Score} points
+                </Text>
+                <Text style={styles.historyText}>
+                  <Text style={{ fontWeight: "bold" }}>Time 2: </Text>
+                  {item.time2}
+                </Text>
+              </View>
+            </View>
             <Text style={styles.historyText}>
-              Scored At: {new Date(item.timestamp).toUTCString().replace("GMT", "PHT")}
+              <Text style={{ fontWeight: "bold" }}>Overall Score: </Text>
+              {item.overallScore}
+            </Text>
+            <Text style={styles.historyTextCreated}>
+              Scored At:{" "}
+              {new Date(item.timestamp).toUTCString().replace("GMT", "PHT")}
             </Text>
           </View>
         )}
-        ListEmptyComponent={<Text style={{ margin: 10 }}>No scores available.</Text>}
+        ListEmptyComponent={
+          <Text style={{ margin: 10 }}>No scores available.</Text>
+        }
       />
       <View style={styles.pagination}>
         <TouchableOpacity
           onPress={handlePreviousPage}
           disabled={currentPage === 1}
-          style={[styles.pageButton, currentPage === 1 && styles.disabledButton]}
+          style={[
+            styles.pageButton,
+            currentPage === 1 && styles.disabledButton,
+          ]}
         >
           <Text style={styles.pageButtonText}>Previous</Text>
         </TouchableOpacity>
@@ -64,7 +101,10 @@ export default function AllScoresScreen({ route }: any) {
         <TouchableOpacity
           onPress={handleNextPage}
           disabled={currentPage === totalPages}
-          style={[styles.pageButton, currentPage === totalPages && styles.disabledButton]}
+          style={[
+            styles.pageButton,
+            currentPage === totalPages && styles.disabledButton,
+          ]}
         >
           <Text style={styles.pageButtonText}>Next</Text>
         </TouchableOpacity>
@@ -72,38 +112,3 @@ export default function AllScoresScreen({ route }: any) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f4f4f4", padding: 12 },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 12 },
-  subtitle: { fontSize: 16, marginBottom: 10 },
-  historyCard: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
-    elevation: 2,
-  },
-  historyText: { fontSize: 14, marginBottom: 2 },
-  pagination: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  pageButton: {
-    backgroundColor: "#007BFF",
-    padding: 10,
-    borderRadius: 5,
-  },
-  disabledButton: {
-    backgroundColor: "#ccc",
-  },
-  pageButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  pageInfo: {
-    fontSize: 16,
-  },
-});

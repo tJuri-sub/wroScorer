@@ -20,7 +20,7 @@ import {
   where,
   orderBy,
 } from "firebase/firestore";
-import { Ionicons } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import styles from "../components/styles/ScorerStyling";
 
 export default function ScorerScreen({ navigation }: any) {
@@ -190,23 +190,33 @@ export default function ScorerScreen({ navigation }: any) {
             renderItem={({ item }) => (
               <View style={styles.historyCard}>
                 <Text style={styles.historyMainText}>
-                  Team Name: {item.teamName}
+                  <Text style={{ fontWeight: "bold" }}>Team Name: </Text>
+                  {item.teamName}
                 </Text>
                 <View style={styles.historyTextContainer}>
                   <View style={{ flexDirection: "row", gap: 5 }}>
                     <Text style={styles.historyText}>
-                      Round 1: {item.round1Score} points
+                      <Text style={{ fontWeight: "bold" }}>Round 1: </Text>
+                      {item.round1Score} points
                     </Text>
-                    <Text style={styles.historyText}>Time 1: {item.time1}</Text>
+                    <Text style={styles.historyText}>
+                      <Text style={{ fontWeight: "bold" }}>Time 1: </Text>
+                      {item.time1}
+                    </Text>
                   </View>
                   <View style={{ flexDirection: "row", gap: 5 }}>
                     <Text style={styles.historyText}>
-                      Round 2: {item.round2Score} points
+                      <Text style={{ fontWeight: "bold" }}>Round 2: </Text>
+                      {item.round2Score} points
                     </Text>
-                    <Text style={styles.historyText}>Time 2: {item.time2}</Text>
+                    <Text style={styles.historyText}>
+                      <Text style={{ fontWeight: "bold" }}>Time 2: </Text>
+                      {item.time2}
+                    </Text>
                   </View>
                   <Text style={styles.historyText}>
-                    Overall Score: {item.overallScore}
+                    <Text style={{ fontWeight: "bold" }}>Overall Score: </Text>
+                    {item.overallScore}
                   </Text>
                 </View>
                 <Text style={styles.historyCreatedText}>
@@ -218,16 +228,21 @@ export default function ScorerScreen({ navigation }: any) {
             ListEmptyComponent={
               <Text style={{ margin: 10 }}>No history yet.</Text>
             }
-            style={{ marginBottom: 10, padding: 4 }}
+            contentContainerStyle={{ paddingLeft: 8 }}
+            style={{
+              marginBottom: 10,
+              padding: 4,
+            }}
           />
 
           {/* Scorer Calculator */}
           <Text style={styles.sectionTitle}>Scorer Calculator</Text>
           <View style={styles.scorerCard}>
             {/* Searchable Dropdown */}
-            <TextInput
+            {/* <TextInput
               style={styles.dropdown}
               placeholder="Select Team"
+               placeholderTextColor="#a9a9a9"
               value={searchQuery}
               onFocus={() => setShowDropdown(true)} // Show dropdown when focused
               onChangeText={(text) => {
@@ -237,52 +252,84 @@ export default function ScorerScreen({ navigation }: any) {
                 );
                 setFilteredTeams(filtered);
               }}
-            />
+            /> */}
+            <View style={{ position: "relative", justifyContent: "center" }}>
+              <TextInput
+                style={[styles.dropdown, { paddingRight: 36 }]} // add right padding for the icon
+                placeholder="Select Team"
+                placeholderTextColor="#a9a9a9"
+                value={searchQuery}
+                onFocus={() => setShowDropdown(true)}
+                onChangeText={(text) => {
+                  setSearchQuery(text);
+                  const filtered = teams.filter((team) =>
+                    team.teamName.toLowerCase().includes(text.toLowerCase())
+                  );
+                  setFilteredTeams(filtered);
+                }}
+              />
+              <TouchableOpacity
+                style={{
+                  position: "absolute",
+                  right: 10,
+                  top: 0,
+                  bottom: 4,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+                onPress={() => setShowDropdown((prev) => !prev)}
+                activeOpacity={0.7}
+              >
+                <AntDesign name="down" size={24} color="black" />
+              </TouchableOpacity>
+            </View>
             {showDropdown && (
-              <View style={styles.dropdownList}>
-                {filteredTeams.length === 0 && (
+              <View style={[styles.dropdownList, { maxHeight: 48 * 5 }]}>
+                {filteredTeams.length === 0 ? (
                   <Text style={{ padding: 10, color: "#888" }}>
                     No teams available
                   </Text>
+                ) : (
+                  <ScrollView>
+                    {filteredTeams.map((team) => (
+                      <TouchableOpacity
+                        key={team.id}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setSelectedTeam(team);
+                          setSearchQuery(team.teamName);
+                          setShowDropdown(false);
+                        }}
+                      >
+                        <Text>{team.teamName}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 )}
-                {filteredTeams.map((team) => (
-                  <TouchableOpacity
-                    key={team.id}
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      setSelectedTeam(team);
-                      setSearchQuery(team.teamName); // Set the selected team's name in the input
-                      setShowDropdown(false); // Close dropdown
-                    }}
-                  >
-                    <Text>{team.teamName}</Text>
-                  </TouchableOpacity>
-                ))}
               </View>
             )}
-
             {/* Round 1 Score Input */}
             <Text
               style={{ fontSize: 16, fontWeight: "bold", marginVertical: 8 }}
             >
               Round 1
             </Text>
-
             <TextInput
               style={styles.input}
               placeholder="Round 1 Score"
+              placeholderTextColor="#a9a9a9"
               keyboardType="numeric"
               value={round1Score}
               onChangeText={(text) =>
                 setRound1Score(text.replace(/[^0-9]/g, ""))
               }
             />
-
             {/* Round 1 Time Input */}
             <View style={styles.timeInputRow}>
               <TextInput
                 style={styles.timeInput}
                 placeholder="00"
+                placeholderTextColor="#a9a9a9"
                 keyboardType="numeric"
                 value={time1Minutes}
                 onChangeText={(text) => {
@@ -292,10 +339,11 @@ export default function ScorerScreen({ navigation }: any) {
                   ); // Limit to 2 digits
                 }}
               />
-              <Text style={styles.timeLabel}>m :</Text>
+              <Text style={styles.timeLabel}>m</Text>
               <TextInput
                 style={styles.timeInput}
                 placeholder="00"
+                placeholderTextColor="#a9a9a9"
                 keyboardType="numeric"
                 value={time1Seconds}
                 onChangeText={(text) => {
@@ -307,10 +355,11 @@ export default function ScorerScreen({ navigation }: any) {
                   }
                 }}
               />
-              <Text style={styles.timeLabel}>s :</Text>
+              <Text style={styles.timeLabel}>s</Text>
               <TextInput
                 style={styles.timeInput}
                 placeholder="000"
+                placeholderTextColor="#a9a9a9"
                 keyboardType="numeric"
                 value={time1Milliseconds}
                 onChangeText={(text) => {
@@ -324,29 +373,28 @@ export default function ScorerScreen({ navigation }: any) {
               />
               <Text style={styles.timeLabel}>ms</Text>
             </View>
-
             {/* Round 2 Score Input */}
             <Text
               style={{ fontSize: 16, fontWeight: "bold", marginVertical: 8 }}
             >
               Round 2
             </Text>
-
             <TextInput
               style={styles.input}
               placeholder="Round 2 Score"
+              placeholderTextColor="#a9a9a9"
               keyboardType="numeric"
               value={round2Score}
               onChangeText={(text) =>
                 setRound2Score(text.replace(/[^0-9]/g, ""))
               }
             />
-
             {/* Round 2 Time Input */}
             <View style={styles.timeInputRow}>
               <TextInput
                 style={styles.timeInput}
                 placeholder="00"
+                placeholderTextColor="#a9a9a9"
                 keyboardType="numeric"
                 value={time2Minutes}
                 onChangeText={(text) => {
@@ -356,10 +404,11 @@ export default function ScorerScreen({ navigation }: any) {
                   ); // Limit to 2 digits
                 }}
               />
-              <Text style={styles.timeLabel}>m :</Text>
+              <Text style={styles.timeLabel}>m</Text>
               <TextInput
                 style={styles.timeInput}
                 placeholder="00"
+                placeholderTextColor="#a9a9a9"
                 keyboardType="numeric"
                 value={time2Seconds}
                 onChangeText={(text) => {
@@ -371,10 +420,11 @@ export default function ScorerScreen({ navigation }: any) {
                   }
                 }}
               />
-              <Text style={styles.timeLabel}>s :</Text>
+              <Text style={styles.timeLabel}>s</Text>
               <TextInput
                 style={styles.timeInput}
                 placeholder="000"
+                placeholderTextColor="#a9a9a9"
                 keyboardType="numeric"
                 value={time2Milliseconds}
                 onChangeText={(text) => {
@@ -388,9 +438,8 @@ export default function ScorerScreen({ navigation }: any) {
               />
               <Text style={styles.timeLabel}>ms</Text>
             </View>
-
             <View style={{ flexDirection: "row", marginTop: 10 }}>
-              <Button title="Submit" onPress={handleSubmit} />
+              {/* <Button title="Submit" onPress={handleSubmit} />
               <View style={{ width: 10 }} />
               <Button
                 title="Clear"
@@ -406,7 +455,46 @@ export default function ScorerScreen({ navigation }: any) {
                   setSelectedTeam(null);
                 }}
                 color="#888"
-              />
+              /> */}
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#432344",
+                  paddingVertical: 10,
+                  paddingHorizontal: 24,
+                  borderRadius: 6,
+                  alignItems: "center",
+                }}
+                onPress={handleSubmit}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  Submit
+                </Text>
+              </TouchableOpacity>
+
+              <View style={{ width: 10 }} />
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#eee",
+                  paddingVertical: 10,
+                  paddingHorizontal: 24,
+                  borderRadius: 6,
+                  alignItems: "center",
+                }}
+                onPress={() => {
+                  setRound1Score("");
+                  setRound2Score("");
+                  setTime1Minutes("");
+                  setTime1Seconds("");
+                  setTime1Milliseconds("");
+                  setTime2Minutes("");
+                  setTime2Seconds("");
+                  setTime2Milliseconds("");
+                  setSelectedTeam(null);
+                }}
+              >
+                <Text style={{ color: "#888", fontWeight: "bold" }}>Clear</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>

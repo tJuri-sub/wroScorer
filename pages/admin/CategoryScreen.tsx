@@ -13,11 +13,11 @@ import {
 import CountryPicker from "rn-country-dropdown-picker"; // Import the new country picker
 import { getFirestore, collection, getDocs, addDoc } from "firebase/firestore";
 import styles from "../../components/styles/adminStyles/CategorycreenStyle";
-import FontAwesome from "react-native-vector-icons/FontAwesome";
+import { Feather } from "@expo/vector-icons";
 
 export default function CategoryScreen({ route }: any) {
   const { category, label } = route.params; // Get category and label from navigation params
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 5;
 
@@ -47,15 +47,19 @@ export default function CategoryScreen({ route }: any) {
   const db = getFirestore();
 
   // Filter teams by search (team name or coach)
-  const filteredTeams = teams.filter(team =>
-    team.teamName.toLowerCase().includes(search.toLowerCase()) ||
-    team.coachName.toLowerCase().includes(search.toLowerCase())
+  const filteredTeams = teams.filter(
+    (team) =>
+      team.teamName.toLowerCase().includes(search.toLowerCase()) ||
+      team.coachName.toLowerCase().includes(search.toLowerCase())
   );
 
   // Pagination
   const totalRecords = filteredTeams.length;
   const totalPages = Math.ceil(totalRecords / PAGE_SIZE);
-  const paginatedTeams = filteredTeams.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginatedTeams = filteredTeams.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  );
 
   // Reset to first page when search changes
   useEffect(() => {
@@ -179,7 +183,10 @@ export default function CategoryScreen({ route }: any) {
         <TouchableOpacity
           onPress={() => setPage(page - 1)}
           disabled={page === 1}
-          style={[styles.paginationButton, page === 1 && styles.paginationButtonDisabled]}
+          style={[
+            styles.paginationButton,
+            page === 1 && styles.paginationButtonDisabled,
+          ]}
         >
           <Text style={styles.paginationButtonText}>Previous</Text>
         </TouchableOpacity>
@@ -193,7 +200,11 @@ export default function CategoryScreen({ route }: any) {
         <TouchableOpacity
           onPress={() => setPage(page + 1)}
           disabled={page === totalPages || totalPages === 0}
-          style={[styles.paginationButton, (page === totalPages || totalPages === 0) && styles.paginationButtonDisabled]}
+          style={[
+            styles.paginationButton,
+            (page === totalPages || totalPages === 0) &&
+              styles.paginationButtonDisabled,
+          ]}
         >
           <Text style={styles.paginationButtonText}>Next</Text>
         </TouchableOpacity>
@@ -208,17 +219,22 @@ export default function CategoryScreen({ route }: any) {
             <View style={styles.teamCard}>
               {/* Header Row */}
               <View style={styles.teamCardHeader}>
-                <Text style={styles.teamCardHeaderText}>Team Number {item.teamNumber}</Text>
-                <Text style={styles.teamCardHeaderText}>Pod Number {item.podNumber}</Text>
+                <Text style={styles.teamCardHeaderText}>
+                  Team Number {item.teamNumber}
+                </Text>
+                <Text style={styles.teamCardHeaderText}>
+                  Pod Number {item.podNumber}
+                </Text>
               </View>
 
               {/* Country and Team Name Row */}
               <View style={styles.teamCardRow}>
                 {/* Replace with your flag component or Image */}
                 {/* <Image source={require('../assets/flags/ph.png')} style={styles.teamCardFlag} /> */}
-                <Text style={styles.teamCardTeamName} numberOfLines={1}>{item.teamName}</Text>
+                <Text style={styles.teamCardTeamName} numberOfLines={1}>
+                  {item.teamName}
+                </Text>
                 <Text style={styles.teamCardCountry}>{item.countryName}</Text>
-                
               </View>
 
               {/* Members */}
@@ -229,7 +245,9 @@ export default function CategoryScreen({ route }: any) {
               ))}
 
               {/* Coach */}
-              <Text style={styles.teamCardCoach}>Coach Name: {item.coachName}</Text>
+              <Text style={styles.teamCardCoach}>
+                Coach Name: {item.coachName}
+              </Text>
 
               {/* Edit Icon (optional) */}
               {/* <TouchableOpacity style={styles.editIcon} onPress={() => onEdit(team)}>
@@ -241,10 +259,13 @@ export default function CategoryScreen({ route }: any) {
         />
       )}
       {/* <Button title="Create Team" onPress={() => setModalVisible(true)} /> */}
-      <TouchableOpacity style={styles.createTeamButton} onPress={() => setModalVisible(true)}>
-        <FontAwesome name="plus" size={18} color="#fff" />
+      <TouchableOpacity
+        style={styles.createTeamButton}
+        onPress={() => setModalVisible(true)}
+      >
+        <Feather name="plus" size={24} color="white" />
         <Text style={styles.createTeamButtonText}>Add Team</Text>
-      </TouchableOpacity> 
+      </TouchableOpacity>
 
       {/* Modal for Team Creation */}
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
@@ -257,9 +278,7 @@ export default function CategoryScreen({ route }: any) {
                     source={require("../../assets/images/user.png")}
                     style={styles.modalImage}
                   /> */}
-                  <Text style={styles.headerTextModal}>
-                    Create Team
-                  </Text>
+                  <Text style={styles.headerTextModal}>Create Team</Text>
                   <Text style={styles.headerSubTextModal}>
                     Enter team information
                   </Text>
@@ -311,21 +330,24 @@ export default function CategoryScreen({ route }: any) {
                 />
 
                 <View style={styles.pageIndicatorContainer}>
-                  <Text style={styles.pageIndicatorText}>
-                    Page 1 of 3
-                  </Text>
+                  <Text style={styles.pageIndicatorText}>Page 1 of 3</Text>
                 </View>
-                
+
                 <View style={styles.modalButtonRow}>
-                  <TouchableOpacity style={[styles.modalButton, styles.modalButton]}>
-                    <Text 
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalButton]}
+                  >
+                    <Text
                       style={[styles.modalButtonText, styles.modalButtonText]}
-                      onPress={() => setModalVisible(false)}>Cancel</Text>
+                      onPress={() => setModalVisible(false)}
+                    >
+                      Cancel
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.modalButtonNext}>
-                    <Text 
-                    style={styles.modalButtonText}
-                    onPress={handleNext}>Next</Text>
+                    <Text style={styles.modalButtonText} onPress={handleNext}>
+                      Next
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -334,9 +356,7 @@ export default function CategoryScreen({ route }: any) {
             {step === 2 && (
               <>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.headerTextModal}>
-                    Create Team
-                  </Text>
+                  <Text style={styles.headerTextModal}>Create Team</Text>
                   <Text style={styles.headerSubTextModal}>
                     Add team members and coach
                   </Text>
@@ -366,21 +386,24 @@ export default function CategoryScreen({ route }: any) {
                 ))}
 
                 <View style={styles.pageIndicatorContainer}>
-                  <Text style={styles.pageIndicatorText}>
-                    Page 2 of 3
-                  </Text>
+                  <Text style={styles.pageIndicatorText}>Page 2 of 3</Text>
                 </View>
 
                 <View style={styles.modalButtonRow}>
-                  <TouchableOpacity style={[styles.modalButton, styles.modalButton]}>
-                    <Text 
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalButton]}
+                  >
+                    <Text
                       style={[styles.modalButtonText, styles.modalButtonText]}
-                      onPress={handleBack}>Back</Text>
+                      onPress={handleBack}
+                    >
+                      Back
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.modalButtonNext}>
-                    <Text 
-                    style={styles.modalButtonText}
-                    onPress={handleNext}>Next</Text>
+                    <Text style={styles.modalButtonText} onPress={handleNext}>
+                      Next
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -389,41 +412,54 @@ export default function CategoryScreen({ route }: any) {
             {step === 3 && (
               <>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.headerTextModal}>
-                    Create Team
-                  </Text>
+                  <Text style={styles.headerTextModal}>Create Team</Text>
                   <Text style={styles.headerSubTextModal}>
                     Review team details
                   </Text>
                 </View>
-                  <Text style={styles.modalLabel}>Country: {formData.countryName}</Text>
-                  <Text style={styles.modalLabel}>Team Number: {formData.teamNumber}</Text>
-                  <Text style={styles.modalLabel}>Pod Number: {formData.podNumber}</Text>
-                  <Text style={styles.modalLabel}>Team Name: {formData.teamName}</Text>
-                  <Text style={styles.modalLabel}>Coach Name: {formData.coachName}</Text>
-                  {formData.members.map((member, index) => (
-                    <Text key={index}>
-                      Member {index + 1}: {member}
-                    </Text>
-                  ))}
-                
+                <Text style={styles.modalLabel}>
+                  Country: {formData.countryName}
+                </Text>
+                <Text style={styles.modalLabel}>
+                  Team Number: {formData.teamNumber}
+                </Text>
+                <Text style={styles.modalLabel}>
+                  Pod Number: {formData.podNumber}
+                </Text>
+                <Text style={styles.modalLabel}>
+                  Team Name: {formData.teamName}
+                </Text>
+                <Text style={styles.modalLabel}>
+                  Coach Name: {formData.coachName}
+                </Text>
+                {formData.members.map((member, index) => (
+                  <Text key={index}>
+                    Member {index + 1}: {member}
+                  </Text>
+                ))}
 
                 <View style={styles.pageIndicatorContainer}>
-                  <Text style={styles.pageIndicatorText}>
-                    Page 3 of 3
-                  </Text>
+                  <Text style={styles.pageIndicatorText}>Page 3 of 3</Text>
                 </View>
 
                 <View style={styles.modalButtonRow}>
-                  <TouchableOpacity style={[styles.modalButton, styles.modalButton]}>
-                    <Text 
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalButton]}
+                  >
+                    <Text
                       style={[styles.modalButtonText, styles.modalButtonText]}
-                     onPress={handleBack}>Back</Text>
+                      onPress={handleBack}
+                    >
+                      Back
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.modalButtonCreate}>
-                    <Text 
-                    style={styles.modalButtonCreateText}
-                    onPress={handleSubmit}>Create</Text>
+                    <Text
+                      style={styles.modalButtonCreateText}
+                      onPress={handleSubmit}
+                    >
+                      Create
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </>
