@@ -56,13 +56,12 @@ export default StyleSheet.create({
 
   teamCard: {
     backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#919191",
     borderRadius: 16,
     padding: 18,
     marginBottom: 18,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    boxShadow: "0px 1px 3px rgba(0,0,0,0.2)",
     flexDirection: "column",
     minWidth: 0,
   },
