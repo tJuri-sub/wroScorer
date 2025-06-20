@@ -83,13 +83,29 @@ export default function Leaderboard() {
           <FlatList
             data={leaderboard}
             keyExtractor={(item) => item.teamId}
-            renderItem={({ item, index }) => (
-              <View style={{ flexDirection: "row", marginBottom: 8 }}>
-                <Text style={{ width: 30 }}>{index + 1}.</Text>
-                <Text style={{ flex: 1 }}>{item.teamName}</Text>
-                <Text>{item.overallScore} pts</Text>
-              </View>
-            )}
+            renderItem={({ item, index }) => {
+              const rankColors = ["#F8AA0C", "#3A9F6C", "#0081CC"];
+              const isTopThree = index < 3;
+              const cardBg = rankColors[index] || "#fff";
+              const textColor = isTopThree ? "#fff" : "#000";
+              return (
+                <View
+                  style={[styles.containerCard, { backgroundColor: cardBg }]}
+                >
+                  <Text
+                    style={{ width: 30, color: textColor, fontWeight: "bold" }}
+                  >
+                    {index + 1}.
+                  </Text>
+                  <Text style={{ flex: 1, color: textColor }}>
+                    {item.teamName}
+                  </Text>
+                  <Text style={{ color: textColor }}>
+                    {item.overallScore} pts
+                  </Text>
+                </View>
+              );
+            }}
           />
         )}
       </View>
