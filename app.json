@@ -1,7 +1,6 @@
 {
   "expo": {
     "name": "ScoreBotics",
-    "entryPoint": "./App.tsx",
     "slug": "scoreBotics",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -20,11 +19,17 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.jurituriano.scoreBotics"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-font"]
+    "plugins": ["expo-font"],
+    "extra": {
+      "eas": {
+        "projectId": "35d1d26b-e054-447c-848a-3ffd9dd50c74"
+      }
+    }
   }
 }
