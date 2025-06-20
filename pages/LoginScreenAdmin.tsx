@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -30,11 +31,13 @@ const LoginAdmin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const auth = FIREBASE_AUTH;
 
   const signIn = async () => {
     setLoading(true);
-      try {
+    try {
       const userCredential = await signInWithEmailAndPassword(
         FIREBASE_AUTH,
         email,
@@ -67,9 +70,8 @@ const LoginAdmin = () => {
       } else {
         alert("Login failed: An unknown error occurred.");
       }
-    }
-    finally {
-    setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,8 +97,9 @@ const LoginAdmin = () => {
             <Text style={styles.backText}>Login as scorer</Text>
           </TouchableOpacity>
           <View style={styles.titleBox}>
-            <Text style={styles.title}>
-              Login your <Text style={styles.highlight}>Admin Account</Text>
+            <Text style={styles.adminTitle}>
+              Login your{" "}
+              <Text style={styles.adminHighlight}>Admin Account</Text>
             </Text>
             <Text style={styles.subtitle}>
               Sign in with your account details.
@@ -108,19 +111,40 @@ const LoginAdmin = () => {
               <TextInput
                 style={styles.input}
                 value={email}
-                placeholder="Email"
+                placeholder="ex. example123@gmail.com"
+                placeholderTextColor={"#999999"}
                 autoCapitalize="none"
                 onChangeText={(text) => setEmail(text)}
-              ></TextInput>
+              />
               {/* Password */}
-              <TextInput
-                style={styles.input}
-                secureTextEntry={true}
-                value={password}
-                placeholder="Password"
-                autoCapitalize="none"
-                onChangeText={(text) => setPassword(text)}
-              ></TextInput>
+              <View style={{ position: "relative", width: "100%" }}>
+                <TextInput
+                  style={styles.input}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  placeholder="Password"
+                  placeholderTextColor={"#999999"}
+                  autoCapitalize="none"
+                  onChangeText={(text) => setPassword(text)}
+                />
+                <TouchableOpacity
+                  style={{
+                    position: "absolute",
+                    right: 20,
+                    top: 0,
+                    bottom: 0,
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                  onPress={() => setShowPassword((prev) => !prev)}
+                >
+                  <FontAwesome5
+                    name={showPassword ? "eye" : "eye-slash"}
+                    size={20}
+                    color="#888"
+                  />
+                </TouchableOpacity>
+              </View>
               <View>
                 <TouchableOpacity>
                   <Text style={styles.forgotPass}>Forgot Password?</Text>
@@ -129,15 +153,15 @@ const LoginAdmin = () => {
             </View>
           </View>
           {/* Login Button */}
-          {loading ? (
-            <ActivityIndicator size="large" color="#00000" />
-          ) : (
-            <>
-              <TouchableOpacity style={styles.signButton} onPress={signIn}>
-                <Text style={styles.buttonText}>Sign in</Text>
-              </TouchableOpacity>
-            </>
-          )}
+
+          <TouchableOpacity style={styles.signButton} onPress={signIn}>
+            {loading ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.buttonText}>Sign in</Text>
+            )}
+          </TouchableOpacity>
+
           {/* Sign In Link */}
           <View style={styles.signUpbuttonContainer}>
             <Text style={{ fontSize: 16 }}>Don't you have an account? </Text>

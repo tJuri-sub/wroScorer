@@ -6,6 +6,7 @@ export default StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     fontFamily: "Inter",
+    overflow: "hidden",
   },
 
   topLeftBlob: {
@@ -77,6 +78,13 @@ export default StyleSheet.create({
     marginBottom: 5,
   },
 
+  adminTitle: {
+    fontSize: 23,
+    fontWeight: "bold",
+    color: "#000000",
+    marginBottom: 5,
+  },
+
   subtitle: {
     fontSize: 16,
   },
@@ -85,25 +93,34 @@ export default StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#740D77",
+    textDecorationLine: "underline",
+    textDecorationColor: "#740D77",
+  },
+
+  adminHighlight: {
+    fontSize: 23,
+    fontWeight: "bold",
+    color: "#740D77",
+    textDecorationLine: "underline",
+    textDecorationColor: "#740D77",
   },
 
   containerForm: {
     display: "flex",
     flexDirection: "column",
-    marginBottom: 20,
+    marginBottom: 10,
   },
 
   input: {
-    height: 46,
+    height: 45,
     width: "100%",
-    margin: 12,
+    margin: 10,
     padding: 10,
-    backgroundColor: "#f7f7f7",
     fontSize: 16,
     borderRadius: 5,
-    borderColor: "#f7f7f7",
+    borderColor: "#919191",
     borderWidth: 1,
-  boxShadow: "0px 2px 3px rgba(0,0,0,0.2)",
+    boxShadow: "0px 1px 4px rgba(0,0,0,0.2)",
     alignSelf: "center",
   },
 
@@ -117,7 +134,7 @@ export default StyleSheet.create({
 
   signButton: {
     width: "100%",
-    height: 47,
+    height: 45,
     backgroundColor: "#211022",
     borderRadius: 5,
     alignSelf: "center",
