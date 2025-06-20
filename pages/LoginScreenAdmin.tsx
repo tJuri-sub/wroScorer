@@ -11,8 +11,9 @@ import {
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 
-import { FIREBASE_AUTH } from "../firebaseconfig";
+import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import styles from "../components/styles/AuthformStyle";
 import SignUp from "./SignUpScreenAdmin";
 
@@ -33,20 +34,42 @@ const LoginAdmin = () => {
 
   const signIn = async () => {
     setLoading(true);
-    try {
-      const response = await signInWithEmailAndPassword(auth, email, password);
-      console.log(response);
+      try {
+      const userCredential = await signInWithEmailAndPassword(
+        FIREBASE_AUTH,
+        email,
+        password
+      );
+      const user = userCredential.user;
 
-      // 🧭 Navigate to Admin Home Screen after successful login
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "AdminScreen" }], // this should match the route name in App.tsx
-      });
-    } catch (error: any) {
-      console.log(error);
-      alert("Login failed: " + error.message);
-    } finally {
-      setLoading(false);
+      // Fetch user document
+      const userDocRef = doc(FIREBASE_DB, "admin-users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.role === "admin") {
+          // Proceed to admin home screen
+          navigation.navigate("AdminScreen");
+        } else {
+          // Not an admin, sign out and show error
+          await FIREBASE_AUTH.signOut();
+          alert("Access denied: Only admins can log in here.");
+        }
+      } else {
+        // User doc not found
+        await FIREBASE_AUTH.signOut();
+        alert("User profile not found.");
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        alert("Login failed: " + error.message);
+      } else {
+        alert("Login failed: An unknown error occurred.");
+      }
+    }
+    finally {
+    setLoading(false);
     }
   };
 

@@ -9,6 +9,7 @@ import {
   Modal,
   TextInput,
   Alert,
+  Pressable,
 } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import styles from "../../components/styles/adminStyles/Profilescreen";
@@ -25,6 +26,7 @@ export default function ProfileAdmin({ navigation }: any) {
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [newUsername, setNewUsername] = useState<string>("");
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
   // Fetch user profile
   useEffect(() => {
@@ -144,10 +146,7 @@ export default function ProfileAdmin({ navigation }: any) {
             {/* Logout */}
             <TouchableOpacity
               style={[styles.optionRow, { borderBottomWidth: 0 }]}
-              onPress={() => {
-                FIREBASE_AUTH.signOut();
-                navigation.navigate("LoginAdmin");
-              }}
+              onPress={() => setLogoutModalVisible(true)}
             >
               <Ionicons name="log-out-outline" size={20} color="#d9534f" />
               <Text style={[styles.optionText, { color: "#d9534f" }]}>
@@ -162,6 +161,42 @@ export default function ProfileAdmin({ navigation }: any) {
             </TouchableOpacity>
           </View>
         </View>
+        
+        {/* Logout Confirmation Modal */}
+        <Modal
+          visible={logoutModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setLogoutModalVisible(false)}
+        >
+          <View style={styles.modalOverlayLogout}>
+            <View style={styles.modalContentLogout}>
+              <Text style={styles.modalTitle}>
+                Are you sure you want to log out?
+              </Text>
+              <View style={styles.modalButtonContainer}>
+                <Pressable
+                  style={[styles.modalButton, styles.backButton]}
+                  onPress={() => setLogoutModalVisible(false)}
+                >
+                  <Text style={[styles.modalButtonText, styles.backButtonText]}>
+                    Back
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.modalButton, styles.yesButton]}
+                  onPress={() => {
+                    FIREBASE_AUTH.signOut();
+                    navigation.replace("LoginAdmin");
+                  }}
+                >
+                  <Text style={styles.modalButtonText}>Yes</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+              
 
         {/* Edit Profile Modal */}
         <Modal visible={editModalVisible} transparent animationType="slide">

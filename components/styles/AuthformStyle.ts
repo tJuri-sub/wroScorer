@@ -141,5 +141,6 @@ export default StyleSheet.create({
   textlink: {
     color: "#852B88",
     fontSize: 16,
+    marginRight: 10,
   },
 });

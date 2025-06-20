@@ -7,9 +7,11 @@ import {
   TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
-import { FIREBASE_AUTH } from "../firebaseconfig";
+import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import styles from "../components/styles/AuthformStyle";
 import Login from "./LoginScreenAdmin";
 
@@ -30,20 +32,41 @@ const LoginJudge = () => {
 
   const signIn = async () => {
     setLoading(true);
-    try {
-      const response = await signInWithEmailAndPassword(auth, email, password);
-      console.log(response);
+      try {
+      const userCredential = await signInWithEmailAndPassword(
+        FIREBASE_AUTH,
+        email,
+        password
+      );
+      const user = userCredential.user;
 
-      // 🧭 Navigate to Admin Home Screen after successful login
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "JudgeScreen" }], // this should match the route name in App.tsx
-      });
-    } catch (error: any) {
-      console.log(error);
-      alert("Login failed: " + error.message);
+      // Fetch user document
+      const userDocRef = doc(FIREBASE_DB, "judge-users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.role === "judge") {
+          // Proceed to judge home screen
+          navigation.navigate("JudgeScreen");
+        } else {
+          // Not a judge, sign out and show error
+          await FIREBASE_AUTH.signOut();
+          alert("Access denied: Only judges can log in here.");
+        }
+      } else {
+        // User doc not found
+        await FIREBASE_AUTH.signOut();
+        alert("User profile not found.");
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        alert("Login failed: " + error.message);
+      } else {
+        alert("Login failed: An unknown error occurred.");
+      }
     } finally {
-      setLoading(false);
+    setLoading(false);
     }
   };
 
@@ -103,9 +126,12 @@ const LoginJudge = () => {
           )}
           {/* Navigate to Admin */}
           <View style={styles.signUpbuttonContainer}>
-            <TouchableOpacity onPress={loginAdmin}>
+            <TouchableOpacity onPress={loginAdmin} style={styles.backNav}>
               <Text style={styles.textlink}>Login as Admin</Text>
+              <AntDesign name="arrowright" size={24} color="#852B88" />
             </TouchableOpacity>
+
+            
           </View>
         </View>
       </View>
