@@ -19,6 +19,7 @@ import bcrypt from "bcryptjs"; //hashing passwords
 
 import { FIREBASE_APP, FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import styles from "../components/styles/AuthformStyle";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Login from "./LoginScreenAdmin";
 import VerifyEmailScreen from "./accountManage/VerifyEmailScreen";
 
@@ -27,6 +28,8 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [confirmpassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const auth = FIREBASE_AUTH;
 
   type RootStackParamList = {
@@ -243,39 +246,81 @@ const SignUp = () => {
                 style={styles.input}
                 value={email}
                 placeholder="Email"
+                placeholderTextColor={"#999999"}
                 autoCapitalize="none"
                 onChangeText={(text) => setEmail(text)}
-              ></TextInput>
+              />
               {/* Password */}
-              <TextInput
-                style={styles.input}
-                secureTextEntry={true}
-                value={password}
-                placeholder="Password"
-                autoCapitalize="none"
-                onChangeText={(text) => setPassword(text)}
-              ></TextInput>
+
+              <View style={{ position: "relative", width: "100%" }}>
+                <TextInput
+                  style={styles.input}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  placeholder="Password"
+                  placeholderTextColor={"#999999"}
+                  autoCapitalize="none"
+                  onChangeText={(text) => setPassword(text)}
+                />
+                <TouchableOpacity
+                  style={{
+                    position: "absolute",
+                    right: 20,
+                    top: 0,
+                    bottom: 0,
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                  onPress={() => setShowPassword((prev) => !prev)}
+                >
+                  <FontAwesome5
+                    name={showPassword ? "eye" : "eye-slash"}
+                    size={20}
+                    color="#888"
+                  />
+                </TouchableOpacity>
+              </View>
               {/* Confirm Password */}
-              <TextInput
-                style={styles.input}
-                secureTextEntry={true}
-                value={confirmpassword}
-                placeholder="Confirm Password"
-                autoCapitalize="none"
-                onChangeText={(text) => setConfirmPassword(text)}
-              ></TextInput>
+              <View style={{ position: "relative", width: "100%" }}>
+                <TextInput
+                  style={styles.input}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  placeholder="Password"
+                  placeholderTextColor={"#999999"}
+                  autoCapitalize="none"
+                  onChangeText={(text) => setPassword(text)}
+                />
+                <TouchableOpacity
+                  style={{
+                    position: "absolute",
+                    right: 20,
+                    top: 0,
+                    bottom: 0,
+                    justifyContent: "center",
+                    height: "100%",
+                  }}
+                  onPress={() => setShowPassword((prev) => !prev)}
+                >
+                  <FontAwesome5
+                    name={showPassword ? "eye" : "eye-slash"}
+                    size={20}
+                    color="#888"
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
           {/* Create User Button */}
-          {loading ? (
-            <ActivityIndicator size="large" color="#00000" />
-          ) : (
-            <>
-              <TouchableOpacity style={styles.signButton} onPress={signUp}>
-                <Text style={styles.buttonText}>Sign up</Text>
-              </TouchableOpacity>
-            </>
-          )}
+
+          <TouchableOpacity style={styles.signButton} onPress={signUp}>
+            {loading ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.buttonText}>Sign up</Text>
+            )}
+          </TouchableOpacity>
+
           {/* Login In Link */}
           <View style={styles.signUpbuttonContainer}>
             <Text style={{ fontSize: 16 }}>Already have an account? </Text>
