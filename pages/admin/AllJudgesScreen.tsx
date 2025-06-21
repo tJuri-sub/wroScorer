@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, TextInput, TouchableOpacity, Image, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, FlatList, TextInput, TouchableOpacity, Image, ActivityIndicator, StyleSheet, ScrollView } from "react-native";
 import { collection, getDocs } from "firebase/firestore";
 import { FIREBASE_DB } from "../../firebaseconfig";
 
@@ -123,11 +123,13 @@ function getCategoryDisplayLabel(categoryValue: string) {
       }
     }
   }
+  
   return categoryValue;
 }
 
   return (
     <View style={styles.container}>
+      <ScrollView>
       <View style={styles.headerSection}>
         <Text style={styles.headerText}>All Judges ({filteredJudges.length})</Text>
         <TextInput
@@ -199,6 +201,7 @@ function getCategoryDisplayLabel(categoryValue: string) {
             <Text style={[styles.paginationText, (page === totalPages || totalPages === 0) && styles.paginationTextDisabled]}>Next</Text>
         </TouchableOpacity>
       </View>
+      </ScrollView>
     </View>
   );
 }

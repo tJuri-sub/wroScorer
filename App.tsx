@@ -109,7 +109,7 @@ const JudgeInsideStackNavigator = () => (
       component={AllLeaderboardScreen}
       options={({ navigation }) => ({
         headerShown: true,
-        headerTitle: "Profile",
+        headerTitle: "Rankings",
         headerTitleAlign: "center",
         headerLeft: () => (
           <TouchableOpacity

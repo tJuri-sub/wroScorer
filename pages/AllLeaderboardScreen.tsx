@@ -2,11 +2,31 @@ import React, { useEffect, useState } from "react";
 import { Text, View, FlatList, ActivityIndicator, TouchableOpacity, StyleSheet } from "react-native";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 
+function parseTimeString(timeStr: string) {
+  if (!timeStr) return Infinity;
+  const [mm, ss, ms] = timeStr.split(":").map(Number);
+  return (mm || 0) * 60000 + (ss || 0) * 1000 + (ms || 0);
+}
+
+function getBestScoreAndTime(item: any) {
+  const r1 = item.round1Score ?? null;
+  const r2 = item.round2Score ?? null;
+  const t1 = item.time1 ?? "";
+  const t2 = item.time2 ?? "";
+  if (r1 !== null && (r2 === null || r1 >= r2)) {
+    return { bestScore: r1, bestTime: t1, bestTimeMs: parseTimeString(t1) };
+  }
+  if (r2 !== null && (r1 === null || r2 > r1)) {
+    return { bestScore: r2, bestTime: t2, bestTimeMs: parseTimeString(t2) };
+  }
+  return { bestScore: null, bestTime: "", bestTimeMs: Infinity };
+}
+
 export default function AllLeaderboardScreen() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const recordsPerPage = 10; // Limit to 10 records per page
+  const recordsPerPage = 10;
   const db = getFirestore();
 
   useEffect(() => {
@@ -14,21 +34,20 @@ export default function AllLeaderboardScreen() {
       setLoading(true);
       try {
         const querySnapshot = await getDocs(collection(db, "scores"));
-        const teamMap: Record<string, any> = {};
+        const teams: any[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          if (!teamMap[data.teamId]) {
-            teamMap[data.teamId] = {
-              teamName: data.teamName,
-              overallScore: 0,
-              teamId: data.teamId,
-            };
-          }
-          teamMap[data.teamId].overallScore += data.overallScore;
+          teams.push({
+            ...data,
+            ...getBestScoreAndTime(data),
+          });
         });
-        const leaderboardArr = Object.values(teamMap).sort(
-          (a: any, b: any) => b.overallScore - a.overallScore
-        );
+        const leaderboardArr = teams
+          .filter((t) => t.bestScore !== null)
+          .sort((a, b) => {
+            if (b.bestScore !== a.bestScore) return b.bestScore - a.bestScore;
+            return a.bestTimeMs - b.bestTimeMs;
+          });
         setLeaderboard(leaderboardArr);
       } catch (e) {
         setLeaderboard([]);
@@ -40,21 +59,17 @@ export default function AllLeaderboardScreen() {
 
   // Pagination logic
   const totalRecords = leaderboard.length;
-  const totalPages = Math.ceil(totalRecords / recordsPerPage);
+  const totalPages = Math.max(1, Math.ceil(totalRecords / recordsPerPage));
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
   const currentRecords = leaderboard.slice(startIndex, endIndex);
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
 
   const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
   if (loading) {
@@ -71,6 +86,9 @@ export default function AllLeaderboardScreen() {
       <Text style={{ marginBottom: 10 }}>
         Showing {currentRecords.length} of {totalRecords} records
       </Text>
+      <Text style={{ color: "#888", fontSize: 14, marginBottom: 8 }}>
+        Ranking is based on the best score; if tied, the best time wins!
+      </Text>
       <FlatList
         data={currentRecords}
         keyExtractor={(item) => item.teamId}
@@ -78,7 +96,8 @@ export default function AllLeaderboardScreen() {
           <View style={styles.row}>
             <Text style={styles.rank}>{startIndex + index + 1}.</Text>
             <Text style={styles.teamName}>{item.teamName}</Text>
-            <Text style={styles.score}>{item.overallScore} pts</Text>
+            <Text style={styles.score}>{item.bestScore} pts</Text>
+            <Text style={styles.time}>{item.bestTime}</Text>
           </View>
         )}
         ListEmptyComponent={<Text>No scores yet!</Text>}
@@ -119,6 +138,7 @@ const styles = StyleSheet.create({
   rank: { width: 30, fontWeight: "bold" },
   teamName: { flex: 1 },
   score: { fontWeight: "bold" },
+  time: { marginLeft: 10, color: "#1976d2", fontWeight: "bold" },
   pagination: {
     flexDirection: "row",
     justifyContent: "space-between",
