@@ -285,11 +285,11 @@ const SignUp = () => {
                 <TextInput
                   style={styles.input}
                   secureTextEntry={!showPassword}
-                  value={password}
-                  placeholder="Password"
+                  value={confirmpassword}
+                  placeholder="Confirm Password"
                   placeholderTextColor={"#999999"}
                   autoCapitalize="none"
-                  onChangeText={(text) => setPassword(text)}
+                  onChangeText={(text) => setConfirmPassword(text)}
                 />
                 <TouchableOpacity
                   style={{
