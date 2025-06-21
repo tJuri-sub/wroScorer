@@ -2,6 +2,7 @@
   "expo": {
     "name": "ScoreBotics",
     "slug": "scoreBotics",
+    "owner": "jurituriano",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -25,10 +26,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-font",
-      "expo-web-browser"
-    ],
+    "plugins": ["expo-font", "expo-web-browser"],
     "extra": {
       "eas": {
         "projectId": "2ab0ad45-8a96-444b-93c7-a67796dec4af"
