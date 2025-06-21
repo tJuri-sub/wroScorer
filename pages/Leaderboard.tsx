@@ -6,9 +6,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import { getFirestore, collection, onSnapshot } from "firebase/firestore";
+import { getFirestore, collection, onSnapshot, getDocs } from "firebase/firestore";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import styles from "../components/styles/LeaderboardStyling";
+
 
 // Helper to parse "mm:ss:ms" to milliseconds
 function parseTimeString(timeStr: string) {

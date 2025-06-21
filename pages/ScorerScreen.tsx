@@ -17,7 +17,7 @@ import {
   collection,
   getDocs,
   doc,
-  updateDoc,
+  setDoc,
   query,
   where,
   orderBy,
@@ -119,48 +119,54 @@ export default function ScorerScreen({ navigation }: any) {
 
   // Modal submit
   const handleScoreSubmit = async () => {
-    if (!scoringTeam) return;
-    const mm = (inputMinute || "0").padStart(2, "0");
-    const ss = (inputSecond || "0").padStart(2, "0");
-    const ms = (inputMs || "0").padStart(2, "0");
-    const inputTime = `${mm}:${ss}:${ms}`;
-    if (!inputScore || !inputMinute || !inputSecond || !inputMs) {
-      Alert.alert("Please input both score and time.");
-      return;
+  if (!scoringTeam) return;
+  const mm = (inputMinute || "0").padStart(2, "0");
+  const ss = (inputSecond || "0").padStart(2, "0");
+  const ms = (inputMs || "0").padStart(2, "0");
+  const inputTime = `${mm}:${ss}:${ms}`;
+  if (!inputScore || !inputMinute || !inputSecond || !inputMs) {
+    Alert.alert("Please input both score and time.");
+    return;
+  }
+  try {
+    // Always include all relevant fields
+    const update: any = {
+      teamName: scoringTeam.teamName,
+      teamId: scoringTeam.id,
+      round1Score: scoringTeam.round1Score ?? null,
+      time1: scoringTeam.time1 ?? null,
+      round2Score: scoringTeam.round2Score ?? null,
+      time2: scoringTeam.time2 ?? null,
+    };
+    if (scoringStep === 1) {
+      update.round1Score = Number(inputScore);
+      update.time1 = inputTime;
+    } else {
+      update.round2Score = Number(inputScore);
+      update.time2 = inputTime;
     }
-    try {
-      const update: any = {};
-      if (scoringStep === 1) {
-        update.round1Score = Number(inputScore);
-        update.time1 = inputTime;
-        // Close modal after round 1 submit
-        setScoreModalVisible(false);
-        setScoringTeam(null);
-      } else {
-        update.round2Score = Number(inputScore);
-        update.time2 = inputTime;
-        setScoreModalVisible(false);
-        setScoringTeam(null);
-      }
-      // Update Firestore
-      const teamRef = doc(FIREBASE_DB, `categories/${judgeCategory}/teams`, scoringTeam.id);
-      await updateDoc(teamRef, update);
-      // Update local state
-      setTeams(teams =>
-        teams.map(t =>
-          t.id === scoringTeam.id ? { ...t, ...update } : t
-        )
-      );
-      // Reset inputs
-      setInputScore("");
-      setInputMinute("");
-      setInputSecond("");
-      setInputMs("");
-      // If you want to keep the modal open for round 2, remove setScoreModalVisible(false) from the round 1 block above.
-    } catch (e) {
-      Alert.alert("Error", "Failed to save score.");
-    }
-  };
+    setScoreModalVisible(false);
+    setScoringTeam(null);
+
+    // Update Firestore
+    const teamRef = doc(FIREBASE_DB, "scores", scoringTeam.id);
+    await setDoc(teamRef, update, { merge: true });
+
+    // Update local state
+    setTeams(teams =>
+      teams.map(t =>
+        t.id === scoringTeam.id ? { ...t, ...update } : t
+      )
+    );
+    // Reset inputs
+    setInputScore("");
+    setInputMinute("");
+    setInputSecond("");
+    setInputMs("");
+  } catch (e) {
+    Alert.alert("Error", "Failed to submit score. Please try again.");
+  }
+};
 
   if (loading) {
     return (
@@ -214,7 +220,9 @@ export default function ScorerScreen({ navigation }: any) {
                   { backgroundColor: getCardColor(status), opacity: isComplete ? 1 : 1 }
                 ]}
               >
+                <Text style={[styles.teamCardTitle]}>{item.teamNumber}</Text>
                 <Text style={styles.teamCardTitle}>{item.teamName}</Text>
+              
                 <View style={{ flexDirection: "row",  marginBottom: 2 }}>
                   <Text style={styles.teamData}>
                     Round 1:{" "}

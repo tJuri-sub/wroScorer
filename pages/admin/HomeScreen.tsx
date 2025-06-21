@@ -621,13 +621,12 @@ const categorydata = [
               <Text style={{ color: "#6c63ff" }}>See All</Text>
             </TouchableOpacity>
           </View>
-          <View style={{ height: screenHeight * 1 }}>
             <FlatList
               data={latestJudges}
               keyExtractor={(item) => item.id}
               scrollEnabled={true}
               // horizontal={true}
-              // showsHorizontalScrollIndicator={false}
+              showsVerticalScrollIndicator={true}
               renderItem={({ item }) => {
                 const categoryLabel = getCategoryDisplayLabel(item.category);
 
@@ -645,7 +644,6 @@ const categorydata = [
               ListEmptyComponent={<Text>No judge users found.</Text>}
             />
           </View>
-        </View>
         <TouchableOpacity
           style={styles.addJudgeButton}
           onPress={() => setModalVisible(true)}
