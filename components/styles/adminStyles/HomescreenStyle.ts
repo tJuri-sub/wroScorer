@@ -113,7 +113,7 @@ export default StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "center",
     gap: 10,
-   boxShadow: "0px 2px 4px rgba(0,0,0,0.2)",
+    boxShadow: "0px 2px 4px rgba(0,0,0,0.2)",
   },
 
   judgesImage: {
