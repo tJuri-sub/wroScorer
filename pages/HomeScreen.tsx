@@ -1,25 +1,30 @@
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   Text,
-  StyleSheet,
   View,
-  Button,
   Image,
   FlatList,
   Modal,
   Pressable,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import styles from "../components/styles/HomepageStyle";
+import styles from "../components/styles/judgeStyles/HomepageStyle";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useFonts, Inter_400Regular } from "@expo-google-fonts/inter";
 
 export default function HomeScreen({ navigation }: any) {
+  let [fontsLoaded] = useFonts({
+    Inter_400Regular,
+  });
+
   const user = FIREBASE_AUTH.currentUser;
   const [judgeName, setJudgeName] = useState<string | null>(null);
+
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [greeting, setGreeting] = useState<string>("Hello");
   const [robomissionModalVisible, setRobomissionModalVisible] = useState(false);
@@ -140,6 +145,143 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <SafeAreaProvider>
+      <ScrollView>
+        <SafeAreaView style={[styles.safeArea, { flex: 1 }]}>
+          <View style={{ flex: 1 }}>
+            <View style={styles.header}>
+              <View style={styles.profileCard}>
+                <Image
+                  source={{
+                    uri:
+                      avatarUrl ||
+                      `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+                        user?.email || "default"
+                      )}`,
+                  }}
+                  style={styles.avatar}
+                />
+                <View style={styles.nameContainer}>
+                  <Text style={styles.greeting}>{greeting}!</Text>
+                  <Text style={styles.name}>Judge {judgeName}</Text>
+                </View>
+              </View>
+              <Text style={styles.categoryAssigned}>
+                {getAssignedCategoryLabel()}
+              </Text>
+            </View>
+
+            <View style={styles.categoryContainer}>
+              <Text style={styles.categorytitleText}>
+                Competition Categories
+              </Text>
+            </View>
+
+            <FlatList
+              data={categorydata}
+              keyExtractor={(item) => item.label}
+              renderItem={({ item }) => {
+                const categoryColors: Record<string, string> = {
+                  Robomission: "#E79300", // Orange
+                  Robosports: "#35A22F", // Green
+                  "Future Innovators": "#B01956", // Pink
+                  "Future Engineers": "#0270AA", // Blue
+                };
+
+                const cardColor = categoryColors[item.label] || "#333"; // Default to black if no match
+                const [firstWord, ...restWords] = item.label.split(" ");
+                const rest = restWords.join(" ");
+
+                return (
+                  <Pressable
+                    style={[styles.card, { backgroundColor: cardColor }]}
+                    onPress={() => {
+                      if (item.label === "Robomission") {
+                        setRobomissionModalVisible(true);
+                      } else if (item.label === "Future Innovators") {
+                        setFutureInnovatorsModalVisible(true);
+                      } else {
+                        navigation.navigate("CategoryScreen", {
+                          category: item.value,
+                          label: item.label,
+                          judgeCategory,
+                        });
+                      }
+                    }}
+                  >
+                    {/* Add three dots icon */}
+                    <View style={styles.cardHeader}>
+                      <MaterialCommunityIcons
+                        name="dots-vertical"
+                        size={24}
+                        color="white"
+                      />
+                    </View>
+                    <Image source={item.image} style={styles.sideImage} />
+                    <View style={styles.ContainerCategory}>
+                      <Text>
+                        {item.label === "Robomission" ? (
+                          <>
+                            <Text
+                              style={styles.cardTextThin}
+                              adjustsFontSizeToFit
+                            >
+                              Robo
+                            </Text>
+                            <Text style={styles.cardText} adjustsFontSizeToFit>
+                              mission
+                            </Text>
+                          </>
+                        ) : item.label === "Robosports" ? (
+                          <>
+                            <Text
+                              style={styles.cardTextThin}
+                              adjustsFontSizeToFit
+                            >
+                              Robo
+                            </Text>
+                            <Text style={styles.cardText} adjustsFontSizeToFit>
+                              sports
+                            </Text>
+                          </>
+                        ) : (
+                          item.label.split(" ").map((word, index) => (
+                            <Text
+                              key={index}
+                              style={
+                                index === 0
+                                  ? styles.cardTextThin
+                                  : styles.cardText
+                              }
+                              numberOfLines={2}
+                              adjustsFontSizeToFit
+                            >
+                              {word}{" "}
+                            </Text>
+                          ))
+                        )}
+                      </Text>
+                      <Text
+                        style={styles.cardDesc}
+                        numberOfLines={3}
+                        adjustsFontSizeToFit
+                        ellipsizeMode="tail"
+                      >
+                        {item.categoryDesc}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              }}
+              contentContainerStyle={{ paddingBottom: 1 }}
+            />
+          </View>
+        </SafeAreaView>
+      </ScrollView>
+
+      {/* ================================= */}
+      {/* --------------  MODALS  -------------- */}
+      {/* ================================= */}
+
       {/* Robomission Modal */}
       <Modal
         visible={robomissionModalVisible}
@@ -293,146 +435,6 @@ export default function HomeScreen({ navigation }: any) {
           </View>
         </View>
       </Modal>
-
-      <SafeAreaProvider>
-        <View style={{ flex: 1 }}>
-          <SafeAreaView style={[styles.safeArea, { flex: 1 }]}>
-            <View style={styles.header}>
-              <Image
-                source={{
-                  uri:
-                    avatarUrl ||
-                    `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
-                      user?.email || "default"
-                    )}`,
-                }}
-                style={styles.avatar}
-              />
-              <View>
-                <Text style={styles.greeting}>{greeting}!</Text>
-                <Text style={styles.name}>{judgeName}</Text>
-                <Text style={styles.categoryAssigned}>
-                  {getAssignedCategoryLabel()}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.categorytitle}>
-              <Text style={styles.categorytitleText}>
-                Competition Categories
-              </Text>
-            </View>
-
-            {/* Ensure FlatList is scrollable */}
-            <View style={{ flex: 1 }}>
-              <FlatList
-                data={categorydata}
-                keyExtractor={(item) => item.label}
-                renderItem={({ item }) => {
-                  const categoryColors: Record<string, string> = {
-                    Robomission: "#E79300", // Orange
-                    Robosports: "#35A22F", // Green
-                    "Future Innovators": "#B01956", // Pink
-                    "Future Engineers": "#0270AA", // Blue
-                  };
-
-                  const cardColor = categoryColors[item.label] || "#333"; // Default to black if no match
-                  const [firstWord, ...restWords] = item.label.split(" ");
-                  const rest = restWords.join(" ");
-
-                  return (
-                    <Pressable
-                      style={[styles.card, { backgroundColor: cardColor }]}
-                      onPress={() => {
-                        if (item.label === "Robomission") {
-                          setRobomissionModalVisible(true);
-                        } else if (item.label === "Future Innovators") {
-                          setFutureInnovatorsModalVisible(true);
-                        } else {
-                          navigation.navigate("CategoryScreen", {
-                            category: item.value,
-                            label: item.label,
-                            judgeCategory,
-                          });
-                        }
-                      }}
-                    >
-                      {/* Add three dots icon */}
-                      <View style={styles.cardHeader}>
-                        <MaterialCommunityIcons
-                          name="dots-vertical"
-                          size={24}
-                          color="white"
-                        />
-                      </View>
-                      <Image source={item.image} style={styles.sideImage} />
-                      <View style={styles.text}>
-                        <Text>
-                          {item.label === "Robomission" ? (
-                            <>
-                              <Text
-                                style={styles.cardTextThin}
-                                adjustsFontSizeToFit
-                              >
-                                Robo
-                              </Text>
-                              <Text
-                                style={styles.cardText}
-                                adjustsFontSizeToFit
-                              >
-                                mission
-                              </Text>
-                            </>
-                          ) : item.label === "Robosports" ? (
-                            <>
-                              <Text
-                                style={styles.cardTextThin}
-                                adjustsFontSizeToFit
-                              >
-                                Robo
-                              </Text>
-                              <Text
-                                style={styles.cardText}
-                                adjustsFontSizeToFit
-                              >
-                                sports
-                              </Text>
-                            </>
-                          ) : (
-                            item.label.split(" ").map((word, index) => (
-                              <Text
-                                key={index}
-                                style={
-                                  index === 0
-                                    ? styles.cardTextThin
-                                    : styles.cardText
-                                } // Apply bold style to all words except the first
-                                numberOfLines={2}
-                                adjustsFontSizeToFit
-                              >
-                                {word}{" "}
-                              </Text>
-                            ))
-                          )}
-                        </Text>
-                        <Text
-                          style={styles.cardDesc}
-                          numberOfLines={3}
-                          adjustsFontSizeToFit
-                          ellipsizeMode="tail"
-                        >
-                          {item.categoryDesc}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  );
-                }}
-                contentContainerStyle={{ paddingBottom: 1 }} // Add padding for better scrolling experience
-              />
-            </View>
-          </SafeAreaView>
-        </View>
-      </SafeAreaProvider>
     </SafeAreaProvider>
   );
 }

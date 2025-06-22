@@ -6,10 +6,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import { getFirestore, collection, onSnapshot, getDocs } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  onSnapshot,
+  getDocs,
+} from "firebase/firestore";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-import styles from "../components/styles/LeaderboardStyling";
-
+import styles from "../components/styles/judgeStyles/LeaderboardStyling";
 
 // Helper to parse "mm:ss:ms" to milliseconds
 function parseTimeString(timeStr: string) {
@@ -125,7 +129,9 @@ export default function Leaderboard() {
         <TouchableOpacity
           onPress={() => navigation.navigate("AllLeaderboardScreen")}
         >
-          <Text style={{ color: "blue", marginBottom: 10 }}>See All Ranking</Text>
+          <Text style={{ color: "blue", marginBottom: 10 }}>
+            See All Ranking
+          </Text>
         </TouchableOpacity>
         {leaderboard.length === 0 ? (
           <Text>No scores yet!</Text>

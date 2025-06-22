@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
-import styles from "../components/styles/CategoryStyling";
+import styles from "../components/styles/judgeStyles/CategoryStyling";
 import { AntDesign, Feather } from "@expo/vector-icons";
 
 export default function CategoryScreenJudge({ route, navigation }: any) {

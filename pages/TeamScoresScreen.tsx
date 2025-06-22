@@ -1,8 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
-import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
-import styles from "../components/styles/CategoryStyling";
-
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import styles from "../components/styles/judgeStyles/CategoryStyling";
 
 export default function TeamScoresScreen({ route, navigation }: any) {
   const { team, category } = route.params;
@@ -47,7 +60,10 @@ export default function TeamScoresScreen({ route, navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Scores for {team.teamName}</Text>
@@ -61,9 +77,12 @@ export default function TeamScoresScreen({ route, navigation }: any) {
             <Text style={styles.scoreText}>Time 1: {item.time1}</Text>
             <Text style={styles.scoreText}>Round 2: {item.round2Score}</Text>
             <Text style={styles.scoreText}>Time 2: {item.time2}</Text>
-            <Text style={styles.scoreText}>Overall Score: {item.overallScore}</Text>
             <Text style={styles.scoreText}>
-              Time: {new Date(item.timestamp).toUTCString().replace("GMT", "PHT")}
+              Overall Score: {item.overallScore}
+            </Text>
+            <Text style={styles.scoreText}>
+              Time:{" "}
+              {new Date(item.timestamp).toUTCString().replace("GMT", "PHT")}
             </Text>
             <Text style={styles.scoreText}>Scored by: {item.judge}</Text>
           </View>

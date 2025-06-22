@@ -52,17 +52,16 @@ function getRandomAvatar(username: string): string {
   )}`;
 }
 
-
 export default function HomeScreenAdmin({ navigation }: any) {
   const [modalVisible, setModalVisible] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [category, setCategory] = useState(null);
-  type CategoryType = typeof categorydata[number];
+  type CategoryType = (typeof categorydata)[number];
   const [subcategory, setSubcategory] = useState<string | null>(null);
   const [robomissionModalVisible, setRobomissionModalVisible] = useState(false);
-    const [futureInnovatorsModalVisible, setFutureInnovatorsModalVisible] =
-      useState(false);
+  const [futureInnovatorsModalVisible, setFutureInnovatorsModalVisible] =
+    useState(false);
   const [confirmpassword, setConfirmPassword] = useState("");
   interface JudgeUser {
     id: string;
@@ -84,7 +83,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
   const db = getFirestore();
   const user = FIREBASE_AUTH.currentUser;
 
-const categorydata = [
+  const categorydata = [
     {
       label: "Robomission",
       value: "robomission",
@@ -124,26 +123,30 @@ const categorydata = [
   ];
 
   function getCategoryDisplayLabel(categoryValue: string) {
-  for (const mainCat of categorydata) {
-    if (mainCat.value === categoryValue) {
-      return mainCat.label;
-    }
-    if (mainCat.subcategories) {
-      const sub = mainCat.subcategories.find(subcat => subcat.value === categoryValue);
-      if (sub) {
-        return `${mainCat.label} ${sub.label}`;
+    for (const mainCat of categorydata) {
+      if (mainCat.value === categoryValue) {
+        return mainCat.label;
+      }
+      if (mainCat.subcategories) {
+        const sub = mainCat.subcategories.find(
+          (subcat) => subcat.value === categoryValue
+        );
+        if (sub) {
+          return `${mainCat.label} ${sub.label}`;
+        }
       }
     }
+    return categoryValue;
   }
-  return categoryValue;
-}
 
-    useFocusEffect(
+  useFocusEffect(
     React.useCallback(() => {
       const fetchAdminAvatar = async () => {
         const user = FIREBASE_AUTH.currentUser;
         if (user && user.email) {
-          const userDoc = await getDoc(doc(FIREBASE_DB, "admin-users", user.email));
+          const userDoc = await getDoc(
+            doc(FIREBASE_DB, "admin-users", user.email)
+          );
           if (userDoc.exists()) {
             const data = userDoc.data();
             setAvatarUrl(
@@ -211,7 +214,8 @@ const categorydata = [
           username: doc.data().username || "",
           category: doc.data().category || "",
           email: doc.data().email || "",
-          avatarUrl: doc.data().avatarUrl || getRandomAvatar(doc.data().username || ""),
+          avatarUrl:
+            doc.data().avatarUrl || getRandomAvatar(doc.data().username || ""),
           createdAt: doc.data().createdAt, // Add createdAt from Firestore
         })) as JudgeUser[];
         setJudgeUsers(users);
@@ -241,8 +245,9 @@ const categorydata = [
       if (
         !category ||
         (["Robomission", "Future Innovators"].includes(
-          (categorydata.find((cat: any) => cat.value === category)?.label || "")
-        ) && !subcategory)
+          categorydata.find((cat: any) => cat.value === category)?.label || ""
+        ) &&
+          !subcategory)
       ) {
         Alert.alert("Error", "Please select a category and subcategory!");
         return;
@@ -263,7 +268,6 @@ const categorydata = [
         password
       );
 
-      
       // Update the user's profile with the avatar URL
       const avatarUrl = getRandomAvatar(username);
 
@@ -299,7 +303,7 @@ const categorydata = [
       setPassword("");
       setConfirmPassword("");
       setCategory(null);
-      setSubcategory(null); 
+      setSubcategory(null);
       setModalVisible(false);
 
       // Refresh the judge users list
@@ -309,7 +313,8 @@ const categorydata = [
         username: doc.data().username || "",
         category: doc.data().category || "",
         email: doc.data().email || "",
-        avatarUrl: doc.data().avatarUrl || getRandomAvatar(doc.data().username || ""),
+        avatarUrl:
+          doc.data().avatarUrl || getRandomAvatar(doc.data().username || ""),
       })) as JudgeUser[];
       setJudgeUsers(users);
     } catch (error) {
@@ -328,13 +333,12 @@ const categorydata = [
   const snapInterval = cardWidth + cardGap;
 
   const sortedJudges = [...judgeUsers].sort(
-  (a, b) => b.createdAt?.toDate?.() - a.createdAt?.toDate?.()
+    (a, b) => b.createdAt?.toDate?.() - a.createdAt?.toDate?.()
   );
   const latestJudges = sortedJudges.slice(0, 5);
 
   return (
     <SafeAreaProvider>
-
       {/* Robomission Modal */}
       <Modal
         visible={robomissionModalVisible}
@@ -365,7 +369,6 @@ const categorydata = [
                   navigation.navigate("Category", {
                     category: sub.value,
                     label: `Robomission ${sub.label}`,
-                    
                   });
                 }}
               >
@@ -408,7 +411,6 @@ const categorydata = [
                   navigation.navigate("Category", {
                     category: sub.value,
                     label: `Future Innovators ${sub.label}`,
-                   
                   });
                 }}
               >
@@ -451,11 +453,11 @@ const categorydata = [
               decelerationRate="fast"
               renderItem={({ item }) => {
                 const categoryColors: Record<string, string> = {
-                    Robomission: "#E79300", // Orange
-                    Robosports: "#35A22F", // Green
-                    "Future Innovators": "#B01956", // Pink
-                    "Future Engineers": "#0270AA", // Blue
-                  };
+                  Robomission: "#E79300", // Orange
+                  Robosports: "#35A22F", // Green
+                  "Future Innovators": "#B01956", // Pink
+                  "Future Engineers": "#0270AA", // Blue
+                };
 
                 const cardColor = categoryColors[item.label] || "#333";
                 const [firstWord, ...restWords] = item.label.split(" ");
@@ -464,25 +466,25 @@ const categorydata = [
                 return (
                   <Pressable
                     style={[styles.card, { backgroundColor: cardColor }]}
-                    onPress={() =>{
+                    onPress={() => {
                       if (item.label === "Robomission") {
-                          setRobomissionModalVisible(true);
-                        } else if (item.label === "Future Innovators") {
-                          setFutureInnovatorsModalVisible(true);
-                        } else {
-                          navigation.navigate("Category", {
-                            category: item.value,
-                            label: item.label,
-                          });
-                        }
+                        setRobomissionModalVisible(true);
+                      } else if (item.label === "Future Innovators") {
+                        setFutureInnovatorsModalVisible(true);
+                      } else {
+                        navigation.navigate("Category", {
+                          category: item.value,
+                          label: item.label,
+                        });
+                      }
                     }}
                   >
                     <View style={styles.cardHeader}>
-                        <MaterialCommunityIcons
-                          name="dots-vertical"
-                          size={24}
-                          color="white"
-                        />
+                      <MaterialCommunityIcons
+                        name="dots-vertical"
+                        size={24}
+                        color="white"
+                      />
                     </View>
                     <Image source={item.image} style={styles.sideImage} />
                     <View style={styles.text}>
@@ -525,10 +527,6 @@ const categorydata = [
             <View style={styles.modal}>
               <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
-                  {/* <Image
-                    source={require("../../assets/images/user.png")}
-                    style={styles.modalImage}
-                  /> */}
                   <Text style={styles.headerTextModal}>
                     Create Judge Account
                   </Text>
@@ -579,12 +577,14 @@ const categorydata = [
                     }}
                   />
                   {["Robomission", "Future Innovators"].includes(
-                    categorydata.find((cat: any) => cat.value === category)?.label || ""
+                    categorydata.find((cat: any) => cat.value === category)
+                      ?.label || ""
                   ) && (
                     <Dropdown
                       style={styles.dropdown}
                       data={
-                        categorydata.find((cat: any) => cat.value === category)?.subcategories || []
+                        categorydata.find((cat: any) => cat.value === category)
+                          ?.subcategories || []
                       }
                       labelField="label"
                       valueField="value"
@@ -615,35 +615,47 @@ const categorydata = [
           </Modal>
 
           {/* Manage Judge Users */}
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 8,
+            }}
+          >
             <Text style={styles.headerTexts}>Manage Judges</Text>
             <TouchableOpacity onPress={() => navigation.navigate("Judges")}>
               <Text style={{ color: "#6c63ff" }}>See All</Text>
             </TouchableOpacity>
           </View>
-            <FlatList
-              data={latestJudges}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={true}
-              // horizontal={true}
-              showsVerticalScrollIndicator={true}
-              renderItem={({ item }) => {
-                const categoryLabel = getCategoryDisplayLabel(item.category);
+          <FlatList
+            data={latestJudges}
+            keyExtractor={(item) => item.id}
+            scrollEnabled={true}
+            // horizontal={true}
+            showsVerticalScrollIndicator={true}
+            renderItem={({ item }) => {
+              const categoryLabel = getCategoryDisplayLabel(item.category);
 
-                return (
-                  <View style={styles.judgesCard}>
-                   <Image source={{ uri: item.avatarUrl || getRandomAvatar(item.username) }} style={styles.judgesImage} />
-                    <View>
-                      <Text style={styles.judgesName}>{item.username}</Text>
-                      <Text style={styles.judgesEmail}>{item.email}</Text>
-                      <Text style={styles.judgesCategory}>{categoryLabel}</Text>
-                    </View>
+              return (
+                <View style={styles.judgesCard}>
+                  <Image
+                    source={{
+                      uri: item.avatarUrl || getRandomAvatar(item.username),
+                    }}
+                    style={styles.judgesImage}
+                  />
+                  <View>
+                    <Text style={styles.judgesName}>{item.username}</Text>
+                    <Text style={styles.judgesEmail}>{item.email}</Text>
+                    <Text style={styles.judgesCategory}>{categoryLabel}</Text>
                   </View>
-                );
-              }}
-              ListEmptyComponent={<Text>No judge users found.</Text>}
-            />
-          </View>
+                </View>
+              );
+            }}
+            ListEmptyComponent={<Text>No judge users found.</Text>}
+          />
+        </View>
         <TouchableOpacity
           style={styles.addJudgeButton}
           onPress={() => setModalVisible(true)}
