@@ -559,9 +559,6 @@ export default function HomeScreenAdmin({ navigation }: any) {
                   />
                   <Dropdown
                     style={styles.dropdown}
-                    // placeholderStyle={styles.placeholderStyle}
-                    // selectedTextStyle={styles.selectedTextStyle}
-                    // inputSearchStyle={styles.inputSearchStyle}
                     data={categorydata}
                     search
                     maxHeight={300}

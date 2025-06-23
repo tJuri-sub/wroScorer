@@ -42,7 +42,6 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
         );
         const teamList = querySnapshot.docs.map((doc) => {
           const data = doc.data();
-          console.log("Fetched Team Data:", data); // Debugging log
           return {
             id: doc.id,
             category: category,

@@ -22,9 +22,14 @@ import {
   where,
   orderBy,
 } from "firebase/firestore";
+import { useFonts, Inter_400Regular } from "@expo-google-fonts/inter";
 import styles from "../components/styles/judgeStyles/ScorerStyling";
 
 export default function ScorerScreen({ navigation }: any) {
+  let [fontsLoaded] = useFonts({
+    Inter_400Regular,
+  });
+
   const user = FIREBASE_AUTH.currentUser;
   const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
   const [teams, setTeams] = useState<any[]>([]);
@@ -181,37 +186,20 @@ export default function ScorerScreen({ navigation }: any) {
 
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-      <View>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            marginHorizontal: 16,
-            marginTop: 10,
-            marginBottom: 10,
-          }}
-        >
-          <Text style={styles.header}>Score Teams</Text>
-          <Text style={{ marginLeft: 25, color: "#888", fontSize: 15 }}>
-            Tap a team card to score
-          </Text>
+      <View style={{ padding: 15 }}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Score Teams</Text>
+          <Text style={styles.headerSubtitle}>Tap a team card to score</Text>
         </View>
-        <View style={{ marginHorizontal: 16, marginBottom: 10 }}>
-          <TextInput
-            style={{
-              backgroundColor: "#f3f3f3",
-              borderWidth: 1,
-              borderColor: "#A7A5AC",
-              borderRadius: 10,
-              paddingVertical: 10,
-              paddingHorizontal: 16,
-              fontSize: 16,
-            }}
-            placeholder="Search team name..."
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View>
+        {/* Search Bar */}
+        <TextInput
+          style={styles.searchbar}
+          placeholder="Search team name..."
+          placeholderTextColor="#999999"
+          value={search}
+          onChangeText={setSearch}
+        />
+        {/* Scoring Team Card */}
         <FlatList
           data={teams.filter((team) =>
             team.teamName?.toLowerCase().includes(search.toLowerCase())
@@ -235,7 +223,11 @@ export default function ScorerScreen({ navigation }: any) {
                   },
                 ]}
               >
-                <Text style={[styles.teamCardTitle]}>{item.teamNumber}</Text>
+                <Text style={styles.teamCardTeamNumber}>
+                  Team no.:{" "}
+                  <Text style={{ fontWeight: "bold" }}> {item.teamNumber}</Text>
+                </Text>
+
                 <Text style={styles.teamCardTitle}>{item.teamName}</Text>
 
                 <View style={{ flexDirection: "row", marginBottom: 2 }}>
@@ -251,7 +243,6 @@ export default function ScorerScreen({ navigation }: any) {
                       {item.round1Score ?? "—"}
                     </Text>
                   </Text>
-                  <View style={{ width: 24 }} /> {/* Spacer for more space */}
                   <Text style={styles.teamData}>
                     Time 1:{" "}
                     <Text
@@ -312,7 +303,6 @@ export default function ScorerScreen({ navigation }: any) {
           ListEmptyComponent={
             <Text style={{ margin: 16 }}>No teams found.</Text>
           }
-          contentContainerStyle={{ padding: 8 }}
         />
 
         {/* Score Calculator Modal */}

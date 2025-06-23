@@ -4,41 +4,78 @@ export default StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f4f4f4",
-    padding: 12,
+    paddingHorizontal: 12,
   },
-  
-   centered: {
+
+  centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
 
   header: {
-    fontSize: 24,
+    marginHorizontal: 3,
+    marginTop: 10,
+    marginBottom: 10,
+    gap: 10,
+  },
+
+  headerTitle: {
+    fontSize: 20,
     fontWeight: "bold",
-    margin: 10,
-    textAlign: "left",
+    fontFamily: "inter_400Regular",
+  },
+
+  headerSubtitle: {
+    fontSize: 16,
+    fontFamily: "inter_400Regular",
+    color: "rgba(0,0,0,0.5)",
+  },
+
+  searchbar: {
+    backgroundColor: "#f3f3f3",
+    borderWidth: 1,
+    borderColor: "#919191",
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 16,
+    marginBottom: 20,
+    marginHorizontal: 3,
   },
 
   teamCard: {
-    borderRadius: 14,
+    borderRadius: 10,
     padding: 16,
     marginBottom: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
+    boxShadow: "0px 3px 4px rgba(0,0,0,0.5)",
+    borderWidth: 1,
+    borderColor: "#919191",
+    marginHorizontal: 3,
+  },
+
+  teamCardTeamNumber: {
+    fontSize: 16,
+    fontFamily: "inter_400Regular",
+  },
+
+  teamCardTeamNumberHighlight: {
+    fontWeight: "bold",
+    fontSize: 18,
+    fontFamily: "inter_400Regular",
   },
 
   teamCardTitle: {
     fontWeight: "bold",
-    fontSize: 18,
-    marginBottom: 4,
+    fontSize: 20,
+    marginTop: 10,
+    marginBottom: 10,
+    fontFamily: "inter_400Regular",
   },
 
   teamData: {
     fontSize: 16,
     marginBottom: 4,
+    fontFamily: "inter_400Regular",
   },
 
   modalOverlay: {
@@ -129,6 +166,5 @@ export default StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
-  }
-
+  },
 });

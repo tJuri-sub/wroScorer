@@ -16,7 +16,7 @@ export default StyleSheet.create({
     left: 20,
     backgroundColor: "#fff",
     borderRadius: 4,
-    boxShadow: " 0px 2px 3px rgba(0,0,0,0.4)",
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.4)",
   },
 
   dropdownItem: {
@@ -74,7 +74,7 @@ export default StyleSheet.create({
     borderRadius: 5,
     alignItems: "center",
     width: "100%",
-    elevation: 2,
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.3)",
   },
 
   backButton: {
@@ -191,7 +191,7 @@ export default StyleSheet.create({
     flexDirection: "row",
     marginBottom: 16,
     overflow: "hidden",
-    elevation: 2,
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.3)",
   },
 
   cardHeader: {
@@ -210,7 +210,6 @@ export default StyleSheet.create({
     height: "100%",
     aspectRatio: 1 / 1,
     borderRadius: 10,
-    resizeMode: "contain",
   },
 
   ContainerCategory: {
@@ -266,10 +265,7 @@ export default StyleSheet.create({
     padding: 20,
     width: 300,
     alignItems: "center",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    boxShadow: "0px 3px 4px rgba(0,0,0,0.3)",
   },
 
   modalCloseIcon: {
@@ -295,10 +291,10 @@ export default StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
-    marginVertical: 5, // Space between buttons
+    marginVertical: 5,
     alignItems: "center",
-    width: "100%", // Full width button
-    elevation: 2, // Add shadow for Android
+    width: "100%",
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.3)",
   },
 
   modalButtonTextCat: {
