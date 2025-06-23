@@ -1,35 +1,9 @@
 import { StyleSheet } from "react-native";
 
 export default StyleSheet.create({
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 25,
-    paddingHorizontal: 15,
-    backgroundColor: "#fff",
-    elevation: 4,
-    shadowColor: "#000", // For iOS shadow
-    shadowOffset: { width: 0, height: 2 }, // For iOS
-    shadowOpacity: 0.1, // For iOS shadow
-  },
-
-  topBarText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#432344",
-    textAlign: "center",
-  },
-
-  menuIcon: {
-    position: "absolute",
-    left: 20,
-    top: 25,
-  },
-
   modalmenuOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.1)",
+    backgroundColor: "rgba(0,0,0,0.2)",
     justifyContent: "flex-start",
     alignItems: "flex-start",
     paddingTop: 60,
@@ -37,22 +11,18 @@ export default StyleSheet.create({
   },
 
   dropdownContent: {
+    position: "absolute",
+    top: 62,
+    left: 20,
     backgroundColor: "#fff",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    borderRadius: 4,
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.4)",
   },
 
   dropdownItem: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginBottom: 5,
-    backgroundColor: "#fff",
+    paddingVertical: 6,
+    paddingHorizontal: 25,
+    backgroundColor: "#f3f3f3",
   },
 
   dropdownItemPressed: {
@@ -62,7 +32,6 @@ export default StyleSheet.create({
   dropdownText: {
     fontSize: 16,
     color: "#432344",
-    fontWeight: "bold",
     textAlign: "center",
   },
 
@@ -104,8 +73,8 @@ export default StyleSheet.create({
     marginTop: 10,
     borderRadius: 5,
     alignItems: "center",
-    width: "100%", // Adjust width to fit two buttons side by side
-    elevation: 2,
+    width: "100%",
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.3)",
   },
 
   backButton: {
@@ -127,7 +96,7 @@ export default StyleSheet.create({
     color: "#fff",
     fontWeight: "semibold",
     letterSpacing: 1,
-    fontFamily: "Roboto",
+    fontFamily: "inter_400Regular",
   },
 
   safeArea: {
@@ -141,39 +110,51 @@ export default StyleSheet.create({
   },
 
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
+    flexDirection: "column",
     marginBottom: 20,
   },
 
+  profileCard: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderColor: "rgb(150, 150, 150)",
+    paddingBottom: 10,
+    marginBottom: 5,
+  },
+
   avatar: {
-    width: 70,
-    height: 70,
+    width: 60,
+    height: 60,
     borderRadius: 40,
-    marginRight: 20,
+    marginRight: 15,
     backgroundColor: "#eee",
+    borderWidth: 1,
+  },
+
+  nameContainer: {
+    justifyContent: "center",
+    gap: 5,
   },
 
   greeting: {
-    fontSize: 20,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "bold",
     color: "#333",
-    fontFamily: "Roboto",
+    fontFamily: "Inter_400Regular",
   },
 
   name: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
     color: "#852B88",
-    fontFamily: "Roboto",
+    fontFamily: "Inter_400Regular",
   },
 
   categoryAssigned: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#852B88",
-    marginTop: 2,
     fontWeight: "bold",
+    fontFamily: "Inter_400Regular",
   },
 
   container: {
@@ -183,20 +164,19 @@ export default StyleSheet.create({
     marginHorizontal: 20,
   },
 
-  categorytitle: {
+  categoryContainer: {
     marginTop: 10,
     marginBottom: 10,
     paddingHorizontal: 10,
     width: "100%",
     justifyContent: "center",
-    fontFamily: "Roboto",
     color: "#432344",
   },
 
   categorytitleText: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "bold",
-    fontFamily: "Roboto",
+    fontFamily: "Inter_400Regular",
     color: "#432344",
     marginBottom: 10,
     textAlign: "center",
@@ -211,7 +191,7 @@ export default StyleSheet.create({
     flexDirection: "row",
     marginBottom: 16,
     overflow: "hidden",
-    elevation: 2,
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.3)",
   },
 
   cardHeader: {
@@ -230,10 +210,9 @@ export default StyleSheet.create({
     height: "100%",
     aspectRatio: 1 / 1,
     borderRadius: 10,
-    resizeMode: "contain",
   },
 
-  text: {
+  ContainerCategory: {
     flex: 1,
     padding: 10,
     marginLeft: 5,
@@ -249,7 +228,7 @@ export default StyleSheet.create({
     textTransform: "uppercase",
     fontWeight: "ultralight",
     letterSpacing: 3,
-    fontFamily: "Roboto",
+    fontFamily: "Inter_400Regular",
   },
 
   cardText: {
@@ -258,14 +237,14 @@ export default StyleSheet.create({
     textTransform: "uppercase",
     fontWeight: "bold",
     letterSpacing: 3,
-    fontFamily: "Roboto",
+    fontFamily: "Inter_400Regular",
   },
 
   cardDesc: {
     fontSize: 12,
     color: "#fff",
     marginVertical: 4,
-    fontFamily: "Roboto",
+    fontFamily: "Inter_400Regular",
     letterSpacing: 1.5,
     flexWrap: "wrap",
     textAlign: "left",
@@ -286,10 +265,7 @@ export default StyleSheet.create({
     padding: 20,
     width: 300,
     alignItems: "center",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    boxShadow: "0px 3px 4px rgba(0,0,0,0.3)",
   },
 
   modalCloseIcon: {
@@ -300,14 +276,14 @@ export default StyleSheet.create({
   },
 
   modalTitleCat: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
     color: "#432344",
     marginBottom: 20,
     textAlign: "center",
     textTransform: "uppercase",
     letterSpacing: 1,
-    fontFamily: "Roboto",
+    fontFamily: "inter_400Regular",
   },
 
   modalButtonCat: {
@@ -315,10 +291,10 @@ export default StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
-    marginVertical: 5, // Space between buttons
+    marginVertical: 5,
     alignItems: "center",
-    width: "100%", // Full width button
-    elevation: 2, // Add shadow for Android
+    width: "100%",
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.3)",
   },
 
   modalButtonTextCat: {

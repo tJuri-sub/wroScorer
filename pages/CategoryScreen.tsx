@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
-import styles from "../components/styles/CategoryStyling";
+import styles from "../components/styles/judgeStyles/CategoryStyling";
 import { AntDesign, Feather } from "@expo/vector-icons";
 
 export default function CategoryScreenJudge({ route, navigation }: any) {
@@ -42,7 +42,6 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
         );
         const teamList = querySnapshot.docs.map((doc) => {
           const data = doc.data();
-          console.log("Fetched Team Data:", data); // Debugging log
           return {
             id: doc.id,
             category: category,
