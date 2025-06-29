@@ -9,6 +9,7 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
@@ -18,6 +19,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Dimensions } from "react-native";
 import styles from "../../components/styles/adminStyles/HomescreenStyle";
+import { useFonts, Inter_400Regular } from "@expo-google-fonts/inter";
 
 import { FIREBASE_AUTH, FIREBASE_DB } from "../../firebaseconfig";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
@@ -53,6 +55,10 @@ function getRandomAvatar(username: string): string {
 }
 
 export default function HomeScreenAdmin({ navigation }: any) {
+  let [fontsLoaded] = useFonts({
+    Inter_400Regular,
+  });
+
   const [modalVisible, setModalVisible] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -339,6 +345,248 @@ export default function HomeScreenAdmin({ navigation }: any) {
 
   return (
     <SafeAreaProvider>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView>
+          <View style={styles.container}>
+            {/* Header with avatar, greeting, and name/email */}
+            <View style={styles.header}>
+              <Image
+                source={{
+                  uri:
+                    avatarUrl ||
+                    `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+                      user?.email || "default"
+                    )}`,
+                }}
+                style={styles.avatar}
+              />
+              <View>
+                <Text style={styles.greeting}>{greeting}!</Text>
+                <Text style={styles.email}>{adminName}</Text>
+              </View>
+            </View>
+
+            <Text style={styles.headerTexts}>Manage Team Categories</Text>
+
+            {/* Manage Categories */}
+            <View>
+              <FlatList
+                data={categorydata}
+                keyExtractor={(item) => item.label}
+                decelerationRate="fast"
+                renderItem={({ item }) => {
+                  const categoryColors: Record<string, string> = {
+                    Robomission: "#E79300", // Orange
+                    Robosports: "#35A22F", // Green
+                    "Future Innovators": "#B01956", // Pink
+                    "Future Engineers": "#0270AA", // Blue
+                  };
+
+                  const cardColor = categoryColors[item.label] || "#333";
+                  const [firstWord, ...restWords] = item.label.split(" ");
+                  const rest = restWords.join(" ");
+
+                  return (
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.card,
+                        { backgroundColor: cardColor },
+                        pressed && styles.buttonPressed,
+                      ]}
+                      onPress={() => {
+                        if (item.label === "Robomission") {
+                          setRobomissionModalVisible(true);
+                        } else if (item.label === "Future Innovators") {
+                          setFutureInnovatorsModalVisible(true);
+                        } else {
+                          navigation.navigate("Category", {
+                            category: item.value,
+                            label: item.label,
+                          });
+                        }
+                      }}
+                    >
+                      <View style={styles.cardHeader}>
+                        <MaterialCommunityIcons
+                          name="dots-vertical"
+                          size={24}
+                          color="white"
+                        />
+                      </View>
+                      <Image source={item.image} style={styles.sideImage} />
+                      <View style={styles.text}>
+                        <Text>
+                          <Text style={styles.cardTextThin}>{firstWord}</Text>
+                          <Text
+                            style={styles.cardText}
+                            numberOfLines={2}
+                            ellipsizeMode="tail"
+                          >
+                            {rest}
+                          </Text>
+                        </Text>
+                        <Text
+                          style={styles.cardDesc}
+                          numberOfLines={2}
+                          ellipsizeMode="tail"
+                        >
+                          {item.categoryDesc}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                }}
+                ListEmptyComponent={<Text>No categories found.</Text>}
+              />
+            </View>
+
+            {/* Manage Judge Users */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 8,
+              }}
+            >
+              <Text style={styles.headerTexts}>Manage Judges</Text>
+              <TouchableOpacity onPress={() => navigation.navigate("Judges")}>
+                <Text style={{ color: "#6c63ff" }}>See All</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={latestJudges}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={true}
+              // horizontal={true}
+              showsVerticalScrollIndicator={true}
+              renderItem={({ item }) => {
+                const categoryLabel = getCategoryDisplayLabel(item.category);
+
+                return (
+                  <View style={styles.judgesCard}>
+                    <Image
+                      source={{
+                        uri: item.avatarUrl || getRandomAvatar(item.username),
+                      }}
+                      style={styles.judgesImage}
+                    />
+                    <View>
+                      <Text style={styles.judgesName}>{item.username}</Text>
+                      <Text style={styles.judgesEmail}>{item.email}</Text>
+                      <Text style={styles.judgesCategory}>{categoryLabel}</Text>
+                    </View>
+                  </View>
+                );
+              }}
+              ListEmptyComponent={<Text>No judge users found.</Text>}
+            />
+          </View>
+        </ScrollView>
+        <TouchableOpacity
+          style={styles.addJudgeButton}
+          onPress={() => setModalVisible(true)}
+        >
+          <AntDesign name="plus" size={25} color="white" />
+        </TouchableOpacity>
+      </SafeAreaView>
+
+      {/* Modal for Creating Judge Account */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        aria-hidden={false}
+        onRequestClose={() => {
+          Alert.alert("Modal has been closed.");
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.modal}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.headerTextModal}>Create Judge Account</Text>
+              <Text style={styles.headerSubTextModal}>
+                Create Judge's account and edit access
+              </Text>
+            </View>
+
+            <View style={styles.formContainer}>
+              <TextInput
+                placeholder="Name"
+                autoCapitalize="none"
+                onChangeText={(text) => setUsername(text)}
+                style={styles.textinput}
+              />
+
+              <TextInput
+                placeholder="Password"
+                secureTextEntry={true}
+                autoCapitalize="none"
+                onChangeText={(text) => setPassword(text)}
+                style={styles.textinput}
+              />
+              <TextInput
+                placeholder="Confirm Password"
+                secureTextEntry={true}
+                autoCapitalize="none"
+                onChangeText={(text) => setConfirmPassword(text)}
+                style={styles.textinput}
+              />
+              <Dropdown
+                style={styles.dropdown}
+                data={categorydata}
+                search
+                maxHeight={300}
+                labelField="label"
+                valueField="value"
+                placeholder="Select Category"
+                searchPlaceholder="Search..."
+                value={category}
+                onChange={(item) => {
+                  setCategory(item.value);
+                  // Reset subcategory if not Robomission or Future Innovators
+                  if (!item.subcategories) setSubcategory(null);
+                }}
+              />
+              {["Robomission", "Future Innovators"].includes(
+                categorydata.find((cat: any) => cat.value === category)
+                  ?.label || ""
+              ) && (
+                <Dropdown
+                  style={styles.dropdown}
+                  data={
+                    categorydata.find((cat: any) => cat.value === category)
+                      ?.subcategories || []
+                  }
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Subcategory"
+                  value={subcategory}
+                  onChange={(item) => setSubcategory(item.value)}
+                />
+              )}
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <Pressable
+                style={styles.modalCreateButton}
+                onPress={createJudgeAccount}
+              >
+                <Text style={styles.buttonText}>Create</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.modalCancelButton}
+                onPress={() => setModalVisible(!modalVisible)}
+              >
+                <Text>Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Robomission Modal */}
       <Modal
         visible={robomissionModalVisible}
@@ -420,246 +668,6 @@ export default function HomeScreenAdmin({ navigation }: any) {
           </View>
         </View>
       </Modal>
-
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          {/* Header with avatar, greeting, and name/email */}
-          <View style={styles.header}>
-            <Image
-              source={{
-                uri:
-                  avatarUrl ||
-                  `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
-                    user?.email || "default"
-                  )}`,
-              }}
-              style={styles.avatar}
-            />
-            <View>
-              <Text style={styles.greeting}>{greeting}!</Text>
-              <Text style={styles.name}>{adminName}</Text>
-            </View>
-          </View>
-
-          <Text style={styles.headerTexts}>Manage Team Categories</Text>
-
-          {/* Manage Categories */}
-          <View>
-            <FlatList
-              data={categorydata}
-              keyExtractor={(item) => item.label}
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}
-              decelerationRate="fast"
-              renderItem={({ item }) => {
-                const categoryColors: Record<string, string> = {
-                  Robomission: "#E79300", // Orange
-                  Robosports: "#35A22F", // Green
-                  "Future Innovators": "#B01956", // Pink
-                  "Future Engineers": "#0270AA", // Blue
-                };
-
-                const cardColor = categoryColors[item.label] || "#333";
-                const [firstWord, ...restWords] = item.label.split(" ");
-                const rest = restWords.join(" ");
-
-                return (
-                  <Pressable
-                    style={[styles.card, { backgroundColor: cardColor }]}
-                    onPress={() => {
-                      if (item.label === "Robomission") {
-                        setRobomissionModalVisible(true);
-                      } else if (item.label === "Future Innovators") {
-                        setFutureInnovatorsModalVisible(true);
-                      } else {
-                        navigation.navigate("Category", {
-                          category: item.value,
-                          label: item.label,
-                        });
-                      }
-                    }}
-                  >
-                    <View style={styles.cardHeader}>
-                      <MaterialCommunityIcons
-                        name="dots-vertical"
-                        size={24}
-                        color="white"
-                      />
-                    </View>
-                    <Image source={item.image} style={styles.sideImage} />
-                    <View style={styles.text}>
-                      <Text>
-                        <Text style={styles.cardTextThin}>{firstWord}</Text>
-                        <Text
-                          style={styles.cardText}
-                          numberOfLines={2}
-                          ellipsizeMode="tail"
-                        >
-                          {rest}
-                        </Text>
-                      </Text>
-                      <Text
-                        style={styles.cardDesc}
-                        numberOfLines={2}
-                        ellipsizeMode="tail"
-                      >
-                        {item.categoryDesc}
-                      </Text>
-                    </View>
-                  </Pressable>
-                );
-              }}
-              ListEmptyComponent={<Text>No categories found.</Text>}
-            />
-          </View>
-
-          {/* Modal for Creating Judge Account */}
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={modalVisible}
-            aria-hidden={false}
-            onRequestClose={() => {
-              Alert.alert("Modal has been closed.");
-              setModalVisible(!modalVisible);
-            }}
-          >
-            <View style={styles.modal}>
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.headerTextModal}>
-                    Create Judge Account
-                  </Text>
-                  <Text style={styles.headerSubTextModal}>
-                    Create Judge's account and edit access
-                  </Text>
-                </View>
-
-                <View style={styles.formContainer}>
-                  <TextInput
-                    placeholder="Name"
-                    autoCapitalize="none"
-                    onChangeText={(text) => setUsername(text)}
-                    style={styles.textinput}
-                  />
-
-                  <TextInput
-                    placeholder="Password"
-                    secureTextEntry={true}
-                    autoCapitalize="none"
-                    onChangeText={(text) => setPassword(text)}
-                    style={styles.textinput}
-                  />
-                  <TextInput
-                    placeholder="Confirm Password"
-                    secureTextEntry={true}
-                    autoCapitalize="none"
-                    onChangeText={(text) => setConfirmPassword(text)}
-                    style={styles.textinput}
-                  />
-                  <Dropdown
-                    style={styles.dropdown}
-                    data={categorydata}
-                    search
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    placeholder="Select Category"
-                    searchPlaceholder="Search..."
-                    value={category}
-                    onChange={(item) => {
-                      setCategory(item.value);
-                      // Reset subcategory if not Robomission or Future Innovators
-                      if (!item.subcategories) setSubcategory(null);
-                    }}
-                  />
-                  {["Robomission", "Future Innovators"].includes(
-                    categorydata.find((cat: any) => cat.value === category)
-                      ?.label || ""
-                  ) && (
-                    <Dropdown
-                      style={styles.dropdown}
-                      data={
-                        categorydata.find((cat: any) => cat.value === category)
-                          ?.subcategories || []
-                      }
-                      labelField="label"
-                      valueField="value"
-                      placeholder="Select Subcategory"
-                      value={subcategory}
-                      onChange={(item) => setSubcategory(item.value)}
-                    />
-                  )}
-                </View>
-
-                <View style={styles.buttonContainer}>
-                  <Pressable
-                    style={styles.modalCreateButton}
-                    onPress={createJudgeAccount}
-                  >
-                    <Text style={styles.buttonText}>Create</Text>
-                  </Pressable>
-
-                  <Pressable
-                    style={styles.modalCancelButton}
-                    onPress={() => setModalVisible(!modalVisible)}
-                  >
-                    <Text>Cancel</Text>
-                  </Pressable>
-                </View>
-              </View>
-            </View>
-          </Modal>
-
-          {/* Manage Judge Users */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 8,
-            }}
-          >
-            <Text style={styles.headerTexts}>Manage Judges</Text>
-            <TouchableOpacity onPress={() => navigation.navigate("Judges")}>
-              <Text style={{ color: "#6c63ff" }}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          <FlatList
-            data={latestJudges}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={true}
-            // horizontal={true}
-            showsVerticalScrollIndicator={true}
-            renderItem={({ item }) => {
-              const categoryLabel = getCategoryDisplayLabel(item.category);
-
-              return (
-                <View style={styles.judgesCard}>
-                  <Image
-                    source={{
-                      uri: item.avatarUrl || getRandomAvatar(item.username),
-                    }}
-                    style={styles.judgesImage}
-                  />
-                  <View>
-                    <Text style={styles.judgesName}>{item.username}</Text>
-                    <Text style={styles.judgesEmail}>{item.email}</Text>
-                    <Text style={styles.judgesCategory}>{categoryLabel}</Text>
-                  </View>
-                </View>
-              );
-            }}
-            ListEmptyComponent={<Text>No judge users found.</Text>}
-          />
-        </View>
-        <TouchableOpacity
-          style={styles.addJudgeButton}
-          onPress={() => setModalVisible(true)}
-        >
-          <AntDesign name="plus" size={25} color="white" />
-        </TouchableOpacity>
-      </SafeAreaView>
     </SafeAreaProvider>
   );
 }

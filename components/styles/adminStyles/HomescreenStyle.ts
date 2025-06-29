@@ -21,8 +21,11 @@ export default StyleSheet.create({
     alignItems: "center",
     gap: 15,
     width: "100%",
-    padding: 10,
+    padding: 15,
     marginTop: 10,
+    backgroundColor: "#ffffff",
+    borderRadius: 5,
+    boxShadow: "0px 1px 2px rgba(0,0,0,0.3)",
   },
 
   avatar: {
@@ -33,14 +36,15 @@ export default StyleSheet.create({
   },
 
   greeting: {
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: "bold",
+    fontFamily: "inter_400Regular",
   },
 
-  name: {
-    fontSize: 20,
+  email: {
+    fontSize: 16,
     color: "#852B88",
-    fontWeight: "bold",
+    fontFamily: "inter_400Regular",
   },
 
   headerTexts: {
@@ -48,16 +52,21 @@ export default StyleSheet.create({
     fontWeight: "bold",
     marginTop: 15,
     marginBottom: 15,
+    fontFamily: "inter_400Regular",
   },
 
   card: {
     height: 120,
-    width: screenWidth * 0.9, // Responsive width (80% of screen)
+    width: screenWidth * 0.9,
     borderRadius: 10,
     backgroundColor: "#E79300",
     display: "flex",
     flexDirection: "row",
-    marginRight: 16, // Gap between cards
+    marginVertical: 5,
+  },
+
+  buttonPressed: {
+    transform: [{ scale: 0.98 }],
   },
 
   cardHeader: {
@@ -79,6 +88,7 @@ export default StyleSheet.create({
     padding: 10,
     flexShrink: 1,
     flexWrap: "wrap",
+    fontFamily: "inter_400Regular",
   },
 
   cardTextThin: {
@@ -87,6 +97,7 @@ export default StyleSheet.create({
     textTransform: "uppercase",
     fontWeight: "ultralight",
     letterSpacing: 3,
+    fontFamily: "inter_400Regular",
   },
 
   cardText: {
@@ -95,12 +106,14 @@ export default StyleSheet.create({
     textTransform: "uppercase",
     fontWeight: "bold",
     letterSpacing: 3,
+    fontFamily: "inter_400Regular",
   },
 
   cardDesc: {
     marginTop: 2,
     fontSize: 14,
     color: "#ffffff",
+    fontFamily: "inter_400Regular",
   },
 
   judgesCard: {
@@ -126,14 +139,18 @@ export default StyleSheet.create({
   judgesName: {
     fontSize: 18,
     fontWeight: "bold",
+    fontFamily: "inter_400Regular",
   },
 
   judgesEmail: {
     fontSize: 14,
+    fontFamily: "inter_400Regular",
   },
 
   judgesCategory: {
-    fontSize: 14,
+    fontSize: 12,
+    fontFamily: "inter_400Regular",
+    color: "#999999",
   },
 
   addJudgeButton: {
@@ -148,111 +165,117 @@ export default StyleSheet.create({
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.5)",
   },
 
-modal: {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  backgroundColor: "rgba(0,0,0,0.5)",
-},
+  modal: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
 
-modalContent: {
-  backgroundColor: "#fff",
-  width: "90%",
-  borderRadius: 16,
-  padding: 28,
-  alignItems: "center",
-  elevation: 6,
-},
+  modalContent: {
+    backgroundColor: "#fff",
+    width: "90%",
+    borderRadius: 16,
+    padding: 28,
+    alignItems: "center",
+    elevation: 6,
+  },
 
-modalHeader: {
-  width: "100%",
-  borderBottomWidth: 1,
-  borderColor: "#eee",
-  paddingBottom: 10,
-  marginBottom: 18,
-  alignItems: "flex-start",
-},
+  modalHeader: {
+    width: "100%",
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+    paddingBottom: 10,
+    marginBottom: 18,
+    alignItems: "flex-start",
+  },
 
-headerTextModal: {
-  fontSize: 22,
-  fontWeight: "bold",
-  marginBottom: 2,
-  color: "#222",
-},
+  headerTextModal: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 2,
+    color: "#222",
+    fontFamily: "inter_400Regular",
+  },
 
-headerSubTextModal: {
-  fontSize: 14,
-  color: "#888",
-  marginBottom: 2,
-},
+  headerSubTextModal: {
+    fontSize: 14,
+    color: "#888",
+    marginBottom: 2,
+    fontFamily: "inter_400Regular",
+  },
 
-formContainer: {
-  width: "100%",
-  gap: 14,
-  marginBottom: 22,
-},
+  formContainer: {
+    width: "100%",
+    gap: 14,
+    marginBottom: 22,
+  },
 
-textinput: {
-  backgroundColor: "#f3f3f3",
-  borderWidth: 1,
-  borderColor: "#e0e0e0",
-  borderRadius: 7,
-  paddingVertical: 10,
-  paddingHorizontal: 12,
-  width: "100%",
-  fontSize: 17,
-  marginBottom: 2,
-},
+  textinput: {
+    backgroundColor: "#f3f3f3",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 7,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    width: "100%",
+    fontSize: 17,
+    marginBottom: 2,
+    fontFamily: "inter_400Regular",
+  },
 
-dropdown: {
-  backgroundColor: "#f3f3f3",
-  borderWidth: 1,
-  borderColor: "#e0e0e0",
-  borderRadius: 7,
-  paddingVertical: 10,
-  paddingHorizontal: 12,
-  width: "100%",
-  fontSize: 16,
-  marginBottom: 2,
-},
+  dropdown: {
+    backgroundColor: "#f3f3f3",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 7,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    width: "100%",
+    fontSize: 16,
+    marginBottom: 2,
+    fontFamily: "inter_400Regular",
+  },
 
-buttonContainer: {
-  flexDirection: "row",
-  justifyContent: "flex-end",
-  alignItems: "center",
-  width: "100%",
-  marginTop: 10,
-  gap: 12,
-},
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    width: "100%",
+    marginTop: 10,
+    gap: 12,
+  },
 
-modalCreateButton: {
-  backgroundColor: "#432344",
-  borderRadius: 7,
-  borderWidth: 1,
-  borderColor: "#432344",
-  flex: 1,
-  alignItems: "center",
-  paddingVertical: 10,
-  marginLeft: 8,
-},
+  modalCreateButton: {
+    backgroundColor: "#432344",
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: "#432344",
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 10,
+    marginLeft: 8,
+  },
 
-buttonText: {
-  color: "#ffffff",
-  fontWeight: "bold",
-  fontSize: 16,
-},
+  buttonText: {
+    color: "#ffffff",
+    fontWeight: "bold",
+    fontSize: 16,
+    fontFamily: "inter_400Regular",
+  },
 
-modalCancelButton: {
-  borderWidth: 1,
-  borderColor: "#432344",
-  borderRadius: 7,
-  flex: 1,
-  alignItems: "center",
-  paddingVertical: 10,
-  marginRight: 8,
-},
+  modalCancelButton: {
+    borderWidth: 1,
+    borderColor: "#432344",
+    borderRadius: 7,
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 10,
+    marginRight: 8,
+  },
 
   modalOverlayCat: {
     flex: 1,
@@ -288,7 +311,7 @@ modalCancelButton: {
     textAlign: "center",
     textTransform: "uppercase",
     letterSpacing: 1,
-    fontFamily: "Roboto",
+    fontFamily: "inter_400Regular",
   },
 
   modalButtonCat: {
@@ -299,7 +322,7 @@ modalCancelButton: {
     marginVertical: 5, // Space between buttons
     alignItems: "center",
     width: "100%", // Full width button
-    elevation: 2, // Add shadow for Android
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.4)",
   },
 
   modalButtonTextCat: {
@@ -308,5 +331,6 @@ modalCancelButton: {
     fontWeight: "bold",
     textTransform: "uppercase",
     letterSpacing: 1,
+    fontFamily: "inter_400Regular",
   },
 });

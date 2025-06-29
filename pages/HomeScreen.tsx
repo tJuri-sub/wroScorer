@@ -31,21 +31,20 @@ export default function HomeScreen({ navigation }: any) {
   const [futureInnovatorsModalVisible, setFutureInnovatorsModalVisible] =
     useState(false);
   const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
-  const [menuVisible, setMenuVisible] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
         <TouchableOpacity
-          onPress={() => setMenuVisible(!menuVisible)}
+          onPress={() => navigation.openDrawer()}
           style={{ marginLeft: 15 }}
         >
           <Feather name="menu" size={24} color="black" />
         </TouchableOpacity>
       ),
     });
-  }, [navigation, menuVisible]);
+  }, [navigation]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
@@ -362,34 +361,6 @@ export default function HomeScreen({ navigation }: any) {
                 <Text style={styles.modalButtonTextCat}>{sub.label}</Text>
               </Pressable>
             ))}
-          </View>
-        </View>
-      </Modal>
-
-      {/* Dropdown Menu */}
-      <Modal
-        visible={menuVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setMenuVisible(false)} // Close dropdown on request
-      >
-        <View style={styles.modalmenuOverlay}>
-          <View style={styles.dropdownContent}>
-            <Pressable
-              style={styles.dropdownItem}
-              onPress={() => {
-                setMenuVisible(false);
-                setLogoutModalVisible(true);
-              }}
-            >
-              <Text style={styles.dropdownText}>Logout</Text>
-            </Pressable>
-            <Pressable
-              style={styles.dropdownItem}
-              onPress={() => setMenuVisible(false)} // Close dropdown
-            >
-              <Text style={styles.dropdownText}>Cancel</Text>
-            </Pressable>
           </View>
         </View>
       </Modal>
