@@ -142,6 +142,12 @@ export default function HomeScreen({ navigation }: any) {
     return judgeCategory;
   };
 
+  useEffect(() => {
+    navigation.setParams({
+      openLogoutModal: () => setLogoutModalVisible(true),
+    });
+  }, [navigation]);
+
   return (
     <SafeAreaProvider>
       <ScrollView>
