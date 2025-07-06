@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import {
 } from "firebase/firestore";
 import { useFonts, Inter_400Regular } from "@expo-google-fonts/inter";
 import styles from "../components/styles/judgeStyles/ScorerStyling";
+import { Feather } from "@expo/vector-icons";
 
 export default function ScorerScreen({ navigation }: any) {
   let [fontsLoaded] = useFonts({
@@ -44,6 +45,19 @@ export default function ScorerScreen({ navigation }: any) {
   const [inputSecond, setInputSecond] = useState("");
   const [inputMs, setInputMs] = useState("");
   const [search, setSearch] = useState("");
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => navigation.openDrawer()}
+          style={{ marginLeft: 15 }}
+        >
+          <Feather name="menu" size={24} color="black" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   // Fetch judge's assigned category and teams
   useEffect(() => {

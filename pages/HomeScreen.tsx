@@ -198,7 +198,11 @@ export default function HomeScreen({ navigation }: any) {
 
                 return (
                   <Pressable
-                    style={[styles.card, { backgroundColor: cardColor }]}
+                    style={({ pressed }) => [
+                      styles.card,
+                      { backgroundColor: cardColor },
+                      pressed && styles.buttonPressed,
+                    ]}
                     onPress={() => {
                       if (item.label === "Robomission") {
                         setRobomissionModalVisible(true);
