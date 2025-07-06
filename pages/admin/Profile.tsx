@@ -121,7 +121,7 @@ export default function ProfileAdmin({ navigation }: any) {
               }}
             >
               <Ionicons name="pencil-outline" size={20} color="#6c63ff" />
-              <Text style={styles.optionText}>Edit Profile</Text>
+              <Text style={styles.optionText}>Edit Username</Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
@@ -161,7 +161,7 @@ export default function ProfileAdmin({ navigation }: any) {
             </TouchableOpacity>
           </View>
         </View>
-        
+
         {/* Logout Confirmation Modal */}
         <Modal
           visible={logoutModalVisible}
@@ -196,7 +196,6 @@ export default function ProfileAdmin({ navigation }: any) {
             </View>
           </View>
         </Modal>
-              
 
         {/* Edit Profile Modal */}
         <Modal visible={editModalVisible} transparent animationType="slide">

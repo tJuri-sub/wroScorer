@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   Text,
   View,
@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import styles from "../components/styles/judgeStyles/LeaderboardStyling";
+import { Feather } from "@expo/vector-icons";
 
 // Helper to parse "mm:ss:ms" to milliseconds
 function parseTimeString(timeStr: string) {
@@ -22,16 +23,29 @@ function parseTimeString(timeStr: string) {
   return (mm || 0) * 60000 + (ss || 0) * 1000 + (ms || 0);
 }
 
-export default function Leaderboard() {
+export default function Leaderboard({ navigation }: any) {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => navigation.openDrawer()}
+          style={{ marginLeft: 15 }}
+        >
+          <Feather name="menu" size={24} color="black" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   // Define navigation types
   type RootStackParamList = {
     Leaderboard: undefined;
     AllLeaderboardScreen: undefined;
   };
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  //const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const db = getFirestore();
 
   useEffect(() => {
