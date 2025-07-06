@@ -6,6 +6,7 @@ import { DrawerContentScrollView } from "@react-navigation/drawer";
 
 import { FIREBASE_AUTH, FIREBASE_DB } from "../../firebaseconfig";
 import { doc, getDoc } from "firebase/firestore";
+import { Feather } from "@expo/vector-icons";
 
 export default function CustomJudgeDrawer({ navigation }: any) {
   let [fontsLoaded] = useFonts({
@@ -41,14 +42,23 @@ export default function CustomJudgeDrawer({ navigation }: any) {
   return (
     <DrawerContentScrollView contentContainerStyle={styles.container}>
       <View style={{ flex: 1 }}>
-        <View style={styles.profileSection}>
+        <View style={styles.headerRow}>
+          <Pressable
+            style={styles.closeButton}
+            onPress={() => navigation.closeDrawer()}
+            hitSlop={10}
+          >
+            <Feather name="x" size={28} color="#432344" />
+          </Pressable>
+        </View>
+        <View style={styles.Header}>
           <Image
             source={require("../../assets/icon.png")}
             style={styles.avatar}
           />
           <Text style={styles.name}>ScoreBotics</Text>
         </View>
-        <View style={styles.menuSection}>
+        <View>
           <Pressable
             style={({ pressed }) => [
               styles.menuItem,
@@ -60,6 +70,7 @@ export default function CustomJudgeDrawer({ navigation }: any) {
           >
             <Text style={styles.menuText}>Profile</Text>
           </Pressable>
+
           <Pressable
             style={({ pressed }) => [
               styles.menuItem,
@@ -71,6 +82,7 @@ export default function CustomJudgeDrawer({ navigation }: any) {
           >
             <Text style={styles.menuText}>About Us</Text>
           </Pressable>
+
           {/* Logout */}
           <Pressable
             style={({ pressed }) => [
@@ -101,7 +113,7 @@ export default function CustomJudgeDrawer({ navigation }: any) {
       </View>
 
       <View>
-        <Text>© 2025 Felta Multi-Media.</Text>
+        <Text style={styles.drawerFooter}>© 2025 Felta Multi-Media.</Text>
       </View>
     </DrawerContentScrollView>
   );
@@ -115,13 +127,24 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     height: "100%",
   },
-  profileSection: {
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: -10, // Pull up to align with header
+  },
+  closeButton: {
+    padding: 6,
+  },
+  Header: {
+    alignItems: "center",
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderColor: "#bab8b8",
   },
   avatar: {
-    width: 90,
-    height: 90,
+    width: 100,
+    height: 100,
     marginBottom: 10,
   },
   name: {
@@ -130,16 +153,10 @@ const styles = StyleSheet.create({
     color: "#432344",
     fontFamily: "inter_400Regular",
   },
-  email: {
-    fontSize: 14,
-    color: "#555",
-  },
-  menuSection: {
-    paddingTop: 10,
-  },
   menuItem: {
     paddingVertical: 15,
     borderBottomWidth: 1,
+    borderColor: "#999999",
     paddingHorizontal: 5,
   },
   menuText: {
@@ -149,5 +166,10 @@ const styles = StyleSheet.create({
 
   buttonPressed: {
     backgroundColor: "#ddd",
+  },
+
+  drawerFooter: {
+    fontFamily: "inter_400Regular",
+    fontSize: 12,
   },
 });
