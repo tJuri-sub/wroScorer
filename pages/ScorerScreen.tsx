@@ -142,18 +142,72 @@ export default function ScorerScreen({ navigation }: any) {
   };
 
   // Modal submit
+  // const handleScoreSubmit = async () => {
+  //   if (!scoringTeam) return;
+  //   const mm = (inputMinute || "0").padStart(2, "0");
+  //   const ss = (inputSecond || "0").padStart(2, "0");
+  //   const ms = (inputMs || "0").padStart(2, "0");
+  //   const inputTime = `${mm}:${ss}:${ms}`;
+  //   if (!inputScore || !inputMinute || !inputSecond || !inputMs) {
+  //     Alert.alert("Please input both score and time.");
+  //     return;
+  //   }
+  //   try {
+  //     // Always include all relevant fields
+  //     const update: any = {
+  //       teamName: scoringTeam.teamName,
+  //       teamId: scoringTeam.id,
+  //       round1Score: scoringTeam.round1Score ?? null,
+  //       time1: scoringTeam.time1 ?? null,
+  //       round2Score: scoringTeam.round2Score ?? null,
+  //       time2: scoringTeam.time2 ?? null,
+  //     };
+  //     if (scoringStep === 1) {
+  //       update.round1Score = Number(inputScore);
+  //       update.time1 = inputTime;
+  //     } else {
+  //       update.round2Score = Number(inputScore);
+  //       update.time2 = inputTime;
+  //     }
+  //     setScoreModalVisible(false);
+  //     setScoringTeam(null);
+
+  //     // Update Firestore
+  //     const teamRef = doc(FIREBASE_DB, "scores", scoringTeam.id);
+  //     await setDoc(teamRef, update, { merge: true });
+
+  //     // Update local state
+  //     setTeams((teams) =>
+  //       teams.map((t) => (t.id === scoringTeam.id ? { ...t, ...update } : t))
+  //     );
+  //     // Reset inputs
+  //     setInputScore("");
+  //     setInputMinute("");
+  //     setInputSecond("");
+  //     setInputMs("");
+  //   } catch (e) {
+  //     Alert.alert("Error", "Failed to submit score. Please try again.");
+  //   }
+  // };
   const handleScoreSubmit = async () => {
     if (!scoringTeam) return;
+
     const mm = (inputMinute || "0").padStart(2, "0");
     const ss = (inputSecond || "0").padStart(2, "0");
     const ms = (inputMs || "0").padStart(2, "0");
-    const inputTime = `${mm}:${ss}:${ms}`;
-    if (!inputScore || !inputMinute || !inputSecond || !inputMs) {
+    const inputTime = `${mm}:${ss}.${ms}`;
+
+    if (
+      inputScore.trim() === "" ||
+      inputMinute.trim() === "" ||
+      inputSecond.trim() === "" ||
+      inputMs.trim() === ""
+    ) {
       Alert.alert("Please input both score and time.");
       return;
     }
+
     try {
-      // Always include all relevant fields
       const update: any = {
         teamName: scoringTeam.teamName,
         teamId: scoringTeam.id,
@@ -162,6 +216,7 @@ export default function ScorerScreen({ navigation }: any) {
         round2Score: scoringTeam.round2Score ?? null,
         time2: scoringTeam.time2 ?? null,
       };
+
       if (scoringStep === 1) {
         update.round1Score = Number(inputScore);
         update.time1 = inputTime;
@@ -169,23 +224,33 @@ export default function ScorerScreen({ navigation }: any) {
         update.round2Score = Number(inputScore);
         update.time2 = inputTime;
       }
+
       setScoreModalVisible(false);
       setScoringTeam(null);
 
-      // Update Firestore
-      const teamRef = doc(FIREBASE_DB, "scores", scoringTeam.id);
-      await setDoc(teamRef, update, { merge: true });
+      // 🔥 1. Update team inside its category
+      const categoryRef = doc(
+        FIREBASE_DB,
+        `categories/${judgeCategory}/teams/${scoringTeam.id}`
+      );
+      await setDoc(categoryRef, update, { merge: true });
 
-      // Update local state
+      // 🔥 2. Also update or create a mirrored entry in "scores"
+      const scoresRef = doc(FIREBASE_DB, "scores", scoringTeam.id);
+      await setDoc(scoresRef, update, { merge: true });
+
+      // Update local UI state
       setTeams((teams) =>
         teams.map((t) => (t.id === scoringTeam.id ? { ...t, ...update } : t))
       );
-      // Reset inputs
+
+      // Reset input fields
       setInputScore("");
       setInputMinute("");
       setInputSecond("");
       setInputMs("");
     } catch (e) {
+      console.error("Score submission error:", e);
       Alert.alert("Error", "Failed to submit score. Please try again.");
     }
   };
@@ -215,9 +280,15 @@ export default function ScorerScreen({ navigation }: any) {
         />
         {/* Scoring Team Card */}
         <FlatList
-          data={teams.filter((team) =>
-            team.teamName?.toLowerCase().includes(search.toLowerCase())
-          )}
+          data={teams
+            .filter((team) =>
+              team.teamName?.toLowerCase().includes(search.toLowerCase())
+            )
+            .sort((a, b) => {
+              const aNum = Number(a.teamNumber) || 0;
+              const bNum = Number(b.teamNumber) || 0;
+              return aNum - bNum;
+            })}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => {
             const status = getCardStatus(item);
@@ -319,7 +390,7 @@ export default function ScorerScreen({ navigation }: any) {
           }
         />
 
-        {/* Score Calculator Modal */}
+        {/* Scorer Modal */}
         <Modal
           visible={scoreModalVisible}
           transparent
@@ -360,7 +431,7 @@ export default function ScorerScreen({ navigation }: any) {
                   }
                   maxLength={2}
                 />
-                <Text style={{ fontSize: 18, color: "#888" }}>:</Text>
+                <Text style={{ fontSize: 18, color: "#888" }}>.</Text>
                 <TextInput
                   style={[styles.input, { flex: 1, marginLeft: 4 }]}
                   placeholder="ms"
