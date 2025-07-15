@@ -9,7 +9,7 @@ import {
 import React, { useState } from "react";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
@@ -41,13 +41,24 @@ const LoginJudge = () => {
       );
       const user = userCredential.user;
 
-      // Fetch user document
-      const userDocRef = doc(FIREBASE_DB, "judge-users", user.uid);
-      const userDoc = await getDoc(userDocRef);
+      // Query judge-users collection for a document with matching email
+      const q = query(
+        collection(FIREBASE_DB, "judge-users"),
+        where("email", "==", user.email)
+      );
+      const querySnapshot = await getDocs(q);
 
-      if (userDoc.exists()) {
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
         const userData = userDoc.data();
         if (userData.role === "judge") {
+          if (userData.disabled) {
+            // Account is disabled
+            await FIREBASE_AUTH.signOut();
+            alert("Your account is disabled, please contact admin.");
+            setLoading(false);
+            return;
+          }
           // Proceed to judge home screen
           navigation.navigate("JudgeScreen");
         } else {
