@@ -38,6 +38,7 @@ import { FIREBASE_DB } from "./firebaseconfig";
 import AllJudgesScreen from "./pages/admin/AllJudgesScreen";
 import { AntDesign } from "@expo/vector-icons";
 import JudgeDrawerNavigator from "./components/component/JudgeDrawerNavigator";
+import { LogoutModalProvider } from "./components/component/LogoutModalContent";
 
 const Stack = createNativeStackNavigator();
 const InsideStack = createNativeStackNavigator();
@@ -285,26 +286,28 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer ref={navigationRef}>
-      <StatusBar translucent={true} barStyle="light-content" />
-      <Stack.Navigator
-        screenOptions={{ headerShown: false }}
-        initialRouteName={initialRouteName}
-      >
-        {/* Always register all screens */}
-        <Stack.Screen name="LoginJudge" component={LoginJudge} />
-        <Stack.Screen
-          name="JudgeScreen"
-          component={JudgeInsideStackNavigator}
-        />
-        <Stack.Screen name="LoginAdmin" component={Login} />
-        <Stack.Screen name="SignUp" component={SignUp} />
-        <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
-        <Stack.Screen
-          name="AdminScreen"
-          component={AdminInsideStackNavigator}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <LogoutModalProvider>
+      <NavigationContainer ref={navigationRef}>
+        <StatusBar translucent={true} barStyle="light-content" />
+        <Stack.Navigator
+          screenOptions={{ headerShown: false }}
+          initialRouteName={initialRouteName}
+        >
+          {/* Always register all screens */}
+          <Stack.Screen name="LoginJudge" component={LoginJudge} />
+          <Stack.Screen
+            name="JudgeScreen"
+            component={JudgeInsideStackNavigator}
+          />
+          <Stack.Screen name="LoginAdmin" component={Login} />
+          <Stack.Screen name="SignUp" component={SignUp} />
+          <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
+          <Stack.Screen
+            name="AdminScreen"
+            component={AdminInsideStackNavigator}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </LogoutModalProvider>
   );
 }
