@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Pressable, Image, StyleSheet } from "react-native";
 import { useFonts, Inter_400Regular } from "@expo-google-fonts/inter";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
+import { useLogoutModal } from "./LogoutModalContent"; // Adjust path if needed
 
 import { FIREBASE_AUTH, FIREBASE_DB } from "../../firebaseconfig";
 import { doc, getDoc } from "firebase/firestore";
@@ -12,6 +13,8 @@ export default function CustomJudgeDrawer({ navigation }: any) {
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
   });
+
+  const { open } = useLogoutModal();
 
   const user = FIREBASE_AUTH.currentUser;
   const [username, setUsername] = useState("");
@@ -90,21 +93,8 @@ export default function CustomJudgeDrawer({ navigation }: any) {
               pressed && styles.buttonPressed,
             ]}
             onPress={() => {
-              // Get the current route and call the openLogoutModal function if available
-              const openLogoutModal = navigation
-                .getParent()
-                ?.getState()
-                ?.routes?.find(
-                  (r: { name: string; params?: any }) => r.name === "Tabs"
-                )?.params?.openLogoutModal;
-              if (typeof openLogoutModal === "function") {
-                openLogoutModal();
-                navigation.closeDrawer();
-              } else {
-                // fallback: direct sign out
-                FIREBASE_AUTH.signOut();
-                navigation.replace("LoginJudge");
-              }
+              open();
+              navigation.closeDrawer();
             }}
           >
             <Text style={[styles.menuText, { color: "red" }]}>Logout</Text>

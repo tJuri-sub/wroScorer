@@ -16,6 +16,7 @@ import { doc, getDoc } from "firebase/firestore";
 import styles from "../components/styles/judgeStyles/HomepageStyle";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFonts, Inter_400Regular } from "@expo-google-fonts/inter";
+import { useLogoutModal } from "../components/component/LogoutModalContent";
 
 export default function HomeScreen({ navigation }: any) {
   let [fontsLoaded] = useFonts({
@@ -31,7 +32,7 @@ export default function HomeScreen({ navigation }: any) {
   const [futureInnovatorsModalVisible, setFutureInnovatorsModalVisible] =
     useState(false);
   const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
-  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const { show, open, close } = useLogoutModal();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -141,12 +142,6 @@ export default function HomeScreen({ navigation }: any) {
     }
     return judgeCategory;
   };
-
-  useEffect(() => {
-    navigation.setParams({
-      openLogoutModal: () => setLogoutModalVisible(true),
-    });
-  }, [navigation]);
 
   return (
     <SafeAreaProvider>
@@ -377,10 +372,10 @@ export default function HomeScreen({ navigation }: any) {
 
       {/* Logout Confirmation Modal */}
       <Modal
-        visible={logoutModalVisible}
+        visible={show}
         transparent
         animationType="fade"
-        onRequestClose={() => setLogoutModalVisible(false)}
+        onRequestClose={close}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -397,7 +392,7 @@ export default function HomeScreen({ navigation }: any) {
                     borderColor: "#432344",
                   },
                 ]}
-                onPress={() => setLogoutModalVisible(false)} // Close the modal
+                onPress={close} // Close the modal
               >
                 <Text style={[styles.modalButtonText, { color: "#432344" }]}>
                   Back
