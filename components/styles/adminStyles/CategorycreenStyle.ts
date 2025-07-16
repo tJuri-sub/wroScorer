@@ -117,6 +117,9 @@ export default StyleSheet.create({
     position: "absolute",
     right: 16,
     bottom: 16,
+    backgroundColor: "#432344",
+    borderRadius: 20,
+    padding: 8,
   },
 
   createTeamButton: {
@@ -266,4 +269,39 @@ export default StyleSheet.create({
     fontSize: 16,
     letterSpacing: 1,
   },
+
+  // Disable Confirmation Modal Styles
+     modalOverlayDisable: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+  
+    modalContentDisable: {
+      backgroundColor: "#fff",
+      borderRadius: 12,
+      padding: 20,
+      paddingTop: 30,
+      paddingBottom: 30,
+      width: 300,
+      alignItems: "center",
+    },
+  
+    modalTitle: {
+      fontSize: 16,
+      fontWeight: "semibold",
+      color: "#432344",
+      marginBottom: 25,
+      textAlign: "center",
+      fontFamily: "inter_400Regular",
+    },
+  
+    modalButtonContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      width: "100%",
+      gap: 10,
+    },
+
 });
