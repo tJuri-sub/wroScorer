@@ -249,15 +249,22 @@ export default StyleSheet.create({
     gap: 12,
   },
 
-  modalCreateButton: {
-    backgroundColor: "#432344",
-    borderRadius: 7,
-    borderWidth: 1,
-    borderColor: "#432344",
-    flex: 1,
+  buttonDisableContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
     alignItems: "center",
-    paddingVertical: 10,
-    marginLeft: 8,
+    width: "100%",
+    marginTop: 10,
+    gap: 5,
+  },
+
+  modalCreateButton: {
+    flex: 1,
+    backgroundColor: "#432344",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginRight: 6,
   },
 
   buttonText: {
@@ -265,16 +272,28 @@ export default StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
     fontFamily: "inter_400Regular",
+    textAlign: "center",
   },
 
   modalCancelButton: {
+    flex: 1,
     borderWidth: 1,
     borderColor: "#432344",
-    borderRadius: 7,
-    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: "center",
-    paddingVertical: 10,
-    marginRight: 8,
+    marginLeft: 6,
+    backgroundColor: "#fff",
+  },
+
+   modalDisableButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#AA0003",
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 16,
+    backgroundColor: "#fff",
   },
 
   modalOverlayCat: {
@@ -333,4 +352,69 @@ export default StyleSheet.create({
     letterSpacing: 1,
     fontFamily: "inter_400Regular",
   },
+
+  editButton: {
+    backgroundColor: "#432344",
+    borderRadius: 20,
+    padding: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 8,
+  },
+
+  // Disable Confirmation Modal Styles
+     modalOverlayDisable: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+  
+    modalContentDisable: {
+      backgroundColor: "#fff",
+      borderRadius: 12,
+      padding: 20,
+      paddingTop: 30,
+      paddingBottom: 30,
+      width: 300,
+      alignItems: "center",
+    },
+  
+    modalTitle: {
+      fontSize: 16,
+      fontWeight: "semibold",
+      color: "#432344",
+      marginBottom: 25,
+      textAlign: "center",
+      fontFamily: "inter_400Regular",
+    },
+  
+    modalButtonContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      width: "100%",
+    },
+  
+    modalButton: {
+      flex: 1,
+      paddingVertical: 10,
+      marginHorizontal: 5,
+      marginTop: 10,
+      borderRadius: 5,
+      alignItems: "center",
+      width: "100%", // Adjust width to fit two buttons side by side
+      elevation: 2,
+      borderWidth: 1,
+    },
+  
+    modalButtonText: {
+      fontSize: 14,
+      color: "#fff",
+      fontWeight: "semibold",
+      letterSpacing: 1,
+      fontFamily: "inter_400Regular",
+    },
+  
+
+
 });

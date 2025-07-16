@@ -62,7 +62,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
   const [modalVisible, setModalVisible] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [category, setCategory] = useState(null);
+  const [category, setCategory] = useState<string | null>(null);
   type CategoryType = (typeof categorydata)[number];
   const [subcategory, setSubcategory] = useState<string | null>(null);
   const [robomissionModalVisible, setRobomissionModalVisible] = useState(false);
@@ -76,6 +76,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
     email: string;
     avatarUrl: string;
     createdAt?: any; // Add createdAt property, type can be improved if needed
+    disabled?: boolean; // Add disabled property
   }
 
   const [judgeUsers, setJudgeUsers] = useState<JudgeUser[]>([]); // State to store judge users
@@ -83,6 +84,14 @@ export default function HomeScreenAdmin({ navigation }: any) {
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [greeting, setGreeting] = useState<string>("Hello");
   const [lastLogin, setLastLogin] = useState<number | null>(null);
+  
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editJudge, setEditJudge] = useState<JudgeUser | null>(null);
+  const [editUsername, setEditUsername] = useState("");
+  const [editCategory, setEditCategory] = useState<string | null>(null);
+  const [editSubcategory, setEditSubcategory] = useState<string | null>(null);
+
+  const [disableModalVisible, setDisableModalVisible] = useState(false);
 
   // Initialize Firebase
   const auth = getAuth();
@@ -223,6 +232,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
           avatarUrl:
             doc.data().avatarUrl || getRandomAvatar(doc.data().username || ""),
           createdAt: doc.data().createdAt, // Add createdAt from Firestore
+          disabled: doc.data().disabled ?? false,
         })) as JudgeUser[];
         setJudgeUsers(users);
       } catch (error) {
@@ -286,6 +296,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
         email: email.toLowerCase(), // always store as lowercase
         avatarUrl,
         createdAt: new Date(),
+        disabled: false, // Default to not disabled
       });
 
       await setDoc(doc(db, "users", user.uid), {
@@ -333,6 +344,26 @@ export default function HomeScreenAdmin({ navigation }: any) {
       }
     }
   };
+
+  const updateJudgeAccount = async () => {
+  if (!editJudge) return;
+  try {
+    await updateDoc(doc(db, "judge-users", editJudge.id), {
+      username,
+      category: subcategory || category || "",
+    });
+    setJudgeUsers((prev) =>
+      prev.map((j) =>
+        j.id === editJudge.id
+          ? { ...j, username, category: subcategory || category || "" }
+          : j
+      )
+    );
+    setModalVisible(false);
+  } catch (e) {
+    Alert.alert("Error", "Failed to update judge.");
+  }
+};
 
   const cardWidth = screenWidth * 0.9;
   const cardGap = 16;
@@ -462,19 +493,105 @@ export default function HomeScreenAdmin({ navigation }: any) {
               showsVerticalScrollIndicator={true}
               renderItem={({ item }) => {
                 const categoryLabel = getCategoryDisplayLabel(item.category);
+                const isDisabled = item.disabled;
 
                 return (
-                  <View style={styles.judgesCard}>
-                    <Image
-                      source={{
-                        uri: item.avatarUrl || getRandomAvatar(item.username),
-                      }}
-                      style={styles.judgesImage}
-                    />
-                    <View>
-                      <Text style={styles.judgesName}>{item.username}</Text>
-                      <Text style={styles.judgesEmail}>{item.email}</Text>
-                      <Text style={styles.judgesCategory}>{categoryLabel}</Text>
+                  <View
+                    style={[
+                      styles.judgesCard,
+                      isDisabled && { backgroundColor: "#f0f0f0" },
+                    ]}
+                  >
+                    <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10,opacity: isDisabled ? 0.5 : 1 }}>
+                      <Image
+                        source={{
+                          uri: item.avatarUrl || getRandomAvatar(item.username),
+                        }}
+                        style={styles.judgesImage}
+                      />
+                      <View style={{ flex: 1, justifyContent: "center"}}>
+                        <Text style={styles.judgesName}>{item.username}</Text>
+                        <Text style={styles.judgesEmail}>{item.email}</Text>
+                        <Text style={styles.judgesCategory}>{categoryLabel}</Text>
+                      </View>
+                    </View>
+                    {/* Restore or Edit button and Disabled text */}
+                    <View style={{
+                      flexDirection: "column",
+                      alignItems: "flex-end",
+                      justifyContent: "flex-end",
+                      minWidth: 70,
+                      marginLeft: 8,
+                      height: "100%",
+                    }}>
+                      {isDisabled ? (
+                        <>
+                          <TouchableOpacity
+                            style={[
+                              styles.editButton,
+                              { backgroundColor: "#35A22F", opacity: 1 },
+                            ]}
+                            onPress={async () => {
+                              try {
+                                await updateDoc(doc(db, "judge-users", item.id), { disabled: false });
+                                setJudgeUsers((prev) =>
+                                  prev.map((j) =>
+                                    j.id === item.id ? { ...j, disabled: false } : j
+                                  )
+                                );
+                                Alert.alert("Restored!", "Judge account has been restored.");
+                              } catch (e) {
+                                Alert.alert("Error", "Failed to restore judge.");
+                              }
+                            }}
+                          >
+                            <MaterialCommunityIcons name="restore" size={20} color="#fff" />
+                          </TouchableOpacity>
+                          <Text style={{
+                            color: "#AA0003",
+                            fontWeight: "bold",
+                            marginTop: 8,
+                            opacity: 1,
+                            alignSelf: "center"
+                          }}>
+                            Account Disabled
+                          </Text>
+                        </>
+                      ) : (
+                        <TouchableOpacity
+                          style={styles.editButton}
+                          onPress={() => {
+                              setEditJudge(item);
+
+                              // Find if the category is a subcategory
+                              let foundMainCat = null;
+                              let foundSubCat = null;
+                              for (const mainCat of categorydata) {
+                                if (mainCat.value === item.category) {
+                                  foundMainCat = mainCat;
+                                  break;
+                                }
+                                if (mainCat.subcategories) {
+                                  const sub = mainCat.subcategories.find(
+                                    (subcat) => subcat.value === item.category
+                                  );
+                                  if (sub) {
+                                    foundMainCat = mainCat;
+                                    foundSubCat = sub;
+                                    break;
+                                  }
+                                }
+                              }
+
+                              setEditCategory(foundMainCat ? foundMainCat.value : item.category);
+                              setEditSubcategory(foundSubCat ? foundSubCat.value : null);
+                              setEditUsername(item.username);
+                              setEditModalVisible(true);
+                            }}
+                        >
+                          <MaterialCommunityIcons name="pencil-outline" size={20} color="#fff" />
+                        </TouchableOpacity>
+                      )}
                     </View>
                   </View>
                 );
@@ -573,7 +690,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
                 style={styles.modalCreateButton}
                 onPress={createJudgeAccount}
               >
-                <Text style={styles.buttonText}>Create</Text>
+                <Text style={styles.buttonText}>{"Create"}</Text>
               </Pressable>
 
               <Pressable
@@ -586,6 +703,154 @@ export default function HomeScreenAdmin({ navigation }: any) {
           </View>
         </View>
       </Modal>
+
+      {/* Modal for editing judge account */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View style={styles.modal}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.headerTextModal}>Edit Judge Account</Text>
+              <Text style={styles.headerSubTextModal}>
+                Update judge's information
+              </Text>
+            </View>
+            <View style={styles.formContainer}>
+              <TextInput
+                placeholder="Name"
+                value={editUsername}
+                autoCapitalize="none"
+                onChangeText={setEditUsername}
+                style={styles.textinput}
+              />
+              <Dropdown
+                style={styles.dropdown}
+                data={categorydata}
+                search
+                maxHeight={300}
+                labelField="label"
+                valueField="value"
+                placeholder="Select Category"
+                searchPlaceholder="Search..."
+                value={editCategory}
+                onChange={(item) => {
+                  setEditCategory(item.value);
+                  if (!item.subcategories) setEditSubcategory(null);
+                }}
+              />
+              {["Robomission", "Future Innovators"].includes(
+                categorydata.find((cat: any) => cat.value === editCategory)?.label || ""
+              ) && (
+                <Dropdown
+                  style={styles.dropdown}
+                  data={
+                    categorydata.find((cat: any) => cat.value === editCategory)
+                      ?.subcategories || []
+                  }
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Subcategory"
+                  value={editSubcategory}
+                  onChange={(item) => setEditSubcategory(item.value)}
+                />
+              )}
+            </View>
+              <View style={styles.buttonContainer}>
+                <Pressable
+                  style={styles.modalCreateButton}
+                  onPress={async () => {
+                    if (!editJudge) return;
+                    try {
+                      await updateDoc(doc(db, "judge-users", editJudge.id), {
+                        username: editUsername,
+                        category: editSubcategory || editCategory || "",
+                      });
+                      setJudgeUsers((prev) =>
+                        prev.map((j) =>
+                          j.id === editJudge.id
+                            ? { ...j, username: editUsername, category: editSubcategory || editCategory || "" }
+                            : j
+                        )
+                      );
+                      setEditModalVisible(false);
+                    } catch (e) {
+                      Alert.alert("Error", "Failed to update judge.");
+                    }
+                  }}
+                >
+                  <Text style={styles.buttonText}>Save</Text>
+                </Pressable>
+                <Pressable
+                  style={styles.modalCancelButton}
+                  onPress={() => setEditModalVisible(false)}
+                >
+                  <Text>Cancel</Text>
+                </Pressable>
+              </View>
+              <View style={styles.buttonDisableContainer}> 
+                <Pressable
+                  style={styles.modalDisableButton}
+                  onPress={() => setDisableModalVisible(true)}
+                >
+                  <Text style={[styles.buttonText,{color: "#AA0003", fontWeight: "bold"}]}>Disable Account</Text>
+                </Pressable>
+              </View>
+            
+          </View>
+        </View>
+      </Modal>
+
+      {/* Disable Judge Account Confirmation Modal */}
+      <Modal
+        visible={disableModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDisableModalVisible(false)}
+      >
+        <View style={styles.modalOverlayDisable}>
+          <View style={styles.modalContentDisable}>
+            <Text style={styles.modalTitle}>
+              Are you sure you want to disable this judge account?
+            </Text>
+            <View style={styles.modalButtonContainer}>
+              <Pressable
+                style={[styles.modalButton,{borderColor: "#432344",}]}
+                onPress={() => setDisableModalVisible(false)}
+              >
+                <Text style={[styles.modalButtonText, {color: "#432344"}]}>
+                  Back
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, {backgroundColor: "#AA3D3F", borderColor: "#AA3D3F" }]}
+                onPress={async () => {
+                  if (!editJudge) return;
+                  try {
+                    await updateDoc(doc(db, "judge-users", editJudge.id), {
+                      disabled: true,
+                    });
+                    setJudgeUsers((prev) =>
+                      prev.map((j) =>
+                        j.id === editJudge.id ? { ...j, disabled: true } : j
+                      )
+                    );
+                    setDisableModalVisible(false);
+                    setEditModalVisible(false);
+                  } catch (e) {
+                    Alert.alert("Error", "Failed to disable judge.");
+                  }
+                }}
+              >
+                <Text style={[styles.modalButtonText, {fontWeight: "bold"}]}>Yes</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>           
 
       {/* Robomission Modal */}
       <Modal
@@ -670,4 +935,6 @@ export default function HomeScreenAdmin({ navigation }: any) {
       </Modal>
     </SafeAreaProvider>
   );
+// setEditJudge is now handled by useState above, so this function is not needed and can be removed.
 }
+
