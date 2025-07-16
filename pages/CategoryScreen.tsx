@@ -69,7 +69,7 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
   return (
     <View style={styles.container}>
       <FlatList
-        data={teams}
+        data={teams.filter((item) => !item.disabled)}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity

@@ -31,6 +31,8 @@ import {
   getDocs,
   getDoc,
   updateDoc,
+  query,
+  where,
 } from "firebase/firestore";
 
 const { height: screenHeight } = Dimensions.get("window");
@@ -273,6 +275,28 @@ export default function HomeScreenAdmin({ navigation }: any) {
 
       // Generate a email from username
       const email = `judge_${username}@felta.org`;
+
+      // Check for duplicate username or email
+      const q = query(
+        collection(db, "judge-users"),
+        where("username", "==", username)
+      );
+      const qEmail = query(
+        collection(db, "judge-users"),
+        where("email", "==", email)
+      );
+      const [usernameSnapshot, emailSnapshot] = await Promise.all([
+        getDocs(q),
+        getDocs(qEmail),
+      ]);
+      if (!usernameSnapshot.empty) {
+        Alert.alert("Error", "A judge with this username already exists.");
+        return;
+      }
+      if (!emailSnapshot.empty) {
+        Alert.alert("Error", "A judge with this email already exists.");
+        return;
+      }
 
       // Save the currently logged-in admin user
       const currentAdmin = FIREBASE_AUTH.currentUser;

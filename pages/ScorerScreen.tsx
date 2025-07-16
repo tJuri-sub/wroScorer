@@ -281,6 +281,7 @@ export default function ScorerScreen({ navigation }: any) {
         {/* Scoring Team Card */}
         <FlatList
           data={teams
+            .filter((team) => !team.disabled)
             .filter((team) =>
               team.teamName?.toLowerCase().includes(search.toLowerCase())
             )

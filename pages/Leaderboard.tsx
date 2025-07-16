@@ -49,79 +49,89 @@ export default function Leaderboard({ navigation }: any) {
   const db = getFirestore();
 
   useEffect(() => {
-    // Use Firestore's onSnapshot for real-time updates
-    const scoresRef = collection(db, "scores");
-    const unsubscribe = onSnapshot(
-      scoresRef,
-      (querySnapshot) => {
-        const teamMap: Record<
-          string,
-          {
-            teamName: string;
-            teamId: string;
-            round1Score?: number;
-            round2Score?: number;
-            time1?: string;
-            time2?: string;
-            bestScore?: number;
-            bestTime?: string;
-            bestTimeMs?: number;
-          }
-        > = {};
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (!teamMap[data.teamId]) {
-            teamMap[data.teamId] = {
-              teamName: data.teamName,
-              teamId: data.teamId,
-              round1Score: data.round1Score,
-              round2Score: data.round2Score,
-              time1: data.time1,
-              time2: data.time2,
-            };
-          }
-        });
+    let unsubscribeScores: (() => void) | undefined;
+    let unsubTeams: (() => void) | undefined;
 
-        // Calculate best score and best time for each team
-        Object.values(teamMap).forEach((team) => {
-          const r1 = team.round1Score ?? null;
-          const r2 = team.round2Score ?? null;
-          const t1 = team.time1 ?? "";
-          const t2 = team.time2 ?? "";
-          if (r1 !== null && (r2 === null || r1 >= r2)) {
-            team.bestScore = r1;
-            team.bestTime = t1;
-            team.bestTimeMs = parseTimeString(t1);
-          }
-          if (r2 !== null && (r1 === null || r2 > r1)) {
-            team.bestScore = r2;
-            team.bestTime = t2;
-            team.bestTimeMs = parseTimeString(t2);
-          }
-        });
+    const db = getFirestore();
 
-        const leaderboardArr = Object.values(teamMap)
-          .filter((team) => team.bestScore !== undefined)
-          .sort((a, b) => {
-            const aScore = a.bestScore ?? -Infinity;
-            const bScore = b.bestScore ?? -Infinity;
-            if (bScore !== aScore) return bScore - aScore;
-            return (a.bestTimeMs ?? Infinity) - (b.bestTimeMs ?? Infinity);
-          })
-          .slice(0, 5); // Top 5
+    // Fetch all teams and build a disabled lookup
+    const fetchTeamsAndListen = async () => {
+      const teamsSnapshot = await getDocs(collection(db, "teams"));
+      // or use your actual teams path if it's under categories/...
+      const disabledMap: Record<string, boolean> = {};
+      teamsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        disabledMap[doc.id] = !!data.disabled;
+      });
 
-        setLeaderboard(leaderboardArr);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching scores:", error);
-        setLeaderboard([]);
-        setLoading(false);
-      }
-    );
+      // Now listen to scores
+      const scoresRef = collection(db, "scores");
+      unsubscribeScores = onSnapshot(
+        scoresRef,
+        (querySnapshot) => {
+          const teamMap: Record<string, any> = {};
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            // Only include if not disabled
+            if (!disabledMap[data.teamId]) {
+              if (!teamMap[data.teamId]) {
+                teamMap[data.teamId] = {
+                  teamName: data.teamName,
+                  teamId: data.teamId,
+                  round1Score: data.round1Score,
+                  round2Score: data.round2Score,
+                  time1: data.time1,
+                  time2: data.time2,
+                };
+              }
+            }
+          });
 
-    // Cleanup listener on unmount
-    return () => unsubscribe();
+          // ...rest of your leaderboard logic...
+          Object.values(teamMap).forEach((team) => {
+            const r1 = team.round1Score ?? null;
+            const r2 = team.round2Score ?? null;
+            const t1 = team.time1 ?? "";
+            const t2 = team.time2 ?? "";
+            if (r1 !== null && (r2 === null || r1 >= r2)) {
+              team.bestScore = r1;
+              team.bestTime = t1;
+              team.bestTimeMs = parseTimeString(t1);
+            }
+            if (r2 !== null && (r1 === null || r2 > r1)) {
+              team.bestScore = r2;
+              team.bestTime = t2;
+              team.bestTimeMs = parseTimeString(t2);
+            }
+          });
+
+          const leaderboardArr = Object.values(teamMap)
+            .filter((team) => team.bestScore !== undefined)
+            .sort((a, b) => {
+              const aScore = a.bestScore ?? -Infinity;
+              const bScore = b.bestScore ?? -Infinity;
+              if (bScore !== aScore) return bScore - aScore;
+              return (a.bestTimeMs ?? Infinity) - (b.bestTimeMs ?? Infinity);
+            })
+            .slice(0, 5);
+
+          setLeaderboard(leaderboardArr);
+          setLoading(false);
+        },
+        (error) => {
+          console.error("Error fetching scores:", error);
+          setLeaderboard([]);
+          setLoading(false);
+        }
+      );
+    };
+
+    fetchTeamsAndListen();
+
+    return () => {
+      if (unsubscribeScores) unsubscribeScores();
+      if (unsubTeams) unsubTeams();
+    };
   }, []);
 
   if (loading) {

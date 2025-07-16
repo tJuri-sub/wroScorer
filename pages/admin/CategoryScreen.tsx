@@ -11,9 +11,9 @@ import {
   TouchableOpacity,
 } from "react-native";
 import CountryPicker from "rn-country-dropdown-picker"; // Import the new country picker
-import { getFirestore, collection, getDocs, addDoc } from "firebase/firestore";
+import { getFirestore, collection, getDocs, addDoc, query, where, updateDoc, doc } from "firebase/firestore";
 import styles from "../../components/styles/adminStyles/CategorycreenStyle";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialIcons } from "@expo/vector-icons";
 
 export default function CategoryScreen({ route }: any) {
   const { category, label } = route.params; // Get category and label from navigation params
@@ -30,6 +30,7 @@ export default function CategoryScreen({ route }: any) {
       teamName: string;
       coachName: string;
       members: string[];
+      disabled?: boolean;
     }[]
   >([]);
   const [loading, setLoading] = useState(true);
@@ -42,9 +43,16 @@ export default function CategoryScreen({ route }: any) {
     teamName: "",
     coachName: "",
     members: ["", "", ""], // Array for 3 members
+    
   });
 
   const db = getFirestore();
+
+  const [editMode, setEditMode] = useState(false);
+  const [editTeamId, setEditTeamId] = useState<string | null>(null);
+
+  const [disableModalVisible, setDisableModalVisible] = useState(false);
+
 
   // Filter teams by search (team name or coach)
   const filteredTeams = teams.filter(
@@ -83,6 +91,7 @@ export default function CategoryScreen({ route }: any) {
             teamName: data.teamName || "Unknown Team",
             coachName: data.coachName || "Unknown Coach",
             members: data.members || [],
+            disabled: data.disabled || false,
           };
         });
         setTeams(teamList);
@@ -98,25 +107,19 @@ export default function CategoryScreen({ route }: any) {
   }, [category]);
 
   const handleNext = () => {
-    if (
-      step === 1 &&
-      (!formData.countryName ||
-        !formData.teamNumber ||
-        !formData.podNumber ||
-        !formData.teamName)
-    ) {
-      Alert.alert("Error", "Please fill out all fields in this step.");
-      return;
-    }
-    if (
-      step === 2 &&
-      (!formData.coachName || formData.members.some((member) => !member))
-    ) {
-      Alert.alert("Error", "Please fill out all fields in this step.");
-      return;
-    }
-    setStep(step + 1);
-  };
+  if (
+    step === 1 &&
+    (!formData.countryName ||
+      !formData.teamNumber ||
+      !formData.podNumber ||
+      !formData.teamName)
+  ) {
+    Alert.alert("Error", "Please fill out all fields in this step.");
+    return;
+  }
+  // Remove required check for coachName and members
+  setStep(step + 1);
+};
 
   const handleBack = () => {
     setStep(step - 1);
@@ -124,6 +127,18 @@ export default function CategoryScreen({ route }: any) {
 
   const handleSubmit = async () => {
     try {
+
+      // Check for duplication
+      const teamsRef = collection(db, `categories/${category}/teams`);
+      const q = query(teamsRef, where("teamName", "==", formData.teamName));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        Alert.alert("Error", "A team with this name already exists.");
+        return;
+      }
+
+      // Create new team document
       const newTeam = {
         country: formData.countryName,
         teamNumber: formData.teamNumber,
@@ -133,12 +148,12 @@ export default function CategoryScreen({ route }: any) {
         members: formData.members,
       };
 
-      await addDoc(collection(db, `categories/${category}/teams`), newTeam);
+      await addDoc(teamsRef, newTeam);
 
-      const querySnapshot = await getDocs(
+      const allTeamsSnapshot = await getDocs(
         collection(db, `categories/${category}/teams`)
       );
-      const teamList = querySnapshot.docs.map((doc) => {
+      const teamList = allTeamsSnapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -166,6 +181,63 @@ export default function CategoryScreen({ route }: any) {
     } catch (error) {
       console.error("Error creating team:", error);
       Alert.alert("Error", "Failed to create team.");
+    }
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editTeamId) return;
+    try {
+      const teamRef = collection(db, `categories/${category}/teams`);
+      // Check for duplicate team name (exclude current team)
+      const q = query(teamRef, where("teamName", "==", formData.teamName));
+      const querySnapshot = await getDocs(q);
+      if (
+        !querySnapshot.empty &&
+        querySnapshot.docs[0].id !== editTeamId
+      ) {
+        Alert.alert("Error", "A team with this name already exists.");
+        return;
+      }
+      // Update team document
+      await updateDoc(doc(teamRef, editTeamId), {
+        country: formData.countryName,
+        teamNumber: formData.teamNumber,
+        podNumber: formData.podNumber,
+        teamName: formData.teamName,
+        coachName: formData.coachName,
+        members: formData.members,
+      });
+      // Refresh teams
+      const allTeamsSnapshot = await getDocs(teamRef);
+      const teamList = allTeamsSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          countryName: data.country || "Unknown Country",
+          teamNumber: data.teamNumber || 0,
+          podNumber: data.podNumber || 0,
+          teamName: data.teamName || "Unknown Team",
+          coachName: data.coachName || "Unknown Coach",
+          members: data.members || [],
+        };
+      });
+      setTeams(teamList);
+      Alert.alert("Success", "Team updated successfully!");
+      setModalVisible(false);
+      setEditMode(false);
+      setEditTeamId(null);
+      setStep(1);
+      setFormData({
+        countryName: "",
+        teamNumber: 0,
+        podNumber: 0,
+        teamName: "",
+        coachName: "",
+        members: ["", "", ""],
+      });
+    } catch (error) {
+      console.error("Error updating team:", error);
+      Alert.alert("Error", "Failed to update team.");
     }
   };
 
@@ -216,43 +288,101 @@ export default function CategoryScreen({ route }: any) {
           data={paginatedTeams}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={styles.teamCard}>
-              {/* Header Row */}
-              <View style={styles.teamCardHeader}>
-                <Text style={styles.teamCardHeaderText}>
-                  Team Number {item.teamNumber}
-                </Text>
-                <Text style={styles.teamCardHeaderText}>
-                  Pod Number {item.podNumber}
+            <View 
+              style={[
+                styles.teamCard, 
+                item.disabled && { backgroundColor: "#f0f0f0", borderColor: "#c6c6c6ff", borderWidth: 1 }
+                ]}>
+
+              <View style={[ 
+                item.disabled && { opacity: 0.5, backgroundColor: "#f0f0f0" }
+                ]}>
+                {/* Header Row */}
+                <View style={styles.teamCardHeader}>
+                  <Text style={styles.teamCardHeaderText}>
+                    Team Number {item.teamNumber}
+                  </Text>
+                  <Text style={styles.teamCardHeaderText}>
+                    Pod Number {item.podNumber}
+                  </Text>
+                </View>
+
+                {/* Country and Team Name Row */}
+                <View style={styles.teamCardRow}>
+                  {/* Replace with your flag component or Image */}
+                  {/* <Image source={require('../assets/flags/ph.png')} style={styles.teamCardFlag} /> */}
+                  <Text style={styles.teamCardTeamName} numberOfLines={1}>
+                    {item.teamName}
+                  </Text>
+                  <Text style={styles.teamCardCountry}>{item.countryName}</Text>
+                </View>
+
+                {/* Members */}
+                {item.members.map((member, index) => (
+                  <Text style={styles.teamCardMember} key={index}>
+                    Member {index + 1}: {member || "N/A"}
+                  </Text>
+                ))}
+
+                {/* Coach */}
+                <Text style={styles.teamCardCoach}>
+                  Coach Name: {item.coachName}
                 </Text>
               </View>
 
-              {/* Country and Team Name Row */}
-              <View style={styles.teamCardRow}>
-                {/* Replace with your flag component or Image */}
-                {/* <Image source={require('../assets/flags/ph.png')} style={styles.teamCardFlag} /> */}
-                <Text style={styles.teamCardTeamName} numberOfLines={1}>
-                  {item.teamName}
-                </Text>
-                <Text style={styles.teamCardCountry}>{item.countryName}</Text>
+              <View>
+                {item.disabled ? (
+                  <>
+                    <TouchableOpacity
+                      style={[
+                        styles.editIcon,
+                        { backgroundColor: "#35A22F", opacity: 1 },
+                      ]}
+                      onPress={async () => {
+                        try {
+                          await updateDoc(
+                            doc(db, `categories/${category}/teams`, item.id),
+                            { disabled: false }
+                          );
+                          setTeams((prev) =>
+                            prev.map((t) =>
+                              t.id === item.id ? { ...t, disabled: false } : t
+                            )
+                          );
+                          Alert.alert("Restored!", "Team has been restored.");
+                        } catch (e) {
+                          Alert.alert("Error", "Failed to restore team.");
+                        }
+                      }}
+                    >
+                      <MaterialIcons name="restore" size={20} color="#fff" />
+                    </TouchableOpacity>
+                    <Text style={{ color: "#AA0003", fontWeight: "bold", marginTop: 8 }}>
+                      Disabled
+                    </Text>
+                  </>
+                ) : (
+                    <TouchableOpacity
+                      style={styles.editIcon}
+                      onPress={() => {
+                        setEditMode(true);
+                        setEditTeamId(item.id);
+                        setFormData({
+                          countryName: item.countryName,
+                          teamNumber: item.teamNumber,
+                          podNumber: item.podNumber,
+                          teamName: item.teamName,
+                          coachName: item.coachName,
+                          members: item.members.length ? item.members : ["", "", ""],
+                        });
+                        setStep(1);
+                        setModalVisible(true);
+                      }}
+                    >
+                      <MaterialIcons name="edit" size={18} color="#fff" />
+                    </TouchableOpacity>
+                )}
               </View>
-
-              {/* Members */}
-              {item.members.map((member, index) => (
-                <Text style={styles.teamCardMember} key={index}>
-                  Member {index + 1}: {member || "N/A"}
-                </Text>
-              ))}
-
-              {/* Coach */}
-              <Text style={styles.teamCardCoach}>
-                Coach Name: {item.coachName}
-              </Text>
-
-              {/* Edit Icon (optional) */}
-              {/* <TouchableOpacity style={styles.editIcon} onPress={() => onEdit(team)}>
-                <MaterialIcons name="edit" size={22} color="#432344" />
-              </TouchableOpacity> */}
             </View>
           )}
           ListEmptyComponent={<Text>No teams found.</Text>}
@@ -278,22 +408,28 @@ export default function CategoryScreen({ route }: any) {
                     source={require("../../assets/images/user.png")}
                     style={styles.modalImage}
                   /> */}
-                  <Text style={styles.headerTextModal}>Create Team</Text>
+                  <Text style={styles.headerTextModal}>
+                    {editMode ? "Edit Team" : "Create Team"}
+                  </Text>
                   <Text style={styles.headerSubTextModal}>
-                    Enter team information
+                    {editMode ? "Update team information" : "Enter team information"}
                   </Text>
                 </View>
                 <Text style={styles.modalLabel}>Country</Text>
+                {formData.countryName ? (
+                  <Text style={{ marginBottom: 4, color: "#888" }}>
+                    Current Country: {formData.countryName}
+                  </Text>
+                ) : null}
                 <CountryPicker
                   InputFieldStyle={styles.modalInput}
                   Placeholder="Enter Country"
                   flagSize={24}
                   selectedItem={(countryName) => {
-                    console.log(countryName); // Debugging log
                     setFormData({
                       ...formData,
                       countryName: countryName.country,
-                    }); // Store the country label or adjust based on actual property
+                    });
                   }}
                 />
                 <Text style={styles.modalLabel}>Team Number</Text>
@@ -336,32 +472,46 @@ export default function CategoryScreen({ route }: any) {
                 <View style={styles.modalButtonRow}>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.modalButton]}
+                    onPress={() => setModalVisible(false)}
                   >
                     <Text
-                      style={[styles.modalButtonText, styles.modalButtonText]}
-                      onPress={() => setModalVisible(false)}
-                    >
+                      style={[styles.modalButtonText, styles.modalButtonText]}>
                       Cancel
                     </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.modalButtonNext}>
-                    <Text style={styles.modalButtonText} onPress={handleNext}>
+                  <TouchableOpacity style={styles.modalButtonNext} onPress={handleNext}>
+                    <Text style={styles.modalButtonText}>
                       Next
                     </Text>
                   </TouchableOpacity>
                 </View>
+                
+                {editMode && (
+                  <View style={styles.modalButtonRow}>
+                    <TouchableOpacity
+                      style={[styles.modalButtonNext, { borderColor: "#AA3D3F" }]}
+                      onPress={() => setDisableModalVisible(true)}
+                    >
+                      <Text style={[styles.modalButtonText, { color: "#AA3D3F" }]}>
+                        Disable Team
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </>
             )}
 
             {step === 2 && (
               <>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.headerTextModal}>Create Team</Text>
+                  <Text style={styles.headerTextModal}>
+                    {editMode ? "Edit Team" : "Create Team"}
+                  </Text>
                   <Text style={styles.headerSubTextModal}>
-                    Add team members and coach
+                    {editMode ? "Enter updated coach and team members" : "Add coach and team members"}
                   </Text>
                 </View>
-                <Text style={styles.modalLabel}>Coach Name</Text>
+                <Text style={styles.modalLabel}>Coach Name (optional)</Text>
                 <TextInput
                   placeholder="Enter Coach Name"
                   value={formData.coachName}
@@ -370,7 +520,7 @@ export default function CategoryScreen({ route }: any) {
                   }
                   style={styles.modalInput}
                 />
-                <Text style={styles.modalLabel}>Team Members</Text>
+                <Text style={styles.modalLabel}>Team Members (optional)</Text>
                 {formData.members.map((member, index) => (
                   <TextInput
                     key={index}
@@ -392,16 +542,15 @@ export default function CategoryScreen({ route }: any) {
                 <View style={styles.modalButtonRow}>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.modalButton]}
+                    onPress={handleBack}
                   >
                     <Text
-                      style={[styles.modalButtonText, styles.modalButtonText]}
-                      onPress={handleBack}
-                    >
+                      style={[styles.modalButtonText, styles.modalButtonText]}>
                       Back
                     </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.modalButtonNext}>
-                    <Text style={styles.modalButtonText} onPress={handleNext}>
+                  <TouchableOpacity style={styles.modalButtonNext} onPress={handleNext}>
+                    <Text style={styles.modalButtonText}>
                       Next
                     </Text>
                   </TouchableOpacity>
@@ -412,7 +561,9 @@ export default function CategoryScreen({ route }: any) {
             {step === 3 && (
               <>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.headerTextModal}>Create Team</Text>
+                  <Text style={styles.headerTextModal}>
+                    {editMode ? "Edit Team" : "Create Team"}
+                  </Text>
                   <Text style={styles.headerSubTextModal}>
                     Review team details
                   </Text>
@@ -445,25 +596,88 @@ export default function CategoryScreen({ route }: any) {
                 <View style={styles.modalButtonRow}>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.modalButton]}
+                    onPress={handleBack}
                   >
                     <Text
-                      style={[styles.modalButtonText, styles.modalButtonText]}
-                      onPress={handleBack}
-                    >
+                      style={[styles.modalButtonText, styles.modalButtonText]}>
                       Back
                     </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.modalButtonCreate}>
-                    <Text
-                      style={styles.modalButtonCreateText}
-                      onPress={handleSubmit}
-                    >
-                      Create
+                  <TouchableOpacity style={styles.modalButtonCreate}
+                    onPress={editMode ? handleEditSubmit : handleSubmit}>
+                    <Text style={styles.modalButtonCreateText}>
+                      {editMode ? "Update" : "Create"}
                     </Text>
                   </TouchableOpacity>
                 </View>
               </>
             )}
+          </View>
+        </View>
+      </Modal>
+
+            {/* Disable Judge Account Confirmation Modal */}
+      <Modal
+        visible={disableModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDisableModalVisible(false)}
+      >
+        <View style={styles.modalOverlayDisable}>
+          <View style={styles.modalContentDisable}>
+            <Text style={styles.modalTitle}>
+              Are you sure you want to disable this team?
+            </Text>
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity
+                style={[styles.modalButton, { borderColor: "#432344" }]}
+                onPress={() => setDisableModalVisible(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: "#432344" }]}>
+                  Back
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { borderColor: "#AA3D3F", backgroundColor: "#AA3D3F" }]}
+                onPress={async () => {
+                  if (!editTeamId) return;
+                  try {
+                    await updateDoc(
+                      doc(db, `categories/${category}/teams`, editTeamId),
+                      { disabled: true }
+                    );
+                    // Refresh teams
+                    const allTeamsSnapshot = await getDocs(
+                      collection(db, `categories/${category}/teams`)
+                    );
+                    const teamList = allTeamsSnapshot.docs.map((doc) => {
+                      const data = doc.data();
+                      return {
+                        id: doc.id,
+                        countryName: data.country || "Unknown Country",
+                        teamNumber: data.teamNumber || 0,
+                        podNumber: data.podNumber || 0,
+                        teamName: data.teamName || "Unknown Team",
+                        coachName: data.coachName || "Unknown Coach",
+                        members: data.members || [],
+                        disabled: data.disabled ?? false,
+                      };
+                    });
+                    setTeams(teamList);
+                    setDisableModalVisible(false);
+                    setModalVisible(false);
+                    setEditMode(false);
+                    setEditTeamId(null);
+                  } catch (e) {
+                    Alert.alert("Error", "Failed to disable team.");
+                  }
+                }}
+              >
+                <Text style={[styles.modalButtonText, { fontWeight: "bold", color: "#fff" }]}>
+                  Yes
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
