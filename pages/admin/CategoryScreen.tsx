@@ -15,7 +15,7 @@ import { getFirestore, collection, getDocs, addDoc, query, where, updateDoc, doc
 import styles from "../../components/styles/adminStyles/CategorycreenStyle";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 
-export default function CategoryScreen({ route }: any) {
+export default function CategoryScreen({ route, navigation }: any) {
   const { category, label } = route.params; // Get category and label from navigation params
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -45,6 +45,10 @@ export default function CategoryScreen({ route }: any) {
     members: ["", "", ""], // Array for 3 members
     
   });
+  const [countryError, setCountryError] = useState<string | null>(null);
+  const [teamNumberError, setTeamNumberError] = useState<string | null>(null);
+  const [podNumberError, setPodNumberError] = useState<string | null>(null);
+  const [teamNameError, setTeamNameError] = useState<string | null>(null);
 
   const db = getFirestore();
 
@@ -93,7 +97,9 @@ export default function CategoryScreen({ route }: any) {
             members: data.members || [],
             disabled: data.disabled || false,
           };
-        });
+        })
+        .sort((a, b) => a.teamNumber - b.teamNumber);
+
         setTeams(teamList);
       } catch (error) {
         console.error("Error fetching teams:", error);
@@ -107,19 +113,45 @@ export default function CategoryScreen({ route }: any) {
   }, [category]);
 
   const handleNext = () => {
-  if (
-    step === 1 &&
-    (!formData.countryName ||
-      !formData.teamNumber ||
-      !formData.podNumber ||
-      !formData.teamName)
-  ) {
-    Alert.alert("Error", "Please fill out all fields in this step.");
-    return;
-  }
-  // Remove required check for coachName and members
-  setStep(step + 1);
-};
+    let hasError = false;
+    if (!formData.countryName) {
+      setCountryError("Country is required.");
+      hasError = true;
+    } else {
+      setCountryError(null);
+    }
+    if (!formData.teamNumber) {
+      setTeamNumberError("Team number is required.");
+      hasError = true;
+    } else {
+      // Check for duplicate team number
+      const duplicate = teams.some(
+        (team) =>
+          team.teamNumber === formData.teamNumber &&
+          (!editMode || team.id !== editTeamId)
+      );
+      if (duplicate) {
+        setTeamNumberError("Team number already exists.");
+        hasError = true;
+      } else {
+        setTeamNumberError(null);
+      }
+    }
+    if (!formData.podNumber) {
+      setPodNumberError("Pod number is required.");
+      hasError = true;
+    } else {
+      setPodNumberError(null);
+    }
+    if (!formData.teamName) {
+      setTeamNameError("Team name is required.");
+      hasError = true;
+    } else {
+      setTeamNameError(null);
+    }
+    if (hasError) return;
+    setStep(step + 1);
+  };
 
   const handleBack = () => {
     setStep(step - 1);
@@ -288,11 +320,19 @@ export default function CategoryScreen({ route }: any) {
           data={paginatedTeams}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View 
+            <TouchableOpacity
               style={[
                 styles.teamCard, 
                 item.disabled && { backgroundColor: "#f0f0f0", borderColor: "#c6c6c6ff", borderWidth: 1 }
-                ]}>
+                ]}
+                onPress={() => {
+                  navigation.navigate("Scores", {
+                    teamId: item.id,
+                    teamName: item.teamName,
+                  });
+                }}
+                disabled={item.disabled}
+              >
 
               <View style={[ 
                 item.disabled && { opacity: 0.5, backgroundColor: "#f0f0f0" }
@@ -383,7 +423,7 @@ export default function CategoryScreen({ route }: any) {
                     </TouchableOpacity>
                 )}
               </View>
-            </View>
+            </TouchableOpacity>
           )}
           ListEmptyComponent={<Text>No teams found.</Text>}
         />
@@ -391,7 +431,20 @@ export default function CategoryScreen({ route }: any) {
       {/* <Button title="Create Team" onPress={() => setModalVisible(true)} /> */}
       <TouchableOpacity
         style={styles.createTeamButton}
-        onPress={() => setModalVisible(true)}
+        onPress={() => {
+          setEditMode(false);           // <-- Reset edit mode
+          setEditTeamId(null);          // <-- Reset edit team id
+          setStep(1);                   // <-- Reset to first step
+          setFormData({
+            countryName: "",
+            teamNumber: 0,
+            podNumber: 0,
+            teamName: "",
+            coachName: "",
+            members: ["", "", ""],
+          });                           // <-- Reset form data
+          setModalVisible(true);        // <-- Open modal
+        }}
       >
         <Feather name="plus" size={24} color="white" />
         <Text style={styles.createTeamButtonText}>Add Team</Text>
@@ -430,40 +483,56 @@ export default function CategoryScreen({ route }: any) {
                       ...formData,
                       countryName: countryName.country,
                     });
+                    setCountryError(null); // Clear error when country is selected
                   }}
                 />
+                {countryError && (
+                  <Text style={styles.errorText}>{countryError}</Text>
+                )}
                 <Text style={styles.modalLabel}>Team Number</Text>
                 <TextInput
                   placeholder="Enter Team Number"
                   value={String(formData.teamNumber)}
-                  onChangeText={(text) =>
+                  onChangeText={(text) => {
                     setFormData({
                       ...formData,
                       teamNumber: parseInt(text) || 0,
-                    })
-                  }
+                    });
+                    setTeamNumberError(null);
+                  }}
                   style={styles.modalInput}
                   keyboardType="numeric"
                 />
+                {teamNumberError && (
+                  <Text style={styles.errorText}>{teamNumberError}</Text>
+                )}
                 <Text style={styles.modalLabel}>Pod Number</Text>
                 <TextInput
                   placeholder="Enter Pod Number"
                   value={String(formData.podNumber)}
-                  onChangeText={(text) =>
-                    setFormData({ ...formData, podNumber: parseInt(text) || 0 })
-                  }
+                   onChangeText={(text) => {
+                    setFormData({ ...formData, podNumber: parseInt(text) || 0 });
+                    setPodNumberError(null);
+                  }}
                   style={styles.modalInput}
                   keyboardType="numeric"
                 />
+                {podNumberError && (
+                  <Text style={styles.errorText}>{podNumberError}</Text>
+                )}
                 <Text style={styles.modalLabel}>Team Name</Text>
                 <TextInput
                   placeholder="Enter Team Name"
                   value={formData.teamName}
-                  onChangeText={(text) =>
-                    setFormData({ ...formData, teamName: text })
-                  }
+                  onChangeText={(text) => {
+                    setFormData({ ...formData, teamName: text });
+                    setTeamNameError(null);
+                  }}
                   style={styles.modalInput}
                 />
+                {teamNameError && (
+                  <Text style={styles.errorText}>{teamNameError}</Text>
+                )}
 
                 <View style={styles.pageIndicatorContainer}>
                   <Text style={styles.pageIndicatorText}>Page 1 of 3</Text>
@@ -668,6 +737,10 @@ export default function CategoryScreen({ route }: any) {
                     setModalVisible(false);
                     setEditMode(false);
                     setEditTeamId(null);
+                    setCountryError(null);
+                    setTeamNumberError(null);
+                    setPodNumberError(null);
+                    setTeamNameError(null);
                   } catch (e) {
                     Alert.alert("Error", "Failed to disable team.");
                   }

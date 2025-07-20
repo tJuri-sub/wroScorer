@@ -215,14 +215,18 @@ export default function ScorerScreen({ navigation }: any) {
         time1: scoringTeam.time1 ?? null,
         round2Score: scoringTeam.round2Score ?? null,
         time2: scoringTeam.time2 ?? null,
+        category: judgeCategory,
       };
 
+      const now = new Date();
       if (scoringStep === 1) {
         update.round1Score = Number(inputScore);
         update.time1 = inputTime;
+        update.round1ScoredAt = now.toISOString(); // Store date/time for round 1
       } else {
         update.round2Score = Number(inputScore);
         update.time2 = inputTime;
+        update.round2ScoredAt = now.toISOString(); // Store date/time for round 2
       }
 
       setScoreModalVisible(false);

@@ -303,5 +303,11 @@ export default StyleSheet.create({
       width: "100%",
       gap: 10,
     },
+    errorText: {
+      color: "#AA0003", 
+      marginBottom: 4,
+      textAlign: "left",
+      alignSelf: "flex-start",
+    }
 
 });
