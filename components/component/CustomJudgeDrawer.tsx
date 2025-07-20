@@ -62,7 +62,7 @@ export default function CustomJudgeDrawer({ navigation }: any) {
           <Text style={styles.name}>ScoreBotics</Text>
         </View>
         <View>
-          <Pressable
+          {/* <Pressable
             style={({ pressed }) => [
               styles.menuItem,
               pressed && styles.buttonPressed,
@@ -72,9 +72,9 @@ export default function CustomJudgeDrawer({ navigation }: any) {
             }}
           >
             <Text style={styles.menuText}>Profile</Text>
-          </Pressable>
+          </Pressable> */}
 
-          <Pressable
+          {/* <Pressable
             style={({ pressed }) => [
               styles.menuItem,
               pressed && styles.buttonPressed,
@@ -84,7 +84,7 @@ export default function CustomJudgeDrawer({ navigation }: any) {
             }}
           >
             <Text style={styles.menuText}>About Us</Text>
-          </Pressable>
+          </Pressable> */}
 
           {/* Logout */}
           <Pressable

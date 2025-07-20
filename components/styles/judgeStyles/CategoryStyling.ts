@@ -4,7 +4,7 @@ export default StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: "#fff",
+    backgroundColor: "#f3f3f3",
   },
 
   header: {
@@ -56,14 +56,13 @@ export default StyleSheet.create({
 
   teamCard: {
     backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#919191",
     borderRadius: 16,
     padding: 18,
     marginBottom: 18,
-    boxShadow: "0px 1px 3px rgba(0,0,0,0.2)",
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.3)",
     flexDirection: "column",
-    minWidth: 0,
+    width: "95%",
+    margin: "auto",
   },
   teamCardHeader: {
     flexDirection: "row",
@@ -103,6 +102,7 @@ export default StyleSheet.create({
     color: "#432344",
     flex: 1,
     textAlign: "left",
+    flexWrap: "wrap",
   },
   teamCardMember: {
     fontSize: 15,

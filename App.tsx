@@ -150,7 +150,23 @@ const JudgeInsideStackNavigator = () => (
         ),
       })}
     />
-    <InsideStack.Screen name="TeamScoresScreen" component={TeamScoresScreen} />
+    <InsideStack.Screen
+      name="TeamScoresScreen"
+      component={TeamScoresScreen}
+      options={({ navigation }) => ({
+        headerShown: true,
+        headerTitle: "Team Scores",
+        headerTitleAlign: "center",
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={{ marginLeft: 15 }}
+          >
+            <AntDesign name="arrowleft" size={24} color="#432344" />
+          </TouchableOpacity>
+        ),
+      })}
+    />
   </InsideStack.Navigator>
 );
 
