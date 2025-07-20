@@ -61,20 +61,12 @@ export default function TeamScoresScreen({ route, navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
         <Text style={styles.title}>Scores for {team.teamName}</Text>
       </View>
       <FlatList
         data={scores}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <ScoreCard score={item} />
-        )}
+        renderItem={({ item }) => <ScoreCard score={item} />}
         ListEmptyComponent={<Text>No scores found for this team.</Text>}
       />
     </View>

@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Modal,
+  Pressable,
 } from "react-native";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import {
@@ -302,84 +303,97 @@ export default function ScorerScreen({ navigation }: any) {
               getBestScoreAndTime(item);
 
             return (
-              <TouchableOpacity
+              <Pressable
                 disabled={isComplete}
                 onPress={() => openScoreModal(item)}
-                style={[
+                style={({ pressed }) => [
                   styles.teamCard,
                   {
                     backgroundColor: getCardColor(status),
                     opacity: isComplete ? 1 : 1,
                   },
+                  pressed && styles.buttonPressed,
                 ]}
               >
                 <Text style={styles.teamCardTeamNumber}>
-                  Team no.:{" "}
-                  <Text style={{ fontWeight: "bold" }}> {item.teamNumber}</Text>
+                  Team no. {item.teamNumber}
                 </Text>
 
                 <Text style={styles.teamCardTitle}>{item.teamName}</Text>
 
-                <View style={{ flexDirection: "row", marginBottom: 2 }}>
-                  <Text style={styles.teamData}>
-                    Round 1:{" "}
-                    <Text
-                      style={
-                        bestRound === 1
-                          ? { color: "#388e3c", fontWeight: "bold" }
-                          : {}
-                      }
-                    >
-                      {item.round1Score ?? "—"}
-                    </Text>
-                  </Text>
-                  <Text style={styles.teamData}>
-                    Time 1:{" "}
-                    <Text
-                      style={
-                        bestRound === 1
-                          ? { color: "#1976d2", fontWeight: "bold" }
-                          : {}
-                      }
-                    >
-                      {item.time1 ?? "—"}
-                    </Text>
-                  </Text>
-                </View>
                 <View
                   style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginBottom: 2,
+                    borderBottomWidth: 1,
+                    borderColor: "#bcbcbcff",
+                    paddingVertical: 10,
+                    marginBottom: 10,
                   }}
                 >
-                  <Text style={styles.teamData}>
-                    Round 2:{" "}
-                    <Text
-                      style={
-                        bestRound === 2
-                          ? { color: "#388e3c", fontWeight: "bold" }
-                          : {}
-                      }
-                    >
-                      {item.round2Score ?? "—"}
-                    </Text>
-                  </Text>
-                  <View style={{ width: 24 }} />
-                  <Text style={styles.teamData}>
-                    Time 2:{" "}
-                    <Text
-                      style={
-                        bestRound === 2
-                          ? { color: "#1976d2", fontWeight: "bold" }
-                          : {}
-                      }
-                    >
-                      {item.time2 ?? "—"}
-                    </Text>
-                  </Text>
+                  <View style={{ flexDirection: "row" }}>
+                    {/* Round column */}
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.teamData}>
+                        Round 1:{" "}
+                        <Text
+                          style={
+                            bestRound === 1
+                              ? { color: "#388e3c", fontWeight: "bold" }
+                              : {}
+                          }
+                        >
+                          {item.round1Score ?? "—"}
+                        </Text>
+                      </Text>
+                      <Text style={styles.teamData}>
+                        Round 2:{" "}
+                        <Text
+                          style={
+                            bestRound === 2
+                              ? { color: "#388e3c", fontWeight: "bold" }
+                              : {}
+                          }
+                        >
+                          {item.round2Score ?? "—"}
+                        </Text>
+                      </Text>
+                    </View>
+                    {/* Time column */}
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.teamData}>
+                        Time 1:{" "}
+                        <Text
+                          style={
+                            bestRound === 1
+                              ? { color: "#1976d2", fontWeight: "bold" }
+                              : {}
+                          }
+                        >
+                          {item.time1 ?? "—"}
+                        </Text>
+                      </Text>
+                      <Text style={styles.teamData}>
+                        Time 2:{" "}
+                        <Text
+                          style={
+                            bestRound === 2
+                              ? { color: "#1976d2", fontWeight: "bold" }
+                              : {}
+                          }
+                        >
+                          {item.time2 ?? "—"}
+                        </Text>
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-                <Text style={{ fontStyle: "italic", color: "#888" }}>
+
+                <Text
+                  style={{
+                    fontFamily: "inter_400Regular",
+                    fontStyle: "italic",
+                    color: "#6B7280",
+                  }}
+                >
                   Status:{" "}
                   {status === "no-score"
                     ? "No Score yet"
@@ -387,7 +401,7 @@ export default function ScorerScreen({ navigation }: any) {
                     ? "Round 1 Done"
                     : "Complete"}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             );
           }}
           ListEmptyComponent={

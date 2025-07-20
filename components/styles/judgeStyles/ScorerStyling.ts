@@ -47,15 +47,14 @@ export default StyleSheet.create({
     borderRadius: 10,
     padding: 16,
     marginBottom: 14,
-    boxShadow: "0px 3px 4px rgba(0,0,0,0.5)",
-    borderWidth: 1,
-    borderColor: "#919191",
+    boxShadow: "0px 3px 3px rgba(0,0,0,0.2)",
     marginHorizontal: 3,
   },
 
   teamCardTeamNumber: {
     fontSize: 16,
     fontFamily: "inter_400Regular",
+    color: "#6B7280",
   },
 
   teamCardTeamNumberHighlight: {
@@ -166,5 +165,9 @@ export default StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+
+  buttonPressed: {
+    transform: [{ scale: 0.98 }],
   },
 });

@@ -73,7 +73,6 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.teamCard}
             onPress={() => {
               if (
                 item.category?.toLowerCase().trim() ===
@@ -86,39 +85,48 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
               }
             }}
           >
-            {/* Header Row */}
-            <View style={styles.teamCardHeader}>
-              <Text style={styles.teamCardHeaderText}>
-                Team Number {item.teamNumber}
-              </Text>
-              <Text style={styles.teamCardHeaderText}>
-                Pod Number {item.podNumber}
-              </Text>
-            </View>
+            <View style={styles.teamCard}>
+              {/* Header Row */}
 
-            {/* Country and Team Name Row */}
-            <View style={styles.teamCardRow}>
-              {/* If you want to add a flag, do it here */}
-              <Text style={styles.teamCardTeamName} numberOfLines={1}>
-                {item.teamName}
-              </Text>
-              <Text style={styles.teamCardCountry}>
-                {item.countryName || item.country || "N/A"}
-              </Text>
-            </View>
-
-            {/* Members */}
-            {item.members &&
-              item.members.map((member: string, index: number) => (
-                <Text style={styles.teamCardMember} key={index}>
-                  Member {index + 1}: {member || "N/A"}
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  marginBottom: 6,
+                }}
+              >
+                <Text style={[styles.teamCardHeaderText, { flex: 1 }]}>
+                  Team Number {item.teamNumber}
                 </Text>
-              ))}
+                <Text style={styles.teamCardHeaderText}>
+                  Pod Number {item.podNumber}
+                </Text>
+              </View>
 
-            {/* Coach */}
-            <Text style={styles.teamCardCoach}>
-              Coach Name: {item.coachName}
-            </Text>
+              {/* Country and Team Name Row */}
+              <View style={styles.teamCardRow}>
+                {/* If you want to add a flag, do it here */}
+                <Text style={styles.teamCardTeamName}>{item.teamName}</Text>
+                <Text style={styles.teamCardCountry}>
+                  {item.countryName || item.country || "N/A"}
+                </Text>
+              </View>
+
+              {/* Members */}
+              <View style={{ marginBottom: 6 }}>
+                {item.members &&
+                  item.members.map((member: string, index: number) => (
+                    <Text style={styles.teamCardMember} key={index}>
+                      Member {index + 1}: {member || "N/A"}
+                    </Text>
+                  ))}
+              </View>
+
+              {/* Coach */}
+              <Text style={styles.teamCardCoach}>
+                Coach Name: {item.coachName}
+              </Text>
+            </View>
           </TouchableOpacity>
         )}
         ListEmptyComponent={
