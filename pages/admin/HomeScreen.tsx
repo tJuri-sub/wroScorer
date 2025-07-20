@@ -33,6 +33,7 @@ import {
   updateDoc,
   query,
   where,
+  onSnapshot,
 } from "firebase/firestore";
 
 const { height: screenHeight } = Dimensions.get("window");
@@ -94,6 +95,16 @@ export default function HomeScreenAdmin({ navigation }: any) {
   const [editSubcategory, setEditSubcategory] = useState<string | null>(null);
 
   const [disableModalVisible, setDisableModalVisible] = useState(false);
+  
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [subcategoryError, setSubcategoryError] = useState<string | null>(null);
+
+  const [editUsernameError, setEditUsernameError] = useState<string | null>(null);
+  const [editCategoryError, setEditCategoryError] = useState<string | null>(null);
+  const [editSubcategoryError, setEditSubcategoryError] = useState<string | null>(null);
 
   // Initialize Firebase
   const auth = getAuth();
@@ -223,9 +234,9 @@ export default function HomeScreenAdmin({ navigation }: any) {
 
   // Fetch judge users from Firestore
   useEffect(() => {
-    const fetchJudgeUsers = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "judge-users"));
+    const unsubscribe = onSnapshot(
+      collection(db, "judge-users"),
+      (querySnapshot) => {
         const users = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           username: doc.data().username || "",
@@ -233,41 +244,44 @@ export default function HomeScreenAdmin({ navigation }: any) {
           email: doc.data().email || "",
           avatarUrl:
             doc.data().avatarUrl || getRandomAvatar(doc.data().username || ""),
-          createdAt: doc.data().createdAt, // Add createdAt from Firestore
+          createdAt: doc.data().createdAt,
           disabled: doc.data().disabled ?? false,
         })) as JudgeUser[];
         setJudgeUsers(users);
-      } catch (error) {
+      },
+      (error) => {
         console.error("Error fetching judge users:", error);
       }
-    };
-
-    fetchJudgeUsers();
+    );
+    return () => unsubscribe();
   }, []);
 
   const createJudgeAccount = async () => {
     try {
       // Validate input fields
       if (!username.trim()) {
-        Alert.alert("Error", "Username cannot be empty!");
+        setUsernameError("Name cannot be empty!");
         return;
       }
       if (!password.trim()) {
-        Alert.alert("Error", "Password cannot be empty!");
+        setPasswordError("Password cannot be empty!");
         return;
       }
       if (password !== confirmpassword) {
-        Alert.alert("Error", "Passwords do not match!");
+        setConfirmPasswordError("Passwords do not match!");
+        return;
+      }
+      if (!category) {
+        setCategoryError("Please select a category!");
         return;
       }
       if (
-        !category ||
-        (["Robomission", "Future Innovators"].includes(
+        ["Robomission", "Future Innovators"].includes(
           categorydata.find((cat: any) => cat.value === category)?.label || ""
         ) &&
-          !subcategory)
+        !subcategory
       ) {
-        Alert.alert("Error", "Please select a category and subcategory!");
+        setSubcategoryError("Please select a subcategory!");
         return;
       }
 
@@ -290,11 +304,11 @@ export default function HomeScreenAdmin({ navigation }: any) {
         getDocs(qEmail),
       ]);
       if (!usernameSnapshot.empty) {
-        Alert.alert("Error", "A judge with this username already exists.");
+        Alert.alert("A judge with this username already exists.");
         return;
       }
       if (!emailSnapshot.empty) {
-        Alert.alert("Error", "A judge with this email already exists.");
+        Alert.alert("A judge with this email already exists.");
         return;
       }
 
@@ -370,20 +384,43 @@ export default function HomeScreenAdmin({ navigation }: any) {
   };
 
   const updateJudgeAccount = async () => {
+  // Validation
+  let hasError = false;
+  if (!editUsername.trim()) {
+    setEditUsernameError("Name cannot be empty!");
+    hasError = true;
+  } else {
+    setEditUsernameError(null);
+  }
+  if (!editCategory) {
+    setEditCategoryError("Please select a category!");
+    hasError = true;
+  } else {
+    setEditCategoryError(null);
+  }
+  if (
+    ["Robomission", "Future Innovators"].includes(
+      categorydata.find((cat: any) => cat.value === editCategory)?.label || ""
+    ) &&
+    !editSubcategory
+  ) {
+    setEditSubcategoryError("Please select a subcategory!");
+    hasError = true;
+  } else {
+    setEditSubcategoryError(null);
+  }
+  if (hasError) return;
+
   if (!editJudge) return;
   try {
     await updateDoc(doc(db, "judge-users", editJudge.id), {
-      username,
-      category: subcategory || category || "",
+      username: editUsername,
+      category: editSubcategory || editCategory || "",
     });
-    setJudgeUsers((prev) =>
-      prev.map((j) =>
-        j.id === editJudge.id
-          ? { ...j, username, category: subcategory || category || "" }
-          : j
-      )
-    );
-    setModalVisible(false);
+    setEditModalVisible(false);
+    setEditUsernameError(null);
+    setEditCategoryError(null);
+    setEditSubcategoryError(null);
   } catch (e) {
     Alert.alert("Error", "Failed to update judge.");
   }
@@ -393,8 +430,8 @@ export default function HomeScreenAdmin({ navigation }: any) {
   const cardGap = 16;
   const snapInterval = cardWidth + cardGap;
 
-  const sortedJudges = [...judgeUsers].sort(
-    (a, b) => b.createdAt?.toDate?.() - a.createdAt?.toDate?.()
+  const sortedJudges = [...judgeUsers].sort((a, b) =>
+    a.username.localeCompare(b.username)
   );
   const latestJudges = sortedJudges.slice(0, 5);
 
@@ -641,6 +678,11 @@ export default function HomeScreenAdmin({ navigation }: any) {
         onRequestClose={() => {
           Alert.alert("Modal has been closed.");
           setModalVisible(!modalVisible);
+          setUsernameError(null);
+          setPasswordError(null);
+          setConfirmPasswordError(null);
+          setCategoryError(null);
+          setSubcategoryError(null);
         }}
       >
         <View style={styles.modal}>
@@ -656,24 +698,41 @@ export default function HomeScreenAdmin({ navigation }: any) {
               <TextInput
                 placeholder="Name"
                 autoCapitalize="none"
-                onChangeText={(text) => setUsername(text)}
+                onChangeText={(text) => {
+                  setUsername(text)
+                  setUsernameError(null); // Clear error on change
+                  }}
                 style={styles.textinput}
               />
-
+              {usernameError && (
+                <Text style={styles.errorText}>{usernameError}</Text>
+              )}
               <TextInput
                 placeholder="Password"
                 secureTextEntry={true}
                 autoCapitalize="none"
-                onChangeText={(text) => setPassword(text)}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setPasswordError(null);
+                }}
                 style={styles.textinput}
               />
+              {passwordError && (
+                <Text style={styles.errorText}>{passwordError}</Text>
+              )}
               <TextInput
                 placeholder="Confirm Password"
                 secureTextEntry={true}
                 autoCapitalize="none"
-                onChangeText={(text) => setConfirmPassword(text)}
+                onChangeText={(text) => {
+                  setConfirmPassword(text)
+                  setConfirmPasswordError(null);
+                }}
                 style={styles.textinput}
               />
+              {confirmPasswordError && (
+                <Text style={styles.errorText}>{confirmPasswordError}</Text>
+              )}
               <Dropdown
                 style={styles.dropdown}
                 data={categorydata}
@@ -686,29 +745,41 @@ export default function HomeScreenAdmin({ navigation }: any) {
                 value={category}
                 onChange={(item) => {
                   setCategory(item.value);
+                  setCategoryError(null);
                   // Reset subcategory if not Robomission or Future Innovators
                   if (!item.subcategories) setSubcategory(null);
                 }}
               />
+              {categoryError && (
+                <Text style={styles.errorText}>{categoryError}</Text>
+              )}
               {["Robomission", "Future Innovators"].includes(
                 categorydata.find((cat: any) => cat.value === category)
                   ?.label || ""
               ) && (
-                <Dropdown
-                  style={styles.dropdown}
-                  data={
-                    categorydata.find((cat: any) => cat.value === category)
-                      ?.subcategories || []
-                  }
-                  labelField="label"
-                  valueField="value"
-                  placeholder="Select Subcategory"
-                  value={subcategory}
-                  onChange={(item) => setSubcategory(item.value)}
-                />
+                <>
+                  <Dropdown
+                    style={styles.dropdown}
+                    data={
+                      categorydata.find((cat: any) => cat.value === category)
+                        ?.subcategories || []
+                    }
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Select Subcategory"
+                    value={subcategory}
+                    onChange={(item) => {
+                      setSubcategory(item.value)
+                      setSubcategoryError(null);}}
+                  />
+                  {categoryError && (
+                  <Text style={styles.errorText}>{categoryError}</Text>
+                )}
+                </>
               )}
+              
             </View>
-
+            
             <View style={styles.buttonContainer}>
               <Pressable
                 style={styles.modalCreateButton}
@@ -733,7 +804,15 @@ export default function HomeScreenAdmin({ navigation }: any) {
         animationType="slide"
         transparent={true}
         visible={editModalVisible}
-        onRequestClose={() => setEditModalVisible(false)}
+        onRequestClose={() => {
+          setEditModalVisible(false);
+          setUsernameError(null);
+          setPasswordError(null);
+          setConfirmPasswordError(null);
+          setCategoryError(null);
+          setSubcategoryError(null);
+        }}
+        
       >
         <View style={styles.modal}>
           <View style={styles.modalContent}>
@@ -748,9 +827,15 @@ export default function HomeScreenAdmin({ navigation }: any) {
                 placeholder="Name"
                 value={editUsername}
                 autoCapitalize="none"
-                onChangeText={setEditUsername}
+                onChangeText={(text) => {
+                  setEditUsername(text);
+                  setEditUsernameError(null);
+                }}
                 style={styles.textinput}
               />
+              {editUsernameError && (
+                <Text style={styles.errorText}>{editUsernameError}</Text>
+              )}
               <Dropdown
                 style={styles.dropdown}
                 data={categorydata}
@@ -763,12 +848,18 @@ export default function HomeScreenAdmin({ navigation }: any) {
                 value={editCategory}
                 onChange={(item) => {
                   setEditCategory(item.value);
+                  setEditCategoryError(null);
                   if (!item.subcategories) setEditSubcategory(null);
                 }}
               />
+              {editCategoryError && (
+                <Text style={styles.errorText}>{editCategoryError}</Text>
+              )}
+
               {["Robomission", "Future Innovators"].includes(
                 categorydata.find((cat: any) => cat.value === editCategory)?.label || ""
               ) && (
+              <>
                 <Dropdown
                   style={styles.dropdown}
                   data={
@@ -779,32 +870,21 @@ export default function HomeScreenAdmin({ navigation }: any) {
                   valueField="value"
                   placeholder="Select Subcategory"
                   value={editSubcategory}
-                  onChange={(item) => setEditSubcategory(item.value)}
+                  onChange={(item) => {
+                    setEditSubcategory(item.value);
+                    setEditSubcategoryError(null);
+                  }}
                 />
+                {editSubcategoryError && (
+                  <Text style={styles.errorText}>{editSubcategoryError}</Text>
+                )}
+              </>
               )}
             </View>
               <View style={styles.buttonContainer}>
                 <Pressable
                   style={styles.modalCreateButton}
-                  onPress={async () => {
-                    if (!editJudge) return;
-                    try {
-                      await updateDoc(doc(db, "judge-users", editJudge.id), {
-                        username: editUsername,
-                        category: editSubcategory || editCategory || "",
-                      });
-                      setJudgeUsers((prev) =>
-                        prev.map((j) =>
-                          j.id === editJudge.id
-                            ? { ...j, username: editUsername, category: editSubcategory || editCategory || "" }
-                            : j
-                        )
-                      );
-                      setEditModalVisible(false);
-                    } catch (e) {
-                      Alert.alert("Error", "Failed to update judge.");
-                    }
-                  }}
+                  onPress={updateJudgeAccount}
                 >
                   <Text style={styles.buttonText}>Save</Text>
                 </Pressable>

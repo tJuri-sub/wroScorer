@@ -414,7 +414,10 @@ export default StyleSheet.create({
       letterSpacing: 1,
       fontFamily: "inter_400Regular",
     },
-  
-
+    
+    errorText: {
+    color: "#AA0003",
+    marginBottom: 4,
+    }
 
 });

@@ -39,6 +39,7 @@ import AllJudgesScreen from "./pages/admin/AllJudgesScreen";
 import { AntDesign } from "@expo/vector-icons";
 import JudgeDrawerNavigator from "./components/component/JudgeDrawerNavigator";
 import { LogoutModalProvider } from "./components/component/LogoutModalContent";
+import Scores from "./pages/admin/Scores";
 
 const Stack = createNativeStackNavigator();
 const InsideStack = createNativeStackNavigator();
@@ -204,6 +205,7 @@ const AdminInsideStackNavigator = () => (
     <InsideStack.Screen name="ProfileAdmin" component={ProfileAdmin} />
     <InsideStack.Screen name="Category" component={CategoryScreen} />
     <InsideStack.Screen name="Judges" component={AllJudgesScreen} />
+    <InsideStack.Screen name="Scores" component={Scores} />
   </InsideStack.Navigator>
 );
 
