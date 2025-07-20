@@ -11,7 +11,10 @@ import {
   collection,
   onSnapshot,
   getDocs,
+  doc, 
+  getDoc,
 } from "firebase/firestore";
+import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import styles from "../components/styles/judgeStyles/LeaderboardStyling";
 import { Feather } from "@expo/vector-icons";
@@ -26,29 +29,26 @@ function parseTimeString(timeStr: string) {
 export default function Leaderboard({ navigation }: any) {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerLeft: () => (
-        <TouchableOpacity
-          onPress={() => navigation.openDrawer()}
-          style={{ marginLeft: 15 }}
-        >
-          <Feather name="menu" size={24} color="black" />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation]);
-
-  // Define navigation types
-  type RootStackParamList = {
-    Leaderboard: undefined;
-    AllLeaderboardScreen: undefined;
-  };
-  //const navigation = useNavigation<NavigationProp<RootStackParamList>>();
-  const db = getFirestore();
+  const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
 
   useEffect(() => {
+    // Fetch judge's assigned category
+    const fetchJudgeCategory = async () => {
+      const user = FIREBASE_AUTH.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(FIREBASE_DB, "judge-users", user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setJudgeCategory(data.category || null);
+        }
+      }
+    };
+    fetchJudgeCategory();
+  }, []);
+
+  useEffect(() => {
+    if (!judgeCategory) return; // Wait for judgeCategory to load
+
     let unsubscribeScores: (() => void) | undefined;
     let unsubTeams: (() => void) | undefined;
 
@@ -57,7 +57,6 @@ export default function Leaderboard({ navigation }: any) {
     // Fetch all teams and build a disabled lookup
     const fetchTeamsAndListen = async () => {
       const teamsSnapshot = await getDocs(collection(db, "teams"));
-      // or use your actual teams path if it's under categories/...
       const disabledMap: Record<string, boolean> = {};
       teamsSnapshot.forEach((doc) => {
         const data = doc.data();
@@ -72,8 +71,11 @@ export default function Leaderboard({ navigation }: any) {
           const teamMap: Record<string, any> = {};
           querySnapshot.forEach((doc) => {
             const data = doc.data();
-            // Only include if not disabled
-            if (!disabledMap[data.teamId]) {
+            // Only include if not disabled AND category matches
+            if (
+              !disabledMap[data.teamId] &&
+              data.category === judgeCategory
+            ) {
               if (!teamMap[data.teamId]) {
                 teamMap[data.teamId] = {
                   teamName: data.teamName,
@@ -132,7 +134,7 @@ export default function Leaderboard({ navigation }: any) {
       if (unsubscribeScores) unsubscribeScores();
       if (unsubTeams) unsubTeams();
     };
-  }, []);
+  }, [judgeCategory]);
 
   if (loading) {
     return (

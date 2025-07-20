@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
+  TextInput,
 } from "react-native";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 import styles from "../components/styles/judgeStyles/CategoryStyling";
@@ -16,11 +17,16 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Search and pagination state
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const recordsPerPage = 10;
+
   const db = getFirestore();
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: `${label} (${teams.length})`,
+      headerTitle: `${label} Teams`,
       headerTitleAlign: "center",
       headerLeft: () => (
         <TouchableOpacity
@@ -36,7 +42,6 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
   useEffect(() => {
     const fetchTeams = async () => {
       try {
-        // Adjust the collection path as needed for your Firestore structure
         const querySnapshot = await getDocs(
           collection(db, `categories/${category}/teams`)
         );
@@ -46,8 +51,11 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
             id: doc.id,
             category: category,
             ...data,
+            teamNumber: data.teamNumber ?? 0, // Ensure teamNumber exists
           };
         });
+        // Sort by team number ascending
+        teamList.sort((a, b) => (a.teamNumber ?? 0) - (b.teamNumber ?? 0));
         setTeams(teamList);
       } catch (error) {
         console.error("Error fetching teams:", error);
@@ -57,6 +65,32 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
     };
     fetchTeams();
   }, [category]);
+
+  // Filter teams by search and not disabled
+  const filteredTeams = teams
+    .filter((item) => !item.disabled)
+    .filter((item) => {
+      const searchLower = search.toLowerCase();
+      return (
+        item.teamName?.toLowerCase().includes(searchLower) ||
+        String(item.teamNumber).includes(searchLower)
+      );
+    });
+
+  // Pagination logic
+  const totalRecords = filteredTeams.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / recordsPerPage));
+  const startIndex = (currentPage - 1) * recordsPerPage;
+  const endIndex = startIndex + recordsPerPage;
+  const currentRecords = filteredTeams.slice(startIndex, endIndex);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
 
   if (loading) {
     return (
@@ -68,8 +102,27 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
 
   return (
     <View style={styles.container}>
+      {/* Search Bar */}
+      <TextInput
+        style={{
+          borderWidth: 1,
+          borderRadius: 10,
+          padding: 10,
+          borderColor: "#e0e0e0",
+          backgroundColor: "#fafafa",
+          marginBottom: 12,
+          fontSize: 16,
+        }}
+        placeholder="Search team name"
+        value={search}
+        onChangeText={(text) => {
+          setSearch(text);
+          setCurrentPage(1); // Reset to first page on search
+        }}
+      />
+
       <FlatList
-        data={teams.filter((item) => !item.disabled)}
+        data={currentRecords}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -87,7 +140,6 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
           >
             <View style={styles.teamCard}>
               {/* Header Row */}
-
               <View
                 style={{
                   flexDirection: "row",
@@ -102,16 +154,13 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
                   Pod Number {item.podNumber}
                 </Text>
               </View>
-
               {/* Country and Team Name Row */}
               <View style={styles.teamCardRow}>
-                {/* If you want to add a flag, do it here */}
                 <Text style={styles.teamCardTeamName}>{item.teamName}</Text>
                 <Text style={styles.teamCardCountry}>
                   {item.countryName || item.country || "N/A"}
                 </Text>
               </View>
-
               {/* Members */}
               <View style={{ marginBottom: 6 }}>
                 {item.members &&
@@ -121,7 +170,6 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
                     </Text>
                   ))}
               </View>
-
               {/* Coach */}
               <Text style={styles.teamCardCoach}>
                 Coach Name: {item.coachName}
@@ -135,6 +183,41 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
           </Text>
         }
       />
+
+      {/* Pagination Controls */}
+      <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 10 }}>
+        <TouchableOpacity
+          onPress={handlePreviousPage}
+          disabled={currentPage === 1}
+          style={{
+            padding: 8,
+            marginHorizontal: 8,
+            backgroundColor: currentPage === 1 ? "#eee" : "#432344",
+            borderRadius: 6,
+          }}
+        >
+          <Text style={{ color: currentPage === 1 ? "#aaa" : "#fff" }}>Previous</Text>
+        </TouchableOpacity>
+        <Text style={{ alignSelf: "center", fontSize: 16 }}>
+          Page {currentPage} of {totalPages}
+        </Text>
+        <TouchableOpacity
+          onPress={handleNextPage}
+          disabled={currentPage === totalPages}
+          style={{
+            padding: 8,
+            marginHorizontal: 8,
+            backgroundColor: currentPage === totalPages ? "#eee" : "#432344",
+            borderRadius: 6,
+          }}
+        >
+          <Text style={{ color: currentPage === totalPages ? "#aaa" : "#fff" }}>Next</Text>
+        </TouchableOpacity>
+      </View>
+      {/* Records summary */}
+        <Text style={{ marginBottom: 5, marginTop: 5, color: "#555", textAlign: "center" }}>
+          Showing {currentRecords.length} of {filteredTeams.length} teams
+        </Text>
     </View>
   );
 }

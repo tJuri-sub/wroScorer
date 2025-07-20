@@ -21,7 +21,7 @@ import {
   setDoc,
   query,
   where,
-  orderBy,
+  onSnapshot,
 } from "firebase/firestore";
 import { useFonts, Inter_400Regular } from "@expo-google-fonts/inter";
 import styles from "../components/styles/judgeStyles/ScorerStyling";
@@ -62,6 +62,9 @@ export default function ScorerScreen({ navigation }: any) {
 
   // Fetch judge's assigned category and teams
   useEffect(() => {
+    let unsubscribeTeams: (() => void) | undefined;
+    let unsubscribeScores: (() => void) | undefined;
+
     const fetchJudgeAndTeams = async () => {
       setLoading(true);
       if (user) {
@@ -76,23 +79,50 @@ export default function ScorerScreen({ navigation }: any) {
             const data = docSnap.docs[0].data();
             setJudgeCategory(data.category);
 
-            // Fetch teams in judge's category
-            const teamsSnap = await getDocs(
-              collection(FIREBASE_DB, `categories/${data.category}/teams`)
-            );
-            const teamList = teamsSnap.docs.map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            }));
-            setTeams(teamList);
+            // Listen to teams in judge's category
+            const teamsRef = collection(FIREBASE_DB, `categories/${data.category}/teams`);
+            unsubscribeTeams = onSnapshot(teamsRef, (teamsSnap) => {
+              const teamList = teamsSnap.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              }));
+
+              // Listen to scores and merge with teams
+              const scoresRef = collection(FIREBASE_DB, "scores");
+              unsubscribeScores = onSnapshot(scoresRef, (scoresSnap) => {
+                const scoresMap: Record<string, any> = {};
+                scoresSnap.forEach((doc) => {
+                  const score = doc.data();
+                  if (score.category === data.category) {
+                    scoresMap[score.teamId] = score;
+                  }
+                });
+
+                // Merge scores into teams
+                const mergedTeams = teamList.map((team) => ({
+                  ...team,
+                  ...scoresMap[team.id],
+                }));
+                setTeams(mergedTeams);
+                setLoading(false);
+              });
+            });
           }
         } catch (err) {
           console.log("Error fetching judge or teams:", err);
+          setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     };
+
     fetchJudgeAndTeams();
+
+    return () => {
+      if (unsubscribeTeams) unsubscribeTeams();
+      if (unsubscribeScores) unsubscribeScores();
+    };
   }, [user]);
 
   // Card status helpers
@@ -234,11 +264,11 @@ export default function ScorerScreen({ navigation }: any) {
       setScoringTeam(null);
 
       // 🔥 1. Update team inside its category
-      const categoryRef = doc(
-        FIREBASE_DB,
-        `categories/${judgeCategory}/teams/${scoringTeam.id}`
-      );
-      await setDoc(categoryRef, update, { merge: true });
+      // const categoryRef = doc(
+      //   FIREBASE_DB,
+      //   `categories/${judgeCategory}/teams/${scoringTeam.id}`
+      // );
+      // await setDoc(categoryRef, update, { merge: true });
 
       // 🔥 2. Also update or create a mirrored entry in "scores"
       const scoresRef = doc(FIREBASE_DB, "scores", scoringTeam.id);
