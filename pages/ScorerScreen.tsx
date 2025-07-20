@@ -80,7 +80,10 @@ export default function ScorerScreen({ navigation }: any) {
             setJudgeCategory(data.category);
 
             // Listen to teams in judge's category
-            const teamsRef = collection(FIREBASE_DB, `categories/${data.category}/teams`);
+            const teamsRef = collection(
+              FIREBASE_DB,
+              `categories/${data.category}/teams`
+            );
             unsubscribeTeams = onSnapshot(teamsRef, (teamsSnap) => {
               const teamList = teamsSnap.docs.map((doc) => ({
                 id: doc.id,
@@ -127,9 +130,12 @@ export default function ScorerScreen({ navigation }: any) {
 
   // Card status helpers
   const getCardStatus = (team: any) => {
-    if (!team.round1Score && !team.round2Score) return "no-score";
-    if (team.round1Score && !team.round2Score) return "round1-only";
-    if (team.round1Score && team.round2Score) return "complete";
+    const hasR1 = team.round1Score !== null && team.round1Score !== undefined;
+    const hasR2 = team.round2Score !== null && team.round2Score !== undefined;
+
+    if (!hasR1 && !hasR2) return "no-score";
+    if (hasR1 && !hasR2) return "round1-only";
+    if (hasR1 && hasR2) return "complete";
     return "no-score";
   };
 
@@ -164,7 +170,9 @@ export default function ScorerScreen({ navigation }: any) {
   const openScoreModal = (team: any) => {
     if (getCardStatus(team) === "complete") return;
     setScoringTeam(team);
-    setScoringStep(!team.round1Score ? 1 : 2);
+    setScoringStep(
+      team.round1Score === null || team.round1Score === undefined ? 1 : 2
+    );
     setInputScore("");
     setInputMinute("");
     setInputSecond("");
