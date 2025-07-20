@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Text, View, FlatList, ActivityIndicator, TouchableOpacity, StyleSheet } from "react-native";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { getFirestore, collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 
 function parseTimeString(timeStr: string) {
   if (!timeStr) return Infinity;
@@ -24,12 +25,28 @@ function getBestScoreAndTime(item: any) {
 
 export default function AllLeaderboardScreen() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 10;
   const db = getFirestore();
 
   useEffect(() => {
+    const fetchJudgeCategory = async () => {
+      const user = FIREBASE_AUTH.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(FIREBASE_DB, "judge-users", user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setJudgeCategory(data.category || null);
+        }
+      }
+    };
+    fetchJudgeCategory();
+  }, []);
+
+  useEffect(() => {
+    if (!judgeCategory) return;
     const fetchScores = async () => {
       setLoading(true);
       try {
@@ -37,10 +54,12 @@ export default function AllLeaderboardScreen() {
         const teams: any[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          teams.push({
-            ...data,
-            ...getBestScoreAndTime(data),
-          });
+          if (data.category === judgeCategory) { // <-- Filter here
+            teams.push({
+              ...data,
+              ...getBestScoreAndTime(data),
+            });
+          }
         });
         const leaderboardArr = teams
           .filter((t) => t.bestScore !== null)
@@ -55,7 +74,7 @@ export default function AllLeaderboardScreen() {
       setLoading(false);
     };
     fetchScores();
-  }, []);
+  }, [judgeCategory]);
 
   // Pagination logic
   const totalRecords = leaderboard.length;
