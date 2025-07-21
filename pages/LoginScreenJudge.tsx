@@ -9,12 +9,20 @@ import {
 import React, { useState } from "react";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import styles from "../components/styles/AuthformStyle";
 import Login from "./LoginScreenAdmin";
+import { Inter_400Regular, useFonts } from "@expo-google-fonts/inter";
 
 type RootStackParamList = {
   SignUp: undefined;
@@ -23,11 +31,17 @@ type RootStackParamList = {
 };
 
 const LoginJudge = () => {
+  let [fontsLoaded] = useFonts({
+    Inter_400Regular,
+  });
+
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const [errorMsg, setErrorMsg] = useState("");
 
   const auth = FIREBASE_AUTH;
 
@@ -55,7 +69,7 @@ const LoginJudge = () => {
           if (userData.disabled) {
             // Account is disabled
             await FIREBASE_AUTH.signOut();
-            alert("Your account is disabled, please contact admin.");
+            setErrorMsg("Your account is disabled, please contact admin.");
             setLoading(false);
             return;
           }
@@ -64,18 +78,18 @@ const LoginJudge = () => {
         } else {
           // Not a judge, sign out and show error
           await FIREBASE_AUTH.signOut();
-          alert("Access denied: Only judges can log in here.");
+          setErrorMsg("Access denied: Only judges can log in here.");
         }
       } else {
         // User doc not found
         await FIREBASE_AUTH.signOut();
-        alert("User profile not found.");
+        setErrorMsg("Access denied: Only judges can log in here.");
       }
     } catch (error) {
       if (error instanceof Error) {
-        alert("Login failed: " + error.message);
+        setErrorMsg("Login failed: " + error.message);
       } else {
-        alert("Login failed: An unknown error occurred.");
+        setErrorMsg("Login failed: An unknown error occurred.");
       }
     } finally {
       setLoading(false);
@@ -113,7 +127,10 @@ const LoginJudge = () => {
                 placeholder="ex. judge_johndoe@felta.org"
                 placeholderTextColor={"#999999"}
                 autoCapitalize="none"
-                onChangeText={(text) => setEmail(text)}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  setErrorMsg("");
+                }}
               />
 
               {/* Password */}
@@ -125,7 +142,10 @@ const LoginJudge = () => {
                   placeholder="Password"
                   placeholderTextColor={"#999999"}
                   autoCapitalize="none"
-                  onChangeText={(text) => setPassword(text)}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    setErrorMsg("");
+                  }}
                 />
                 <TouchableOpacity
                   style={{
@@ -145,8 +165,23 @@ const LoginJudge = () => {
                   />
                 </TouchableOpacity>
               </View>
+
+              {errorMsg !== "" && (
+                <Text
+                  style={{
+                    color: "red",
+                    marginTop: 8,
+                    textAlign: "center",
+                    fontFamily: "inter_400Regular",
+                    fontSize: 12,
+                  }}
+                >
+                  {errorMsg}
+                </Text>
+              )}
             </View>
           </View>
+
           {/* Login Button */}
           <TouchableOpacity style={styles.signButton} onPress={signIn}>
             {loading ? (
