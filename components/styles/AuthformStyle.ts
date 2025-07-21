@@ -51,6 +51,7 @@ export default StyleSheet.create({
     color: "#852B88",
     fontSize: 16,
     marginLeft: 10,
+    fontFamily: "inter_400Regular",
   },
 
   spacing: {
@@ -68,6 +69,7 @@ export default StyleSheet.create({
     fontSize: 38,
     fontWeight: "bold",
     color: "#000000",
+    fontFamily: "inter_400Regular",
     marginBottom: 5,
   },
 
@@ -75,6 +77,7 @@ export default StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#000000",
+    fontFamily: "inter_400Regular",
     marginBottom: 5,
   },
 
@@ -82,11 +85,13 @@ export default StyleSheet.create({
     fontSize: 23,
     fontWeight: "bold",
     color: "#000000",
+    fontFamily: "inter_400Regular",
     marginBottom: 5,
   },
 
   subtitle: {
     fontSize: 16,
+    fontFamily: "inter_400Regular",
   },
 
   highlight: {
@@ -95,6 +100,7 @@ export default StyleSheet.create({
     color: "#740D77",
     textDecorationLine: "underline",
     textDecorationColor: "#740D77",
+    fontFamily: "inter_400Regular",
   },
 
   adminHighlight: {
@@ -117,6 +123,7 @@ export default StyleSheet.create({
     margin: 10,
     padding: 10,
     fontSize: 16,
+    fontFamily: "inter_400Regular",
     borderRadius: 5,
     borderColor: "#919191",
     borderWidth: 1,
@@ -129,6 +136,7 @@ export default StyleSheet.create({
     textDecorationLine: "underline",
     textDecorationColor: "#852B88",
     color: "#852B88",
+    fontFamily: "inter_400Regular",
     fontSize: 16,
   },
 
@@ -146,6 +154,7 @@ export default StyleSheet.create({
   buttonText: {
     color: "#ffffff",
     fontSize: 16,
+    fontFamily: "inter_400Regular",
   },
 
   signUpbuttonContainer: {
@@ -158,6 +167,7 @@ export default StyleSheet.create({
   textlink: {
     color: "#852B88",
     fontSize: 16,
+    fontFamily: "inter_400Regular",
     marginRight: 10,
   },
 });
