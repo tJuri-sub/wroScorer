@@ -21,11 +21,10 @@ export default StyleSheet.create({
     alignItems: "center",
     gap: 15,
     width: "100%",
-    padding: 15,
+    paddingVertical: 15,
     marginTop: 10,
-    backgroundColor: "#ffffff",
-    borderRadius: 5,
-    boxShadow: "0px 1px 2px rgba(0,0,0,0.3)",
+    borderBottomWidth: 1,
+    borderBottomColor: "#999999",
   },
 
   avatar: {
@@ -39,12 +38,14 @@ export default StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     fontFamily: "inter_400Regular",
+    marginBottom: 3,
   },
 
   email: {
     fontSize: 16,
     color: "#852B88",
     fontFamily: "inter_400Regular",
+    marginTop: 3,
   },
 
   headerTexts: {
@@ -286,7 +287,7 @@ export default StyleSheet.create({
     backgroundColor: "#fff",
   },
 
-   modalDisableButton: {
+  modalDisableButton: {
     flex: 1,
     borderWidth: 1,
     borderColor: "#AA0003",
@@ -363,61 +364,60 @@ export default StyleSheet.create({
   },
 
   // Disable Confirmation Modal Styles
-     modalOverlayDisable: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
-      justifyContent: "center",
-      alignItems: "center",
-    },
-  
-    modalContentDisable: {
-      backgroundColor: "#fff",
-      borderRadius: 12,
-      padding: 20,
-      paddingTop: 30,
-      paddingBottom: 30,
-      width: 300,
-      alignItems: "center",
-    },
-  
-    modalTitle: {
-      fontSize: 16,
-      fontWeight: "semibold",
-      color: "#432344",
-      marginBottom: 25,
-      textAlign: "center",
-      fontFamily: "inter_400Regular",
-    },
-  
-    modalButtonContainer: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      width: "100%",
-    },
-  
-    modalButton: {
-      flex: 1,
-      paddingVertical: 10,
-      marginHorizontal: 5,
-      marginTop: 10,
-      borderRadius: 5,
-      alignItems: "center",
-      width: "100%", // Adjust width to fit two buttons side by side
-      elevation: 2,
-      borderWidth: 1,
-    },
-  
-    modalButtonText: {
-      fontSize: 14,
-      color: "#fff",
-      fontWeight: "semibold",
-      letterSpacing: 1,
-      fontFamily: "inter_400Regular",
-    },
-    
-    errorText: {
+  modalOverlayDisable: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalContentDisable: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    paddingTop: 30,
+    paddingBottom: 30,
+    width: 300,
+    alignItems: "center",
+  },
+
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "semibold",
+    color: "#432344",
+    marginBottom: 25,
+    textAlign: "center",
+    fontFamily: "inter_400Regular",
+  },
+
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+
+  modalButton: {
+    flex: 1,
+    paddingVertical: 10,
+    marginHorizontal: 5,
+    marginTop: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    width: "100%", // Adjust width to fit two buttons side by side
+    elevation: 2,
+    borderWidth: 1,
+  },
+
+  modalButtonText: {
+    fontSize: 14,
+    color: "#fff",
+    fontWeight: "semibold",
+    letterSpacing: 1,
+    fontFamily: "inter_400Regular",
+  },
+
+  errorText: {
     color: "#AA0003",
     marginBottom: 4,
-    }
-
+  },
 });

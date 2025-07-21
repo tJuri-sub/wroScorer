@@ -11,7 +11,7 @@ import {
   collection,
   onSnapshot,
   getDocs,
-  doc, 
+  doc,
   getDoc,
 } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../firebaseconfig";
@@ -30,6 +30,19 @@ export default function Leaderboard({ navigation }: any) {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => navigation.openDrawer()}
+          style={{ marginLeft: 15 }}
+        >
+          <Feather name="menu" size={24} color="black" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   useEffect(() => {
     // Fetch judge's assigned category
@@ -72,10 +85,7 @@ export default function Leaderboard({ navigation }: any) {
           querySnapshot.forEach((doc) => {
             const data = doc.data();
             // Only include if not disabled AND category matches
-            if (
-              !disabledMap[data.teamId] &&
-              data.category === judgeCategory
-            ) {
+            if (!disabledMap[data.teamId] && data.category === judgeCategory) {
               if (!teamMap[data.teamId]) {
                 teamMap[data.teamId] = {
                   teamName: data.teamName,
@@ -148,15 +158,28 @@ export default function Leaderboard({ navigation }: any) {
     <View>
       <View style={styles.container}>
         {/* Help text for ranking logic */}
-        <Text style={{ color: "#888", fontSize: 14, marginBottom: 8 }}>
+        <Text
+          style={{
+            color: "#888",
+            fontFamily: "Inter_400Regular",
+            fontSize: 14,
+            marginBottom: 8,
+          }}
+        >
           Ranking is based on the best score; if tied, the best time wins!
         </Text>
         {/* Header */}
         <TouchableOpacity
           onPress={() => navigation.navigate("AllLeaderboardScreen")}
         >
-          <Text style={{ color: "blue", marginBottom: 10 }}>
-            See All Ranking
+          <Text
+            style={{
+              color: "blue",
+              fontFamily: "Inter_400Regular",
+              marginBottom: 10,
+            }}
+          >
+            View All Rankings
           </Text>
         </TouchableOpacity>
         {leaderboard.length === 0 ? (
@@ -170,22 +193,65 @@ export default function Leaderboard({ navigation }: any) {
               const isTopThree = index < 3;
               const cardBg = rankColors[index] || "#fff";
               const textColor = isTopThree ? "#fff" : "#000";
+              const rankIcons = ["🥇", "🥈", "🥉"];
+              const rankDisplay = isTopThree
+                ? rankIcons[index]
+                : `${index + 1}.`;
+
               return (
                 <View
                   style={[styles.containerCard, { backgroundColor: cardBg }]}
                 >
                   <Text
-                    style={{ width: 30, color: textColor, fontWeight: "bold" }}
+                    style={{
+                      width: 25,
+                      textAlign: "center",
+                      fontFamily: "Inter_400Regular",
+                      fontWeight: isTopThree ? "700" : "500",
+                      fontSize: isTopThree ? 20 : 16, // Enlarged medal icon
+                      color: textColor,
+                      marginRight: 5,
+                      marginVertical: "auto",
+                      textShadowColor: "rgba(0,0,0,0.5)",
+                      textShadowRadius: 2,
+                    }}
                   >
-                    {index + 1}.
+                    {rankDisplay}
                   </Text>
-                  <Text style={{ flex: 1, color: textColor }}>
+
+                  <Text
+                    style={{
+                      flex: 1,
+                      fontFamily: "Inter_400Regular",
+                      color: textColor,
+                      marginRight: 5,
+                      marginLeft: 5,
+                    }}
+                  >
                     {item.teamName}
                   </Text>
-                  <Text style={{ color: textColor, fontWeight: "bold" }}>
+
+                  <Text
+                    style={{
+                      color: textColor,
+                      fontFamily: "Inter_400Regular",
+                      fontWeight: "bold",
+                      marginRight: 5,
+                      marginLeft: 5,
+                      marginVertical: "auto",
+                    }}
+                  >
                     {item.bestScore} pts
                   </Text>
-                  <Text style={{ color: textColor, marginLeft: 10 }}>
+
+                  <Text
+                    style={{
+                      color: textColor,
+                      fontFamily: "Inter_400Regular",
+                      marginLeft: 5,
+                      marginVertical: "auto",
+                    }}
+                  >
                     {item.bestTime}
                   </Text>
                 </View>
