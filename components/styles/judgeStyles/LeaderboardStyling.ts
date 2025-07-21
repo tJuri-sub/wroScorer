@@ -7,13 +7,13 @@ export default StyleSheet.create({
   },
 
   containerCard: {
-    padding: 10,
-    borderWidth: 1,
+    padding: 12,
     borderColor: "#919191",
-    borderRadius: 5,
+    borderRadius: 10,
     flexDirection: "row",
-    marginTop: 5,
-    marginBottom: 5,
+    marginVertical: 6,
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.2)",
+    marginHorizontal: 5,
   },
 
   headerRow: {
@@ -27,6 +27,7 @@ export default StyleSheet.create({
   },
 
   headerTitle: {
+    fontFamily: "Inter_400Regular",
     fontSize: 22,
     fontWeight: "bold",
     color: "#432344",
