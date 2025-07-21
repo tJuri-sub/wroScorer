@@ -40,6 +40,7 @@ import { AntDesign } from "@expo/vector-icons";
 import JudgeDrawerNavigator from "./components/component/JudgeDrawerNavigator";
 import { LogoutModalProvider } from "./components/component/LogoutModalContent";
 import Scores from "./pages/admin/Scores";
+import AllLeaderboard from "./pages/admin/Leaderboard";
 
 const Stack = createNativeStackNavigator();
 const InsideStack = createNativeStackNavigator();
@@ -195,6 +196,18 @@ const AdminTabNavigator = () => (
       }}
     />
     <AdminTab.Screen
+      name="Ranks"
+      component={AllLeaderboard}
+      options={{
+        headerShown: true,
+        headerTitle: "Leaderboard",
+        headerTitleAlign: "center",
+        tabBarIcon: ({ color, size }) => (
+           <MaterialIcons name="leaderboard" size={size} color={color} />
+        ),
+      }}
+    />
+    <AdminTab.Screen
       name="Profile"
       component={ProfileAdmin}
       options={{
@@ -207,6 +220,7 @@ const AdminTabNavigator = () => (
       }}
     />
     {/* <AdminTab.Screen name="Logs" component={LogsAdmin} /> */}
+    
   </AdminTab.Navigator>
 );
 
@@ -219,6 +233,7 @@ const AdminInsideStackNavigator = () => (
     />
     <InsideStack.Screen name="HomeAdmin" component={HomeScreenAdmin} />
     <InsideStack.Screen name="ProfileAdmin" component={ProfileAdmin} />
+    <InsideStack.Screen name="AllLeaderboard" component={AllLeaderboard} />
     <InsideStack.Screen name="Category" component={CategoryScreen} />
     <InsideStack.Screen name="Judges" component={AllJudgesScreen} />
     <InsideStack.Screen name="Scores" component={Scores} />
