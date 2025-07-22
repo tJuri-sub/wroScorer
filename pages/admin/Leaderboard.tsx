@@ -170,7 +170,11 @@ export default function AdminLeaderboard() {
         {/* <Text style={{ color: "#888", fontSize: 14, marginBottom: 8, textAlign: "center" }}>
           Select a category to view its team rankings.
         </Text> */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: 8 }}
+        >
           {categories.map((cat) => (
             <TouchableOpacity
               key={cat.id}
@@ -180,12 +184,18 @@ export default function AdminLeaderboard() {
                 paddingHorizontal: 18,
                 marginRight: 8,
                 borderRadius: 20,
-                backgroundColor: selectedCategory === cat.id ? "#432344" : "#eee",
+                backgroundColor:
+                  selectedCategory === cat.id ? "#432344" : "#eee",
                 borderWidth: selectedCategory === cat.id ? 2 : 0,
                 borderColor: "#432344",
               }}
             >
-              <Text style={{ color: selectedCategory === cat.id ? "#fff" : "#432344", fontWeight: "bold" }}>
+              <Text
+                style={{
+                  color: selectedCategory === cat.id ? "#fff" : "#432344",
+                  fontWeight: "bold",
+                }}
+              >
                 {cat.label}
               </Text>
             </TouchableOpacity>
@@ -195,7 +205,9 @@ export default function AdminLeaderboard() {
       {/* Leaderboard List */}
       <View style={{ flex: 1 }}>
         {currentRecords.length === 0 ? (
-          <Text style={{ textAlign: "center", marginTop: 20 }}>No scores yet!</Text>
+          <Text style={{ textAlign: "center", marginTop: 20 }}>
+            No scores yet!
+          </Text>
         ) : (
           <FlatList
             data={currentRecords}
@@ -212,6 +224,7 @@ export default function AdminLeaderboard() {
                 ? rankIcons[overallRank]
                 : `${overallRank + 1}.`;
               return (
+
                 <View style={[styles.containerCard, { backgroundColor: cardBg }]}>
                   <Text 
                     style={{
@@ -228,6 +241,7 @@ export default function AdminLeaderboard() {
                     }}
                   >
                     {rankDisplay}
+
                   </Text>
                   <Text 
                     style={{
@@ -271,33 +285,41 @@ export default function AdminLeaderboard() {
       </View>
       {/* Sticky Pagination Controls */}
       <View style={stickyStyles.paginationContainer}>
-        <TouchableOpacity
-          onPress={handlePreviousPage}
-          disabled={currentPage === 1}
-          style={{
-            padding: 8,
-            marginHorizontal: 8,
-            backgroundColor: currentPage === 1 ? "#eee" : "#432344",
-            borderRadius: 6,
-          }}
-        >
-          <Text style={{ color: currentPage === 1 ? "#aaa" : "#fff" }}>Previous</Text>
-        </TouchableOpacity>
-        <Text style={{ alignSelf: "center", fontSize: 16 }}>
-          Page {currentPage} of {totalPages}
-        </Text>
-        <TouchableOpacity
-          onPress={handleNextPage}
-          disabled={currentPage === totalPages}
-          style={{
-            padding: 8,
-            marginHorizontal: 8,
-            backgroundColor: currentPage === totalPages ? "#eee" : "#432344",
-            borderRadius: 6,
-          }}
-        >
-          <Text style={{ color: currentPage === totalPages ? "#aaa" : "#fff" }}>Next</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row" }}>
+          <TouchableOpacity
+            onPress={handlePreviousPage}
+            disabled={currentPage === 1}
+            style={{
+              padding: 8,
+              marginHorizontal: 8,
+              backgroundColor: currentPage === 1 ? "#eee" : "#432344",
+              borderRadius: 6,
+            }}
+          >
+            <Text style={{ color: currentPage === 1 ? "#aaa" : "#fff" }}>
+              Previous
+            </Text>
+          </TouchableOpacity>
+          <Text style={{ alignSelf: "center", fontSize: 16 }}>
+            Page {currentPage} of {totalPages}
+          </Text>
+          <TouchableOpacity
+            onPress={handleNextPage}
+            disabled={currentPage === totalPages}
+            style={{
+              padding: 8,
+              marginHorizontal: 8,
+              backgroundColor: currentPage === totalPages ? "#eee" : "#432344",
+              borderRadius: 6,
+            }}
+          >
+            <Text
+              style={{ color: currentPage === totalPages ? "#aaa" : "#fff" }}
+            >
+              Next
+            </Text>
+          </TouchableOpacity>
+        </View>
         <Text style={{ color: "#555", marginLeft: 16 }}>
           Showing {currentRecords.length} of {leaderboard.length} teams
         </Text>
@@ -323,7 +345,7 @@ const stickyStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: "#fafafa",
-    flexDirection: "row",
+    flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 12,
