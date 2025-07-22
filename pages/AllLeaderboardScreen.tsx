@@ -50,7 +50,7 @@ export default function AllLeaderboardScreen() {
     const fetchScores = async () => {
       setLoading(true);
       try {
-        const querySnapshot = await getDocs(collection(db, "scores"));
+        const querySnapshot = await getDocs(collection(db, "scores2"));
         const teams: any[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();

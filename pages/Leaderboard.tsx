@@ -77,7 +77,7 @@ export default function Leaderboard({ navigation }: any) {
       });
 
       // Now listen to scores
-      const scoresRef = collection(db, "scores");
+      const scoresRef = collection(db, "scores2");
       unsubscribeScores = onSnapshot(
         scoresRef,
         (querySnapshot) => {
@@ -226,6 +226,7 @@ export default function Leaderboard({ navigation }: any) {
                       color: textColor,
                       marginRight: 5,
                       marginLeft: 5,
+                      marginVertical: "auto",
                     }}
                   >
                     {item.teamName}
