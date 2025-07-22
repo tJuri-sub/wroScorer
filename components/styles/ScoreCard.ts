@@ -15,7 +15,7 @@ export default StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
     width: "100%",
-    marginBottom: 0,
+    marginBottom: 10,
     borderColor: "#ddd",
     borderWidth: 1,
   },
