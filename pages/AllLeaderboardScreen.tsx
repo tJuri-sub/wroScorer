@@ -109,18 +109,84 @@ export default function AllLeaderboardScreen() {
         Ranking is based on the best score; if tied, the best time wins!
       </Text>
       <FlatList
-        data={currentRecords}
-        keyExtractor={(item) => item.teamId}
-        renderItem={({ item, index }) => (
-          <View style={styles.row}>
-            <Text style={styles.rank}>{startIndex + index + 1}.</Text>
-            <Text style={styles.teamName}>{item.teamName}</Text>
-            <Text style={styles.score}>{item.bestScore} pts</Text>
-            <Text style={styles.time}>{item.bestTime}</Text>
-          </View>
-        )}
-        ListEmptyComponent={<Text>No scores yet!</Text>}
-      />
+                  data={currentRecords}
+                  keyExtractor={(item) => item.teamId}
+                  contentContainerStyle={{ paddingBottom: 80 }}
+                  renderItem={({ item, index }) => {
+                    const overallRank = startIndex + index;
+                    const rankColors = ["#F8AA0C", "#3A9F6C", "#0081CC"];
+                    const isTopThree = overallRank < 3;
+                    const cardBg = isTopThree ? rankColors[overallRank] : "#fff";
+                    const textColor = isTopThree ? "#fff" : "#000";
+                    const rankIcons = ["🥇", "🥈", "🥉"];
+                    const rankDisplay = isTopThree
+                      ? rankIcons[overallRank]
+                      : `${overallRank + 1}.`;
+                    return (
+      
+                      <View style={ {backgroundColor: cardBg , padding: 12,
+                        borderColor: "#919191",
+                        borderRadius: 10,
+                        flexDirection: "row",
+                        marginVertical: 6,
+                        boxShadow: "0px 2px 3px rgba(0,0,0,0.2)",
+                        marginHorizontal: 5,}}>
+                        <Text 
+                          style={{
+                            width: 25,
+                            textAlign: "center",
+                            fontFamily: "Inter_400Regular",
+                            fontWeight: isTopThree ? "700" : "500",
+                            fontSize: isTopThree ? 22 : 12, // Enlarged medal icon
+                            color: textColor,
+                            marginRight: 5,
+                            marginVertical: "auto",
+                            textShadowColor: "rgba(0,0,0,0.5)",
+                            textShadowRadius: 2,
+                          }}
+                        >
+                          {rankDisplay}
+      
+                        </Text>
+                        <Text 
+                          style={{
+                              flex: 1,
+                              fontFamily: "Inter_400Regular",
+                              color: textColor,
+                              marginRight: 5,
+                              marginLeft: 5,
+                              marginVertical: "auto",
+                            }}
+                        >
+                          {item.teamName}
+                        </Text>
+                        <Text 
+                          style={{
+                              color: textColor,
+                              fontFamily: "Inter_400Regular",
+                              fontWeight: "bold",
+                              marginRight: 5,
+                              marginLeft: 5,
+                              marginVertical: "auto",
+                            }}
+                        >
+                          {item.bestScore} pts
+                        </Text>
+                        <Text 
+                          style={{
+                              color: textColor,
+                              fontFamily: "Inter_400Regular",
+                              marginLeft: 5,
+                              marginVertical: "auto",
+                            }}
+                        >
+                          {item.bestTime}
+                        </Text>
+                      </View>
+                    );
+                  }}
+                   ListEmptyComponent={<Text>No scores yet!</Text>}
+                />
       <View style={styles.pagination}>
         <TouchableOpacity
           onPress={handlePreviousPage}

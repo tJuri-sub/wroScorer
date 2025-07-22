@@ -125,7 +125,7 @@ export default function Leaderboard({ navigation }: any) {
               if (bScore !== aScore) return bScore - aScore;
               return (a.bestTimeMs ?? Infinity) - (b.bestTimeMs ?? Infinity);
             })
-            .slice(0, 5);
+            .slice(0, 8);
 
           setLeaderboard(leaderboardArr);
           setLoading(false);
@@ -208,7 +208,7 @@ export default function Leaderboard({ navigation }: any) {
                       textAlign: "center",
                       fontFamily: "Inter_400Regular",
                       fontWeight: isTopThree ? "700" : "500",
-                      fontSize: isTopThree ? 20 : 16, // Enlarged medal icon
+                      fontSize: isTopThree ? 20 : 14, // Enlarged medal icon
                       color: textColor,
                       marginRight: 5,
                       marginVertical: "auto",
