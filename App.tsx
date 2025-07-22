@@ -28,6 +28,7 @@ import CategoryScreenJudge from "./pages/CategoryScreen";
 import ScorerScreen from "./pages/ScorerScreen";
 import AllScoresScreen from "./pages/AllScoresScreen";
 import TeamScoresScreen from "./pages/TeamScoresScreen";
+import TeamScores from "./pages/admin/TeamScores";
 import AllLeaderboardScreen from "./pages/AllLeaderboardScreen";
 
 import { useEffect, useState } from "react";
@@ -36,11 +37,11 @@ import { FIREBASE_AUTH } from "./firebaseconfig";
 import { doc, getDoc } from "firebase/firestore";
 import { FIREBASE_DB } from "./firebaseconfig";
 import AllJudgesScreen from "./pages/admin/AllJudgesScreen";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, FontAwesome6 } from "@expo/vector-icons";
 import JudgeDrawerNavigator from "./components/component/JudgeDrawerNavigator";
 import { LogoutModalProvider } from "./components/component/LogoutModalContent";
-import Scores from "./pages/admin/Scores";
 import AllLeaderboard from "./pages/admin/Leaderboard";
+import OverallScoresScreen from "./pages/admin/OverallScores";
 
 const Stack = createNativeStackNavigator();
 const InsideStack = createNativeStackNavigator();
@@ -196,6 +197,18 @@ const AdminTabNavigator = () => (
       }}
     />
     <AdminTab.Screen
+      name="OverallScores"
+      component={OverallScoresScreen}
+      options={{
+        headerShown: true,
+        headerTitle: "Scores",
+        headerTitleAlign: "center",
+        tabBarIcon: ({ color, size }) => (
+           <FontAwesome name="table" size={size} color={color} />
+        ),
+      }}
+    />
+    <AdminTab.Screen
       name="Ranks"
       component={AllLeaderboard}
       options={{
@@ -203,7 +216,7 @@ const AdminTabNavigator = () => (
         headerTitle: "Leaderboard",
         headerTitleAlign: "center",
         tabBarIcon: ({ color, size }) => (
-           <MaterialIcons name="leaderboard" size={size} color={color} />
+           <FontAwesome6 name="ranking-star" size={size} color={color} />
         ),
       }}
     />
@@ -236,7 +249,8 @@ const AdminInsideStackNavigator = () => (
     <InsideStack.Screen name="AllLeaderboard" component={AllLeaderboard} />
     <InsideStack.Screen name="Category" component={CategoryScreen} />
     <InsideStack.Screen name="Judges" component={AllJudgesScreen} />
-    <InsideStack.Screen name="Scores" component={Scores} />
+    <InsideStack.Screen name="TeamScores" component={TeamScores} />
+    <InsideStack.Screen name="OverallScores" component={OverallScoresScreen} />
   </InsideStack.Navigator>
 );
 

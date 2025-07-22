@@ -337,7 +337,7 @@ export default function CategoryScreen({ route, navigation }: any) {
                   },
                 ]}
                 onPress={() => {
-                  navigation.navigate("Scores", {
+                  navigation.navigate("TeamScores", {
                     teamId: item.id,
                     teamName: item.teamName,
                   });
