@@ -33,6 +33,7 @@
     "react-native-paper": "^5.14.5",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
+    "react-native-table-component": "^1.2.2",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "^0.20.0",
     "rn-country-dropdown-picker": "^2.1.8"

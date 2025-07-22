@@ -326,7 +326,7 @@ export default function CategoryScreen({ route, navigation }: any) {
                 item.disabled && { backgroundColor: "#f0f0f0", borderColor: "#c6c6c6ff", borderWidth: 1 }
                 ]}
                 onPress={() => {
-                  navigation.navigate("Scores", {
+                  navigation.navigate("TeamScores", {
                     teamId: item.id,
                     teamName: item.teamName,
                   });

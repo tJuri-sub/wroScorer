@@ -23,7 +23,7 @@ function formatDate(iso?: string) {
   return `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`;
 }
 
-export default function ScoresScreen({ route, navigation }: any) {
+export default function TeamScores({ route, navigation }: any) {
   const [userRole, setUserRole] = useState<string>("");
   const { teamId, teamName } = route.params;
   const [scores, setScores] = useState<ScoreData[] | null>(null);
