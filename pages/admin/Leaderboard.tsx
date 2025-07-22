@@ -37,10 +37,20 @@ export default function AdminLeaderboard() {
     const fetchCategories = async () => {
       const db = getFirestore();
       const categoriesSnap = await getDocs(collection(db, "categories"));
-      const cats = categoriesSnap.docs.map((doc) => ({
+      let cats = categoriesSnap.docs.map((doc) => ({
         id: doc.id,
         label: doc.data().label || doc.id,
       }));
+
+      // Custom sort order
+      const order = ["robo-elem", "robo-junior", "robo-senior", "robosports"];
+      cats = [
+        ...order
+          .map((catId) => cats.find((cat) => cat.id === catId))
+          .filter(Boolean) as { id: string; label: any }[],
+        ...cats.filter((cat) => !order.includes(cat.id)),
+      ];
+
       setCategories(cats);
       if (cats.length > 0) setSelectedCategory(cats[0].id);
     };
@@ -61,7 +71,7 @@ export default function AdminLeaderboard() {
       });
     });
 
-    const scoresUnsub = onSnapshot(collection(db, "scores"), (scoresSnap) => {
+    const scoresUnsub = onSnapshot(collection(db, "scores2"), (scoresSnap) => {
       const scores = scoresSnap.docs
         .map((doc) => {
           const data = doc.data() as {
@@ -192,22 +202,65 @@ export default function AdminLeaderboard() {
             keyExtractor={(item) => item.teamId}
             contentContainerStyle={{ paddingBottom: 80 }}
             renderItem={({ item, index }) => {
+              const overallRank = startIndex + index;
               const rankColors = ["#F8AA0C", "#3A9F6C", "#0081CC"];
-              const isTopThree = index < 3;
-              const cardBg = rankColors[index] || "#fff";
+              const isTopThree = overallRank < 3;
+              const cardBg = isTopThree ? rankColors[overallRank] : "#fff";
               const textColor = isTopThree ? "#fff" : "#000";
+              const rankIcons = ["🥇", "🥈", "🥉"];
+              const rankDisplay = isTopThree
+                ? rankIcons[overallRank]
+                : `${overallRank + 1}.`;
               return (
                 <View style={[styles.containerCard, { backgroundColor: cardBg }]}>
-                  <Text style={{ width: 30, color: textColor, fontWeight: "bold" }}>
-                    {startIndex + index + 1}.
+                  <Text 
+                    style={{
+                      width: 25,
+                      textAlign: "center",
+                      fontFamily: "Inter_400Regular",
+                      fontWeight: isTopThree ? "700" : "500",
+                      fontSize: isTopThree ? 22 : 12, // Enlarged medal icon
+                      color: textColor,
+                      marginRight: 5,
+                      marginVertical: "auto",
+                      textShadowColor: "rgba(0,0,0,0.5)",
+                      textShadowRadius: 2,
+                    }}
+                  >
+                    {rankDisplay}
                   </Text>
-                  <Text style={{ flex: 1, color: textColor }}>
+                  <Text 
+                    style={{
+                        flex: 1,
+                        fontFamily: "Inter_400Regular",
+                        color: textColor,
+                        marginRight: 5,
+                        marginLeft: 5,
+                        marginVertical: "auto",
+                      }}
+                  >
                     {item.teamName}
                   </Text>
-                  <Text style={{ color: textColor, fontWeight: "bold" }}>
+                  <Text 
+                    style={{
+                        color: textColor,
+                        fontFamily: "Inter_400Regular",
+                        fontWeight: "bold",
+                        marginRight: 5,
+                        marginLeft: 5,
+                        marginVertical: "auto",
+                      }}
+                  >
                     {item.bestScore} pts
                   </Text>
-                  <Text style={{ color: textColor, marginLeft: 10 }}>
+                  <Text 
+                    style={{
+                        color: textColor,
+                        fontFamily: "Inter_400Regular",
+                        marginLeft: 5,
+                        marginVertical: "auto",
+                      }}
+                  >
                     {item.bestTime}
                   </Text>
                 </View>
@@ -262,6 +315,7 @@ const stickyStyles = StyleSheet.create({
     elevation: 10,
     borderBottomWidth: 1,
     borderColor: "#eee",
+    paddingLeft: 16,
   },
   paginationContainer: {
     position: "absolute",
