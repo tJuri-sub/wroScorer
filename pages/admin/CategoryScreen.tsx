@@ -11,7 +11,16 @@ import {
   TouchableOpacity,
 } from "react-native";
 import CountryPicker from "rn-country-dropdown-picker"; // Import the new country picker
-import { getFirestore, collection, getDocs, addDoc, query, where, updateDoc, doc } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  query,
+  where,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
 import styles from "../../components/styles/adminStyles/CategorycreenStyle";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 
@@ -43,7 +52,6 @@ export default function CategoryScreen({ route, navigation }: any) {
     teamName: "",
     coachName: "",
     members: ["", "", ""], // Array for 3 members
-    
   });
   const [countryError, setCountryError] = useState<string | null>(null);
   const [teamNumberError, setTeamNumberError] = useState<string | null>(null);
@@ -56,7 +64,6 @@ export default function CategoryScreen({ route, navigation }: any) {
   const [editTeamId, setEditTeamId] = useState<string | null>(null);
 
   const [disableModalVisible, setDisableModalVisible] = useState(false);
-
 
   // Filter teams by search (team name or coach)
   const filteredTeams = teams.filter(
@@ -85,20 +92,21 @@ export default function CategoryScreen({ route, navigation }: any) {
         const querySnapshot = await getDocs(
           collection(db, `categories/${category}/teams`)
         );
-        const teamList = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            countryName: data.country || "Unknown Country",
-            teamNumber: data.teamNumber || 0,
-            podNumber: data.podNumber || 0,
-            teamName: data.teamName || "Unknown Team",
-            coachName: data.coachName || "Unknown Coach",
-            members: data.members || [],
-            disabled: data.disabled || false,
-          };
-        })
-        .sort((a, b) => a.teamNumber - b.teamNumber);
+        const teamList = querySnapshot.docs
+          .map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              countryName: data.country || "Unknown Country",
+              teamNumber: data.teamNumber || 0,
+              podNumber: data.podNumber || 0,
+              teamName: data.teamName || "Unknown Team",
+              coachName: data.coachName || "Unknown Coach",
+              members: data.members || [],
+              disabled: data.disabled || false,
+            };
+          })
+          .sort((a, b) => a.teamNumber - b.teamNumber);
 
         setTeams(teamList);
       } catch (error) {
@@ -159,7 +167,6 @@ export default function CategoryScreen({ route, navigation }: any) {
 
   const handleSubmit = async () => {
     try {
-
       // Check for duplication
       const teamsRef = collection(db, `categories/${category}/teams`);
       const q = query(teamsRef, where("teamName", "==", formData.teamName));
@@ -223,10 +230,7 @@ export default function CategoryScreen({ route, navigation }: any) {
       // Check for duplicate team name (exclude current team)
       const q = query(teamRef, where("teamName", "==", formData.teamName));
       const querySnapshot = await getDocs(q);
-      if (
-        !querySnapshot.empty &&
-        querySnapshot.docs[0].id !== editTeamId
-      ) {
+      if (!querySnapshot.empty && querySnapshot.docs[0].id !== editTeamId) {
         Alert.alert("Error", "A team with this name already exists.");
         return;
       }
@@ -313,17 +317,24 @@ export default function CategoryScreen({ route, navigation }: any) {
           <Text style={styles.paginationButtonText}>Next</Text>
         </TouchableOpacity>
       </View>
+
       {loading ? (
         <Text>Loading teams...</Text>
       ) : (
-        <FlatList
-          data={paginatedTeams}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.teamCard, 
-                item.disabled && { backgroundColor: "#f0f0f0", borderColor: "#c6c6c6ff", borderWidth: 1 }
+        <View style={{ marginBottom: 20, flex: 1 }}>
+          <FlatList
+            data={paginatedTeams}
+            scrollEnabled={true}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.teamCard,
+                  item.disabled && {
+                    backgroundColor: "#f0f0f0",
+                    borderColor: "#c6c6c6ff",
+                    borderWidth: 1,
+                  },
                 ]}
                 onPress={() => {
                   navigation.navigate("Scores", {
@@ -333,75 +344,85 @@ export default function CategoryScreen({ route, navigation }: any) {
                 }}
                 disabled={item.disabled}
               >
-
-              <View style={[ 
-                item.disabled && { opacity: 0.5, backgroundColor: "#f0f0f0" }
-                ]}>
-                {/* Header Row */}
-                <View style={styles.teamCardHeader}>
-                  <Text style={styles.teamCardHeaderText}>
-                    Team Number {item.teamNumber}
-                  </Text>
-                  <Text style={styles.teamCardHeaderText}>
-                    Pod Number {item.podNumber}
-                  </Text>
-                </View>
-
-                {/* Country and Team Name Row */}
-                <View style={styles.teamCardRow}>
-                  {/* Replace with your flag component or Image */}
-                  {/* <Image source={require('../assets/flags/ph.png')} style={styles.teamCardFlag} /> */}
-                  <Text style={styles.teamCardTeamName} numberOfLines={1}>
-                    {item.teamName}
-                  </Text>
-                  <Text style={styles.teamCardCountry}>{item.countryName}</Text>
-                </View>
-
-                {/* Members */}
-                {item.members.map((member, index) => (
-                  <Text style={styles.teamCardMember} key={index}>
-                    Member {index + 1}: {member || "N/A"}
-                  </Text>
-                ))}
-
-                {/* Coach */}
-                <Text style={styles.teamCardCoach}>
-                  Coach Name: {item.coachName}
-                </Text>
-              </View>
-
-              <View>
-                {item.disabled ? (
-                  <>
-                    <TouchableOpacity
-                      style={[
-                        styles.editIcon,
-                        { backgroundColor: "#35A22F", opacity: 1 },
-                      ]}
-                      onPress={async () => {
-                        try {
-                          await updateDoc(
-                            doc(db, `categories/${category}/teams`, item.id),
-                            { disabled: false }
-                          );
-                          setTeams((prev) =>
-                            prev.map((t) =>
-                              t.id === item.id ? { ...t, disabled: false } : t
-                            )
-                          );
-                          Alert.alert("Restored!", "Team has been restored.");
-                        } catch (e) {
-                          Alert.alert("Error", "Failed to restore team.");
-                        }
-                      }}
-                    >
-                      <MaterialIcons name="restore" size={20} color="#fff" />
-                    </TouchableOpacity>
-                    <Text style={{ color: "#AA0003", fontWeight: "bold", marginTop: 8 }}>
-                      Disabled
+                <View
+                  style={[
+                    item.disabled && {
+                      opacity: 0.5,
+                      backgroundColor: "#f0f0f0",
+                    },
+                  ]}
+                >
+                  {/* Header Row */}
+                  <View style={styles.teamCardHeader}>
+                    <Text style={styles.teamCardHeaderText}>
+                      Team Number {item.teamNumber}
                     </Text>
-                  </>
-                ) : (
+                    <Text style={styles.teamCardHeaderText}>
+                      Pod Number {item.podNumber}
+                    </Text>
+                  </View>
+
+                  {/* Country and Team Name Row */}
+                  <View style={styles.teamCardRow}>
+                    {/* Replace with your flag component or Image */}
+                    {/* <Image source={require('../assets/flags/ph.png')} style={styles.teamCardFlag} /> */}
+                    <Text style={styles.teamCardTeamName}>{item.teamName}</Text>
+                    <Text style={styles.teamCardCountry}>
+                      {item.countryName}
+                    </Text>
+                  </View>
+
+                  {/* Members */}
+                  {item.members.map((member, index) => (
+                    <Text style={styles.teamCardMember} key={index}>
+                      Member {index + 1}: {member || "N/A"}
+                    </Text>
+                  ))}
+
+                  {/* Coach */}
+                  <Text style={styles.teamCardCoach}>
+                    Coach Name: {item.coachName}
+                  </Text>
+                </View>
+
+                <View>
+                  {item.disabled ? (
+                    <>
+                      <TouchableOpacity
+                        style={[
+                          styles.editIcon,
+                          { backgroundColor: "#35A22F", opacity: 1 },
+                        ]}
+                        onPress={async () => {
+                          try {
+                            await updateDoc(
+                              doc(db, `categories/${category}/teams`, item.id),
+                              { disabled: false }
+                            );
+                            setTeams((prev) =>
+                              prev.map((t) =>
+                                t.id === item.id ? { ...t, disabled: false } : t
+                              )
+                            );
+                            Alert.alert("Restored!", "Team has been restored.");
+                          } catch (e) {
+                            Alert.alert("Error", "Failed to restore team.");
+                          }
+                        }}
+                      >
+                        <MaterialIcons name="restore" size={20} color="#fff" />
+                      </TouchableOpacity>
+                      <Text
+                        style={{
+                          color: "#AA0003",
+                          fontWeight: "bold",
+                          marginTop: 8,
+                        }}
+                      >
+                        Disabled
+                      </Text>
+                    </>
+                  ) : (
                     <TouchableOpacity
                       style={styles.editIcon}
                       onPress={() => {
@@ -413,7 +434,9 @@ export default function CategoryScreen({ route, navigation }: any) {
                           podNumber: item.podNumber,
                           teamName: item.teamName,
                           coachName: item.coachName,
-                          members: item.members.length ? item.members : ["", "", ""],
+                          members: item.members.length
+                            ? item.members
+                            : ["", "", ""],
                         });
                         setStep(1);
                         setModalVisible(true);
@@ -421,20 +444,22 @@ export default function CategoryScreen({ route, navigation }: any) {
                     >
                       <MaterialIcons name="edit" size={18} color="#fff" />
                     </TouchableOpacity>
-                )}
-              </View>
-            </TouchableOpacity>
-          )}
-          ListEmptyComponent={<Text>No teams found.</Text>}
-        />
+                  )}
+                </View>
+              </TouchableOpacity>
+            )}
+            ListEmptyComponent={<Text>No teams found.</Text>}
+          />
+        </View>
       )}
+
       {/* <Button title="Create Team" onPress={() => setModalVisible(true)} /> */}
       <TouchableOpacity
         style={styles.createTeamButton}
         onPress={() => {
-          setEditMode(false);           // <-- Reset edit mode
-          setEditTeamId(null);          // <-- Reset edit team id
-          setStep(1);                   // <-- Reset to first step
+          setEditMode(false); // <-- Reset edit mode
+          setEditTeamId(null); // <-- Reset edit team id
+          setStep(1); // <-- Reset to first step
           setFormData({
             countryName: "",
             teamNumber: 0,
@@ -442,12 +467,11 @@ export default function CategoryScreen({ route, navigation }: any) {
             teamName: "",
             coachName: "",
             members: ["", "", ""],
-          });                           // <-- Reset form data
-          setModalVisible(true);        // <-- Open modal
+          }); // <-- Reset form data
+          setModalVisible(true); // <-- Open modal
         }}
       >
         <Feather name="plus" size={24} color="white" />
-        <Text style={styles.createTeamButtonText}>Add Team</Text>
       </TouchableOpacity>
 
       {/* Modal for Team Creation */}
@@ -465,7 +489,9 @@ export default function CategoryScreen({ route, navigation }: any) {
                     {editMode ? "Edit Team" : "Create Team"}
                   </Text>
                   <Text style={styles.headerSubTextModal}>
-                    {editMode ? "Update team information" : "Enter team information"}
+                    {editMode
+                      ? "Update team information"
+                      : "Enter team information"}
                   </Text>
                 </View>
                 <Text style={styles.modalLabel}>Country</Text>
@@ -510,8 +536,11 @@ export default function CategoryScreen({ route, navigation }: any) {
                 <TextInput
                   placeholder="Enter Pod Number"
                   value={String(formData.podNumber)}
-                   onChangeText={(text) => {
-                    setFormData({ ...formData, podNumber: parseInt(text) || 0 });
+                  onChangeText={(text) => {
+                    setFormData({
+                      ...formData,
+                      podNumber: parseInt(text) || 0,
+                    });
                     setPodNumberError(null);
                   }}
                   style={styles.modalInput}
@@ -544,24 +573,31 @@ export default function CategoryScreen({ route, navigation }: any) {
                     onPress={() => setModalVisible(false)}
                   >
                     <Text
-                      style={[styles.modalButtonText, styles.modalButtonText]}>
+                      style={[styles.modalButtonText, styles.modalButtonText]}
+                    >
                       Cancel
                     </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.modalButtonNext} onPress={handleNext}>
-                    <Text style={styles.modalButtonText}>
-                      Next
-                    </Text>
+                  <TouchableOpacity
+                    style={styles.modalButtonNext}
+                    onPress={handleNext}
+                  >
+                    <Text style={styles.modalButtonText}>Next</Text>
                   </TouchableOpacity>
                 </View>
-                
+
                 {editMode && (
                   <View style={styles.modalButtonRow}>
                     <TouchableOpacity
-                      style={[styles.modalButtonNext, { borderColor: "#AA3D3F" }]}
+                      style={[
+                        styles.modalButtonNext,
+                        { borderColor: "#AA3D3F" },
+                      ]}
                       onPress={() => setDisableModalVisible(true)}
                     >
-                      <Text style={[styles.modalButtonText, { color: "#AA3D3F" }]}>
+                      <Text
+                        style={[styles.modalButtonText, { color: "#AA3D3F" }]}
+                      >
                         Disable Team
                       </Text>
                     </TouchableOpacity>
@@ -577,7 +613,9 @@ export default function CategoryScreen({ route, navigation }: any) {
                     {editMode ? "Edit Team" : "Create Team"}
                   </Text>
                   <Text style={styles.headerSubTextModal}>
-                    {editMode ? "Enter updated coach and team members" : "Add coach and team members"}
+                    {editMode
+                      ? "Enter updated coach and team members"
+                      : "Add coach and team members"}
                   </Text>
                 </View>
                 <Text style={styles.modalLabel}>Coach Name (optional)</Text>
@@ -614,14 +652,16 @@ export default function CategoryScreen({ route, navigation }: any) {
                     onPress={handleBack}
                   >
                     <Text
-                      style={[styles.modalButtonText, styles.modalButtonText]}>
+                      style={[styles.modalButtonText, styles.modalButtonText]}
+                    >
                       Back
                     </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.modalButtonNext} onPress={handleNext}>
-                    <Text style={styles.modalButtonText}>
-                      Next
-                    </Text>
+                  <TouchableOpacity
+                    style={styles.modalButtonNext}
+                    onPress={handleNext}
+                  >
+                    <Text style={styles.modalButtonText}>Next</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -668,12 +708,15 @@ export default function CategoryScreen({ route, navigation }: any) {
                     onPress={handleBack}
                   >
                     <Text
-                      style={[styles.modalButtonText, styles.modalButtonText]}>
+                      style={[styles.modalButtonText, styles.modalButtonText]}
+                    >
                       Back
                     </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.modalButtonCreate}
-                    onPress={editMode ? handleEditSubmit : handleSubmit}>
+                  <TouchableOpacity
+                    style={styles.modalButtonCreate}
+                    onPress={editMode ? handleEditSubmit : handleSubmit}
+                  >
                     <Text style={styles.modalButtonCreateText}>
                       {editMode ? "Update" : "Create"}
                     </Text>
@@ -685,7 +728,7 @@ export default function CategoryScreen({ route, navigation }: any) {
         </View>
       </Modal>
 
-            {/* Disable Judge Account Confirmation Modal */}
+      {/* Disable Judge Account Confirmation Modal */}
       <Modal
         visible={disableModalVisible}
         transparent
@@ -707,7 +750,10 @@ export default function CategoryScreen({ route, navigation }: any) {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, { borderColor: "#AA3D3F", backgroundColor: "#AA3D3F" }]}
+                style={[
+                  styles.modalButton,
+                  { borderColor: "#AA3D3F", backgroundColor: "#AA3D3F" },
+                ]}
                 onPress={async () => {
                   if (!editTeamId) return;
                   try {
@@ -746,7 +792,12 @@ export default function CategoryScreen({ route, navigation }: any) {
                   }
                 }}
               >
-                <Text style={[styles.modalButtonText, { fontWeight: "bold", color: "#fff" }]}>
+                <Text
+                  style={[
+                    styles.modalButtonText,
+                    { fontWeight: "bold", color: "#fff" },
+                  ]}
+                >
                   Yes
                 </Text>
               </TouchableOpacity>
