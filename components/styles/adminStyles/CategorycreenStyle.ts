@@ -5,22 +5,25 @@ export default StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
     marginBottom: 10,
   },
+
   subtitle: {
-    fontSize: 18,
-    marginBottom: 20,
+    fontSize: 16,
+    marginBottom: 10,
   },
+
   searchInput: {
     borderWidth: 1,
     borderRadius: 12,
     padding: 10,
     borderColor: "#e0e0e0",
     backgroundColor: "#fafafa",
-    marginBottom: 12,
+    marginBottom: 10,
     fontSize: 16,
   },
 
@@ -31,18 +34,22 @@ export default StyleSheet.create({
     marginTop: 10,
     marginBottom: 20,
   },
+
   paginationButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
+
   paginationButtonDisabled: {
     opacity: 0.4,
   },
+
   paginationButtonText: {
     color: "#432344",
     fontWeight: "bold",
     fontSize: 16,
   },
+
   paginationInfo: {
     marginHorizontal: 10,
     fontSize: 16,
@@ -61,23 +68,27 @@ export default StyleSheet.create({
     flexDirection: "column",
     minWidth: 0,
   },
+
   teamCardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: 8,
   },
+
   teamCardHeaderText: {
     fontSize: 15,
     color: "#888",
     fontStyle: "italic",
     fontWeight: "500",
   },
+
   teamCardRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 6,
   },
+
   teamCardFlag: {
     width: 24,
     height: 16,
@@ -86,6 +97,7 @@ export default StyleSheet.create({
     borderWidth: 0.5,
     borderColor: "#ccc",
   },
+
   teamCardCountry: {
     fontSize: 16,
     color: "#222",
@@ -93,19 +105,23 @@ export default StyleSheet.create({
     marginRight: 8,
     textAlign: "right",
   },
+
   teamCardTeamName: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#432344",
     flex: 1,
     textAlign: "left",
+    flexWrap: "wrap",
   },
+
   teamCardMember: {
     fontSize: 15,
     color: "#333",
     marginLeft: 30,
     marginBottom: 2,
   },
+
   teamCardCoach: {
     fontSize: 15,
     color: "#432344",
@@ -113,6 +129,7 @@ export default StyleSheet.create({
     marginTop: 4,
     marginLeft: 2,
   },
+
   editIcon: {
     position: "absolute",
     right: 16,
@@ -124,20 +141,15 @@ export default StyleSheet.create({
 
   createTeamButton: {
     backgroundColor: "#432344",
-    borderRadius: 10,
-    paddingVertical: 14,
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    borderRadius: "50%",
+    width: "20%",
+    aspectRatio: 1 / 1,
     alignItems: "center",
-    marginTop: 18,
-    marginHorizontal: 16,
-    marginBottom: 10,
     flexDirection: "row",
     justifyContent: "center",
-  },
-  createTeamButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 17,
-    marginLeft: 8,
   },
 
   // Creation Modal
@@ -198,7 +210,7 @@ export default StyleSheet.create({
     paddingHorizontal: 14,
     fontSize: 16,
     marginBottom: 8,
-    width: "100%"
+    width: "100%",
   },
 
   countryPicker: {
@@ -271,43 +283,42 @@ export default StyleSheet.create({
   },
 
   // Disable Confirmation Modal Styles
-     modalOverlayDisable: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
-      justifyContent: "center",
-      alignItems: "center",
-    },
-  
-    modalContentDisable: {
-      backgroundColor: "#fff",
-      borderRadius: 12,
-      padding: 20,
-      paddingTop: 30,
-      paddingBottom: 30,
-      width: 300,
-      alignItems: "center",
-    },
-  
-    modalTitle: {
-      fontSize: 16,
-      fontWeight: "semibold",
-      color: "#432344",
-      marginBottom: 25,
-      textAlign: "center",
-      fontFamily: "inter_400Regular",
-    },
-  
-    modalButtonContainer: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      width: "100%",
-      gap: 10,
-    },
-    errorText: {
-      color: "#AA0003", 
-      marginBottom: 4,
-      textAlign: "left",
-      alignSelf: "flex-start",
-    }
+  modalOverlayDisable: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
+  modalContentDisable: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    paddingTop: 30,
+    paddingBottom: 30,
+    width: 300,
+    alignItems: "center",
+  },
+
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "semibold",
+    color: "#432344",
+    marginBottom: 25,
+    textAlign: "center",
+    fontFamily: "inter_400Regular",
+  },
+
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    gap: 10,
+  },
+  errorText: {
+    color: "#AA0003",
+    marginBottom: 4,
+    textAlign: "left",
+    alignSelf: "flex-start",
+  },
 });
