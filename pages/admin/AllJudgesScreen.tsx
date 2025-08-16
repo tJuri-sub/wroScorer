@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Modal,
   Pressable,
   Alert,
+  SafeAreaView,
 } from "react-native";
 import {
   collection,
@@ -24,8 +25,9 @@ import {
 import { FIREBASE_AUTH, FIREBASE_DB } from "../../firebaseconfig";
 import { Dropdown } from "react-native-element-dropdown";
 import { getAuth } from "firebase/auth";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Inter_400Regular, useFonts } from "@expo-google-fonts/inter";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 const categorydata = [
   {
@@ -66,7 +68,7 @@ const categorydata = [
   },
 ];
 
-export default function AllJudgesScreen() {
+export default function AllJudgesScreen({ navigation }: any) {
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
   });
@@ -89,6 +91,19 @@ export default function AllJudgesScreen() {
   const auth = getAuth();
   const db = getFirestore();
   const user = FIREBASE_AUTH.currentUser;
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => navigation.openDrawer()}
+          style={{ marginLeft: 15 }}
+        >
+          <Feather name="menu" size={24} color="black" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   type Judge = {
     id: string;
@@ -170,427 +185,435 @@ export default function AllJudgesScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView>
-        <View style={styles.headerSection}>
-          <Text style={styles.headerText}>
-            All Judges ({filteredJudges.length})
-          </Text>
-          <TextInput
-            placeholder="Search by name"
-            value={search}
-            onChangeText={setSearch}
-            style={styles.searchInput}
-          />
-          <View style={styles.categoryRow}>
-            <TouchableOpacity
-              style={[
-                styles.categoryChip,
-                category === null && styles.categoryChipActive,
-              ]}
-              onPress={() => setCategory(null)}
-            >
-              <Text
-                style={[
-                  styles.categoryChipText,
-                  category === null && styles.categoryChipTextActive,
-                ]}
-              >
-                All
-              </Text>
-            </TouchableOpacity>
-            {categorydata.map((cat) => (
+    <SafeAreaProvider>
+      <SafeAreaView>
+        <View style={styles.container}>
+          <View style={styles.headerSection}>
+            <Text style={styles.headerText}>
+              All Judges ({filteredJudges.length})
+            </Text>
+            <TextInput
+              placeholder="Search by name"
+              value={search}
+              onChangeText={setSearch}
+              style={styles.searchInput}
+            />
+            <View style={styles.categoryRow}>
               <TouchableOpacity
-                key={cat.value}
                 style={[
                   styles.categoryChip,
-                  category === cat.value && styles.categoryChipActive,
+                  category === null && styles.categoryChipActive,
                 ]}
-                onPress={() => setCategory(cat.value)}
+                onPress={() => setCategory(null)}
               >
                 <Text
                   style={[
                     styles.categoryChipText,
-                    category === cat.value && styles.categoryChipTextActive,
+                    category === null && styles.categoryChipTextActive,
                   ]}
                 >
-                  {cat.label}
+                  All
                 </Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-        <View style={styles.container}>
-          {loading ? (
-            <ActivityIndicator size="large" style={styles.loadingIndicator} />
-          ) : (
-            <FlatList
-              contentContainerStyle={styles.listContent}
-              data={paginatedJudges}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => {
-                const categoryLabel = getCategoryDisplayLabel(item.category);
-                const isDisabled = item.disabled;
-
-                return (
-                  <View
+              {categorydata.map((cat) => (
+                <TouchableOpacity
+                  key={cat.value}
+                  style={[
+                    styles.categoryChip,
+                    category === cat.value && styles.categoryChipActive,
+                  ]}
+                  onPress={() => setCategory(cat.value)}
+                >
+                  <Text
                     style={[
-                      styles.judgeCard,
-                      isDisabled && {
-                        backgroundColor: "#f0f0f0",
-                        borderColor: "#ccc",
-                        borderWidth: 1,
-                      },
+                      styles.categoryChipText,
+                      category === cat.value && styles.categoryChipTextActive,
                     ]}
                   >
-                    <View
-                      style={{
-                        flex: 1,
-                        flexDirection: "row",
-                        alignItems: "center",
-                        opacity: isDisabled ? 0.5 : 1,
-                      }}
-                    >
-                      <Image
-                        source={{
-                          uri: item.avatarUrl,
-                        }}
-                        style={styles.avatar}
-                      />
-                      <View style={{ flex: 1, justifyContent: "center" }}>
-                        <Text style={styles.judgeName}>{item.username}</Text>
-                        <Text style={styles.judgeEmail}>{item.email}</Text>
-                        <Text style={styles.judgeCategory}>
-                          {categoryLabel}
-                        </Text>
-                      </View>
-                    </View>
-                    {/* Restore or Edit button and Disabled text */}
-                    <View
-                      style={{
-                        flexDirection: "column",
-                        alignItems: "flex-end",
-                        justifyContent: "flex-end",
-                        minWidth: 70,
-                        marginLeft: 8,
-                        height: "100%",
-                      }}
-                    >
-                      {isDisabled ? (
-                        <>
-                          <TouchableOpacity
-                            style={[
-                              styles.editButton,
-                              { backgroundColor: "#35A22F", opacity: 1 },
-                            ]}
-                            onPress={async () => {
-                              try {
-                                await updateDoc(
-                                  doc(FIREBASE_DB, "judge-users", item.id),
-                                  { disabled: false }
-                                );
-                                setJudges((prev) =>
-                                  prev.map((j) =>
-                                    j.id === item.id
-                                      ? { ...j, disabled: false }
-                                      : j
-                                  )
-                                );
-                                Alert.alert(
-                                  "Restored!",
-                                  "Judge account has been restored."
-                                );
-                              } catch (e) {
-                                Alert.alert(
-                                  "Error",
-                                  "Failed to restore judge."
-                                );
-                              }
-                            }}
-                          >
-                            <MaterialCommunityIcons
-                              name="restore"
-                              size={20}
-                              color="#fff"
-                            />
-                          </TouchableOpacity>
-                          <Text
-                            style={{
-                              color: "#AA0003",
-                              fontWeight: "bold",
-                              marginTop: 8,
-                              opacity: 1,
-                              alignSelf: "center",
-                            }}
-                          >
-                            Account Disabled
-                          </Text>
-                        </>
-                      ) : (
-                        <>
-                          <TouchableOpacity
-                            style={styles.editButton}
-                            onPress={() => {
-                              setEditJudge(item);
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          <View style={styles.container}>
+            {loading ? (
+              <ActivityIndicator size="large" style={styles.loadingIndicator} />
+            ) : (
+              <FlatList
+                contentContainerStyle={styles.listContent}
+                data={paginatedJudges}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => {
+                  const categoryLabel = getCategoryDisplayLabel(item.category);
+                  const isDisabled = item.disabled;
 
-                              // Find if the category is a subcategory
-                              let foundMainCat = null;
-                              let foundSubCat = null;
-                              for (const mainCat of categorydata) {
-                                if (mainCat.value === item.category) {
-                                  foundMainCat = mainCat;
-                                  break;
-                                }
-                                if (mainCat.subcategories) {
-                                  const sub = mainCat.subcategories.find(
-                                    (subcat) => subcat.value === item.category
+                  return (
+                    <View
+                      style={[
+                        styles.judgeCard,
+                        isDisabled && {
+                          backgroundColor: "#f0f0f0",
+                          borderColor: "#ccc",
+                          borderWidth: 1,
+                        },
+                      ]}
+                    >
+                      <View
+                        style={{
+                          flex: 1,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          opacity: isDisabled ? 0.5 : 1,
+                        }}
+                      >
+                        <Image
+                          source={{
+                            uri: item.avatarUrl,
+                          }}
+                          style={styles.avatar}
+                        />
+                        <View style={{ flex: 1, justifyContent: "center" }}>
+                          <Text style={styles.judgeName}>{item.username}</Text>
+                          <Text style={styles.judgeEmail}>{item.email}</Text>
+                          <Text style={styles.judgeCategory}>
+                            {categoryLabel}
+                          </Text>
+                        </View>
+                      </View>
+                      {/* Restore or Edit button and Disabled text */}
+                      <View
+                        style={{
+                          flexDirection: "column",
+                          alignItems: "flex-end",
+                          justifyContent: "flex-end",
+                          minWidth: 70,
+                          marginLeft: 8,
+                          height: "100%",
+                        }}
+                      >
+                        {isDisabled ? (
+                          <>
+                            <TouchableOpacity
+                              style={[
+                                styles.editButton,
+                                { backgroundColor: "#35A22F", opacity: 1 },
+                              ]}
+                              onPress={async () => {
+                                try {
+                                  await updateDoc(
+                                    doc(FIREBASE_DB, "judge-users", item.id),
+                                    { disabled: false }
                                   );
-                                  if (sub) {
+                                  setJudges((prev) =>
+                                    prev.map((j) =>
+                                      j.id === item.id
+                                        ? { ...j, disabled: false }
+                                        : j
+                                    )
+                                  );
+                                  Alert.alert(
+                                    "Restored!",
+                                    "Judge account has been restored."
+                                  );
+                                } catch (e) {
+                                  Alert.alert(
+                                    "Error",
+                                    "Failed to restore judge."
+                                  );
+                                }
+                              }}
+                            >
+                              <MaterialCommunityIcons
+                                name="restore"
+                                size={20}
+                                color="#fff"
+                              />
+                            </TouchableOpacity>
+                            <Text
+                              style={{
+                                color: "#AA0003",
+                                fontWeight: "bold",
+                                marginTop: 8,
+                                opacity: 1,
+                                alignSelf: "center",
+                              }}
+                            >
+                              Account Disabled
+                            </Text>
+                          </>
+                        ) : (
+                          <>
+                            <TouchableOpacity
+                              style={styles.editButton}
+                              onPress={() => {
+                                setEditJudge(item);
+
+                                // Find if the category is a subcategory
+                                let foundMainCat = null;
+                                let foundSubCat = null;
+                                for (const mainCat of categorydata) {
+                                  if (mainCat.value === item.category) {
                                     foundMainCat = mainCat;
-                                    foundSubCat = sub;
                                     break;
                                   }
+                                  if (mainCat.subcategories) {
+                                    const sub = mainCat.subcategories.find(
+                                      (subcat) => subcat.value === item.category
+                                    );
+                                    if (sub) {
+                                      foundMainCat = mainCat;
+                                      foundSubCat = sub;
+                                      break;
+                                    }
+                                  }
                                 }
-                              }
 
-                              setEditCategory(
-                                foundMainCat
-                                  ? foundMainCat.value
-                                  : item.category
-                              );
-                              setEditSubcategory(
-                                foundSubCat ? foundSubCat.value : null
-                              );
-                              setEditUsername(item.username);
-                              setEditModalVisible(true);
-                            }}
-                          >
-                            <MaterialCommunityIcons
-                              name="pencil-outline"
-                              size={20}
-                              color="#fff"
-                            />
-                          </TouchableOpacity>
-                        </>
-                      )}
+                                setEditCategory(
+                                  foundMainCat
+                                    ? foundMainCat.value
+                                    : item.category
+                                );
+                                setEditSubcategory(
+                                  foundSubCat ? foundSubCat.value : null
+                                );
+                                setEditUsername(item.username);
+                                setEditModalVisible(true);
+                              }}
+                            >
+                              <MaterialCommunityIcons
+                                name="pencil-outline"
+                                size={20}
+                                color="#fff"
+                              />
+                            </TouchableOpacity>
+                          </>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                );
-              }}
-              ListEmptyComponent={
-                <Text style={styles.emptyText}>No judges found.</Text>
-              }
-              scrollEnabled={paginatedJudges.length > PAGE_SIZE}
-            />
-          )}
-        </View>
-
-        <View style={styles.paginationContainer}>
-          <TouchableOpacity
-            onPress={() => setPage(page - 1)}
-            disabled={page === 1}
-            style={[
-              styles.paginationButton,
-              page === 1 && styles.paginationButtonDisabled,
-            ]}
-          >
-            <Text
-              style={[
-                styles.paginationText,
-                page === 1 && styles.paginationTextDisabled,
-              ]}
-            >
-              Previous
-            </Text>
-          </TouchableOpacity>
-          <Text style={styles.paginationInfo}>
-            Page {page} of {totalPages === 0 ? 1 : totalPages}
-          </Text>
-          <TouchableOpacity
-            onPress={() => setPage(page + 1)}
-            disabled={page === totalPages || totalPages === 0}
-            style={[
-              styles.paginationButton,
-              (page === totalPages || totalPages === 0) &&
-                styles.paginationButtonDisabled,
-            ]}
-          >
-            <Text
-              style={[
-                styles.paginationText,
-                (page === totalPages || totalPages === 0) &&
-                  styles.paginationTextDisabled,
-              ]}
-            >
-              Next
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={editModalVisible}
-        onRequestClose={() => setEditModalVisible(false)}
-      >
-        <View style={styles.modal}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.headerTextModal}>Edit Judge Account</Text>
-              <Text style={styles.headerSubTextModal}>
-                Update judge's information
-              </Text>
-            </View>
-            <View style={styles.formContainer}>
-              <TextInput
-                placeholder="Name"
-                value={editUsername}
-                autoCapitalize="none"
-                onChangeText={setEditUsername}
-                style={styles.textinput}
-              />
-              <Dropdown
-                style={styles.dropdown}
-                data={categorydata}
-                search
-                maxHeight={300}
-                labelField="label"
-                valueField="value"
-                placeholder="Select Category"
-                searchPlaceholder="Search..."
-                value={editCategory}
-                onChange={(item) => {
-                  setEditCategory(item.value);
-                  if (!item.subcategories) setEditSubcategory(null);
+                  );
                 }}
+                ListEmptyComponent={
+                  <Text style={styles.emptyText}>No judges found.</Text>
+                }
+                scrollEnabled={paginatedJudges.length > PAGE_SIZE}
               />
-              {["Robomission", "Future Innovators"].includes(
-                categorydata.find((cat: any) => cat.value === editCategory)
-                  ?.label || ""
-              ) && (
-                <Dropdown
-                  style={styles.dropdown}
-                  data={
-                    categorydata.find((cat: any) => cat.value === editCategory)
-                      ?.subcategories || []
-                  }
-                  labelField="label"
-                  valueField="value"
-                  placeholder="Select Subcategory"
-                  value={editSubcategory}
-                  onChange={(item) => setEditSubcategory(item.value)}
-                />
-              )}
-            </View>
-            <View style={styles.buttonContainer}>
-              <Pressable
-                style={styles.modalCreateButton}
-                onPress={async () => {
-                  if (!editJudge) return;
-                  try {
-                    await updateDoc(doc(db, "judge-users", editJudge.id), {
-                      username: editUsername,
-                      category: editSubcategory || editCategory || "",
-                    });
-                    setJudges((prev) =>
-                      prev.map((j) =>
-                        j.id === editJudge.id
-                          ? {
-                              ...j,
-                              username: editUsername,
-                              category: editSubcategory || editCategory || "",
-                            }
-                          : j
-                      )
-                    );
-                    setEditModalVisible(false);
-                  } catch (e) {
-                    Alert.alert("Error", "Failed to update judge.");
-                  }
-                }}
-              >
-                <Text style={styles.buttonText}>Save</Text>
-              </Pressable>
-              <Pressable
-                style={styles.modalCancelButton}
-                onPress={() => setEditModalVisible(false)}
-              >
-                <Text>Cancel</Text>
-              </Pressable>
-            </View>
-            <View style={styles.buttonDisableContainer}>
-              <Pressable
-                style={styles.modalDisableButton}
-                onPress={() => setDisableModalVisible(true)}
-              >
-                <Text
-                  style={[
-                    styles.buttonText,
-                    { color: "#AA0003", fontWeight: "bold" },
-                  ]}
-                >
-                  Disable Account
-                </Text>
-              </Pressable>
-            </View>
+            )}
           </View>
-        </View>
-      </Modal>
 
-      {/* Disable Judge Account Confirmation Modal */}
-      <Modal
-        visible={disableModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setDisableModalVisible(false)}
-      >
-        <View style={styles.modalOverlayDisable}>
-          <View style={styles.modalContentDisable}>
-            <Text style={styles.modalTitle}>
-              Are you sure you want to disable this judge account?
-            </Text>
-            <View style={styles.modalButtonContainer}>
-              <Pressable
-                style={[styles.modalButton, { borderColor: "#432344" }]}
-                onPress={() => setDisableModalVisible(false)}
-              >
-                <Text style={[styles.modalButtonText, { color: "#432344" }]}>
-                  Back
-                </Text>
-              </Pressable>
-              <Pressable
+          <View style={styles.paginationContainer}>
+            <TouchableOpacity
+              onPress={() => setPage(page - 1)}
+              disabled={page === 1}
+              style={[
+                styles.paginationButton,
+                page === 1 && styles.paginationButtonDisabled,
+              ]}
+            >
+              <Text
                 style={[
-                  styles.modalButton,
-                  { backgroundColor: "#AA3D3F", borderColor: "#AA3D3F" },
+                  styles.paginationText,
+                  page === 1 && styles.paginationTextDisabled,
                 ]}
-                onPress={async () => {
-                  if (!editJudge) return;
-                  try {
-                    await updateDoc(doc(db, "judge-users", editJudge.id), {
-                      disabled: true,
-                    });
-                    setJudges((prev) =>
-                      prev.map((j) =>
-                        j.id === editJudge.id ? { ...j, disabled: true } : j
-                      )
-                    );
-                    setDisableModalVisible(false);
-                    setEditModalVisible(false);
-                  } catch (e) {
-                    Alert.alert("Error", "Failed to disable judge.");
-                  }
-                }}
               >
-                <Text style={[styles.modalButtonText, { fontWeight: "bold" }]}>
-                  Yes
-                </Text>
-              </Pressable>
-            </View>
+                Previous
+              </Text>
+            </TouchableOpacity>
+            <Text style={styles.paginationInfo}>
+              Page {page} of {totalPages === 0 ? 1 : totalPages}
+            </Text>
+            <TouchableOpacity
+              onPress={() => setPage(page + 1)}
+              disabled={page === totalPages || totalPages === 0}
+              style={[
+                styles.paginationButton,
+                (page === totalPages || totalPages === 0) &&
+                  styles.paginationButtonDisabled,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.paginationText,
+                  (page === totalPages || totalPages === 0) &&
+                    styles.paginationTextDisabled,
+                ]}
+              >
+                Next
+              </Text>
+            </TouchableOpacity>
           </View>
+
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={editModalVisible}
+            onRequestClose={() => setEditModalVisible(false)}
+          >
+            <View style={styles.modal}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.headerTextModal}>Edit Judge Account</Text>
+                  <Text style={styles.headerSubTextModal}>
+                    Update judge's information
+                  </Text>
+                </View>
+                <View style={styles.formContainer}>
+                  <TextInput
+                    placeholder="Name"
+                    value={editUsername}
+                    autoCapitalize="none"
+                    onChangeText={setEditUsername}
+                    style={styles.textinput}
+                  />
+                  <Dropdown
+                    style={styles.dropdown}
+                    data={categorydata}
+                    search
+                    maxHeight={300}
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Select Category"
+                    searchPlaceholder="Search..."
+                    value={editCategory}
+                    onChange={(item) => {
+                      setEditCategory(item.value);
+                      if (!item.subcategories) setEditSubcategory(null);
+                    }}
+                  />
+                  {["Robomission", "Future Innovators"].includes(
+                    categorydata.find((cat: any) => cat.value === editCategory)
+                      ?.label || ""
+                  ) && (
+                    <Dropdown
+                      style={styles.dropdown}
+                      data={
+                        categorydata.find(
+                          (cat: any) => cat.value === editCategory
+                        )?.subcategories || []
+                      }
+                      labelField="label"
+                      valueField="value"
+                      placeholder="Select Subcategory"
+                      value={editSubcategory}
+                      onChange={(item) => setEditSubcategory(item.value)}
+                    />
+                  )}
+                </View>
+                <View style={styles.buttonContainer}>
+                  <Pressable
+                    style={styles.modalCreateButton}
+                    onPress={async () => {
+                      if (!editJudge) return;
+                      try {
+                        await updateDoc(doc(db, "judge-users", editJudge.id), {
+                          username: editUsername,
+                          category: editSubcategory || editCategory || "",
+                        });
+                        setJudges((prev) =>
+                          prev.map((j) =>
+                            j.id === editJudge.id
+                              ? {
+                                  ...j,
+                                  username: editUsername,
+                                  category:
+                                    editSubcategory || editCategory || "",
+                                }
+                              : j
+                          )
+                        );
+                        setEditModalVisible(false);
+                      } catch (e) {
+                        Alert.alert("Error", "Failed to update judge.");
+                      }
+                    }}
+                  >
+                    <Text style={styles.buttonText}>Save</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.modalCancelButton}
+                    onPress={() => setEditModalVisible(false)}
+                  >
+                    <Text>Cancel</Text>
+                  </Pressable>
+                </View>
+                <View style={styles.buttonDisableContainer}>
+                  <Pressable
+                    style={styles.modalDisableButton}
+                    onPress={() => setDisableModalVisible(true)}
+                  >
+                    <Text
+                      style={[
+                        styles.buttonText,
+                        { color: "#AA0003", fontWeight: "bold" },
+                      ]}
+                    >
+                      Disable Account
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+          {/* Disable Judge Account Confirmation Modal */}
+          <Modal
+            visible={disableModalVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setDisableModalVisible(false)}
+          >
+            <View style={styles.modalOverlayDisable}>
+              <View style={styles.modalContentDisable}>
+                <Text style={styles.modalTitle}>
+                  Are you sure you want to disable this judge account?
+                </Text>
+                <View style={styles.modalButtonContainer}>
+                  <Pressable
+                    style={[styles.modalButton, { borderColor: "#432344" }]}
+                    onPress={() => setDisableModalVisible(false)}
+                  >
+                    <Text
+                      style={[styles.modalButtonText, { color: "#432344" }]}
+                    >
+                      Back
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={[
+                      styles.modalButton,
+                      { backgroundColor: "#AA3D3F", borderColor: "#AA3D3F" },
+                    ]}
+                    onPress={async () => {
+                      if (!editJudge) return;
+                      try {
+                        await updateDoc(doc(db, "judge-users", editJudge.id), {
+                          disabled: true,
+                        });
+                        setJudges((prev) =>
+                          prev.map((j) =>
+                            j.id === editJudge.id ? { ...j, disabled: true } : j
+                          )
+                        );
+                        setDisableModalVisible(false);
+                        setEditModalVisible(false);
+                      } catch (e) {
+                        Alert.alert("Error", "Failed to disable judge.");
+                      }
+                    }}
+                  >
+                    <Text
+                      style={[styles.modalButtonText, { fontWeight: "bold" }]}
+                    >
+                      Yes
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
         </View>
-      </Modal>
-    </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

@@ -117,6 +117,10 @@ export default StyleSheet.create({
     fontFamily: "inter_400Regular",
   },
 
+  judgesContainer: {
+    marginBottom: 70,
+  },
+
   judgesCard: {
     borderRadius: 10,
     marginTop: 5,

@@ -156,18 +156,6 @@ export default function CustomDrawer({ navigation }: any) {
           >
             <Text style={styles.menuText}>Profile</Text>
           </Pressable>
-          {/* 
-          <Pressable
-            style={({ pressed }) => [
-              styles.menuItem,
-              pressed && styles.buttonPressed,
-            ]}
-            onPress={() => {
-              navigation.closeDrawer();
-            }}
-          >
-            <Text style={styles.menuText}>Judges</Text>
-          </Pressable> */}
 
           {/* Logout */}
           <Pressable

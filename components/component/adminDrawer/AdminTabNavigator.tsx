@@ -6,6 +6,7 @@ import AllLeaderboard from "../../../pages/admin/Leaderboard";
 
 import Entypo from "@expo/vector-icons/Entypo";
 import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
+import AllJudgesScreen from "../../../pages/admin/AllJudgesScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -54,6 +55,18 @@ export default function AdminTabNavigator() {
           headerTitleAlign: "center",
           tabBarIcon: ({ color, size }) => (
             <FontAwesome6 name="ranking-star" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Judges"
+        component={AllJudgesScreen}
+        options={{
+          headerShown: true,
+          headerTitle: "Judges",
+          headerTitleAlign: "center",
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="users" size={size} color={color} />
           ),
         }}
       />
