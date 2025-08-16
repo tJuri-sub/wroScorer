@@ -1,8 +1,8 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import HomeScreenAdmin from "../../pages/admin/HomeScreen";
-import OverallScoresScreen from "../../pages/admin/OverallScores";
-import AllLeaderboard from "../../pages/admin/Leaderboard";
+import HomeScreenAdmin from "../../../pages/admin/HomeScreen";
+import OverallScoresScreen from "../../../pages/admin/OverallScores";
+import AllLeaderboard from "../../../pages/admin/Leaderboard";
 
 import Entypo from "@expo/vector-icons/Entypo";
 import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
