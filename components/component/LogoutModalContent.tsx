@@ -25,6 +25,6 @@ export function LogoutModalProvider({
   );
 }
 
-export function useLogoutModal() {
+export function useLogoutModal(handleLogout: () => Promise<void>) {
   return useContext(LogoutModalContext);
 }
