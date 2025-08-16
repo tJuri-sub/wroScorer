@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   Text,
   View,
@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
-  FlatList
+  FlatList,
 } from "react-native";
 import {
   getFirestore,
@@ -16,6 +16,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import styles from "../../components/styles/judgeStyles/LeaderboardStyling";
+import { Feather } from "@expo/vector-icons";
 
 const RECORDS_PER_PAGE = 10;
 const windowHeight = Dimensions.get("window").height;
@@ -26,12 +27,25 @@ function parseTimeString(timeStr: string) {
   return (mm || 0) * 60000 + (ss || 0) * 1000 + (ms || 0);
 }
 
-export default function AdminLeaderboard() {
+export default function AdminLeaderboard({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => navigation.openDrawer()}
+          style={{ marginLeft: 15 }}
+        >
+          <Feather name="menu" size={24} color="black" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -45,9 +59,9 @@ export default function AdminLeaderboard() {
       // Custom sort order
       const order = ["robo-elem", "robo-junior", "robo-senior", "robosports"];
       cats = [
-        ...order
+        ...(order
           .map((catId) => cats.find((cat) => cat.id === catId))
-          .filter(Boolean) as { id: string; label: any }[],
+          .filter(Boolean) as { id: string; label: any }[]),
         ...cats.filter((cat) => !order.includes(cat.id)),
       ];
 
@@ -205,41 +219,48 @@ export default function AdminLeaderboard() {
       {/* Leaderboard List */}
       <View style={{ flex: 1 }}>
         <View style={stickyStyles.header}>
-                      <Text style={stickyStyles.heading}>Team Name</Text>
-                      <Text style={stickyStyles.heading}>Round 1 Score</Text>
-                      <Text style={stickyStyles.heading}>Round 2 Score</Text>
-                    </View>
+          <Text style={stickyStyles.heading}>Team Name</Text>
+          <Text style={stickyStyles.heading}>Round 1 Score</Text>
+          <Text style={stickyStyles.heading}>Round 2 Score</Text>
+        </View>
         {currentRecords.length === 0 ? (
-          <Text style={{ textAlign: "center"}}>
-            No scores yet!
-          </Text>
+          <Text style={{ textAlign: "center" }}>No scores yet!</Text>
         ) : (
           <FlatList
             data={currentRecords}
             keyExtractor={(item) => item.teamId}
-            contentContainerStyle={{ padding:1 }}
+            contentContainerStyle={{ padding: 1 }}
             renderItem={({ item, index }) => {
               const overallRank = startIndex + index;
-              const rankDisplay =  `${overallRank + 1}.`;
+              const rankDisplay = `${overallRank + 1}.`;
               return (
-                  <FlatList
-                      data={[item]}
-                      keyExtractor={(subItem) => subItem.teamId}
-                      renderItem={({ item: subItem }) => (
-                        <View style={stickyStyles.row}>
-                          <Text style={stickyStyles.cell}>
-                            {rankDisplay} {subItem.teamName}
-                          </Text>
-                          <Text style={[stickyStyles.cell,{ textAlign: "center", fontSize: 18 }]}>
-                            {subItem.round1Score ?? "N/A"}
-                          </Text>
-                          <Text style={[stickyStyles.cell,{ textAlign: "center", fontSize: 18 }]}>
-                            {subItem.round2Score ?? "N/A"}
-                          </Text>
-                        </View>
-                      )}
-                  />
-               
+                <FlatList
+                  data={[item]}
+                  keyExtractor={(subItem) => subItem.teamId}
+                  renderItem={({ item: subItem }) => (
+                    <View style={stickyStyles.row}>
+                      <Text style={stickyStyles.cell}>
+                        {rankDisplay} {subItem.teamName}
+                      </Text>
+                      <Text
+                        style={[
+                          stickyStyles.cell,
+                          { textAlign: "center", fontSize: 18 },
+                        ]}
+                      >
+                        {subItem.round1Score ?? "N/A"}
+                      </Text>
+                      <Text
+                        style={[
+                          stickyStyles.cell,
+                          { textAlign: "center", fontSize: 18 },
+                        ]}
+                      >
+                        {subItem.round2Score ?? "N/A"}
+                      </Text>
+                    </View>
+                  )}
+                />
               );
             }}
           />
@@ -340,9 +361,9 @@ const stickyStyles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
-  cell : {
+  cell: {
     flex: 1,
     textAlign: "left",
     fontSize: 14,
-  }
+  },
 });

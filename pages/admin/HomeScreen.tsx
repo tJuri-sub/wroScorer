@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import {
   Text,
   View,
@@ -35,6 +35,7 @@ import {
   where,
   onSnapshot,
 } from "firebase/firestore";
+import { Feather } from "@expo/vector-icons";
 
 const { height: screenHeight } = Dimensions.get("window");
 const { width: screenWidth } = Dimensions.get("window");
@@ -87,7 +88,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [greeting, setGreeting] = useState<string>("Hello");
   const [lastLogin, setLastLogin] = useState<number | null>(null);
-  
+
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editJudge, setEditJudge] = useState<JudgeUser | null>(null);
   const [editUsername, setEditUsername] = useState("");
@@ -95,21 +96,42 @@ export default function HomeScreenAdmin({ navigation }: any) {
   const [editSubcategory, setEditSubcategory] = useState<string | null>(null);
 
   const [disableModalVisible, setDisableModalVisible] = useState(false);
-  
+
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<
+    string | null
+  >(null);
   const [categoryError, setCategoryError] = useState<string | null>(null);
   const [subcategoryError, setSubcategoryError] = useState<string | null>(null);
 
-  const [editUsernameError, setEditUsernameError] = useState<string | null>(null);
-  const [editCategoryError, setEditCategoryError] = useState<string | null>(null);
-  const [editSubcategoryError, setEditSubcategoryError] = useState<string | null>(null);
+  const [editUsernameError, setEditUsernameError] = useState<string | null>(
+    null
+  );
+  const [editCategoryError, setEditCategoryError] = useState<string | null>(
+    null
+  );
+  const [editSubcategoryError, setEditSubcategoryError] = useState<
+    string | null
+  >(null);
 
   // Initialize Firebase
   const auth = getAuth();
   const db = getFirestore();
   const user = FIREBASE_AUTH.currentUser;
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => navigation.openDrawer()}
+          style={{ marginLeft: 15 }}
+        >
+          <Feather name="menu" size={24} color="black" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   const categorydata = [
     {
@@ -384,47 +406,47 @@ export default function HomeScreenAdmin({ navigation }: any) {
   };
 
   const updateJudgeAccount = async () => {
-  // Validation
-  let hasError = false;
-  if (!editUsername.trim()) {
-    setEditUsernameError("Name cannot be empty!");
-    hasError = true;
-  } else {
-    setEditUsernameError(null);
-  }
-  if (!editCategory) {
-    setEditCategoryError("Please select a category!");
-    hasError = true;
-  } else {
-    setEditCategoryError(null);
-  }
-  if (
-    ["Robomission", "Future Innovators"].includes(
-      categorydata.find((cat: any) => cat.value === editCategory)?.label || ""
-    ) &&
-    !editSubcategory
-  ) {
-    setEditSubcategoryError("Please select a subcategory!");
-    hasError = true;
-  } else {
-    setEditSubcategoryError(null);
-  }
-  if (hasError) return;
+    // Validation
+    let hasError = false;
+    if (!editUsername.trim()) {
+      setEditUsernameError("Name cannot be empty!");
+      hasError = true;
+    } else {
+      setEditUsernameError(null);
+    }
+    if (!editCategory) {
+      setEditCategoryError("Please select a category!");
+      hasError = true;
+    } else {
+      setEditCategoryError(null);
+    }
+    if (
+      ["Robomission", "Future Innovators"].includes(
+        categorydata.find((cat: any) => cat.value === editCategory)?.label || ""
+      ) &&
+      !editSubcategory
+    ) {
+      setEditSubcategoryError("Please select a subcategory!");
+      hasError = true;
+    } else {
+      setEditSubcategoryError(null);
+    }
+    if (hasError) return;
 
-  if (!editJudge) return;
-  try {
-    await updateDoc(doc(db, "judge-users", editJudge.id), {
-      username: editUsername,
-      category: editSubcategory || editCategory || "",
-    });
-    setEditModalVisible(false);
-    setEditUsernameError(null);
-    setEditCategoryError(null);
-    setEditSubcategoryError(null);
-  } catch (e) {
-    Alert.alert("Error", "Failed to update judge.");
-  }
-};
+    if (!editJudge) return;
+    try {
+      await updateDoc(doc(db, "judge-users", editJudge.id), {
+        username: editUsername,
+        category: editSubcategory || editCategory || "",
+      });
+      setEditModalVisible(false);
+      setEditUsernameError(null);
+      setEditCategoryError(null);
+      setEditSubcategoryError(null);
+    } catch (e) {
+      Alert.alert("Error", "Failed to update judge.");
+    }
+  };
 
   const cardWidth = screenWidth * 0.9;
   const cardGap = 16;
@@ -441,22 +463,6 @@ export default function HomeScreenAdmin({ navigation }: any) {
         <ScrollView>
           <View style={styles.container}>
             {/* Header with avatar, greeting, and name/email */}
-            <View style={styles.header}>
-              <Image
-                source={{
-                  uri:
-                    avatarUrl ||
-                    `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
-                      user?.email || "default"
-                    )}`,
-                }}
-                style={styles.avatar}
-              />
-              <View>
-                <Text style={styles.greeting}>{greeting}!</Text>
-                <Text style={styles.email}>{adminName}</Text>
-              </View>
-            </View>
 
             <Text style={styles.headerTexts}>Manage Team Categories</Text>
 
@@ -563,28 +569,40 @@ export default function HomeScreenAdmin({ navigation }: any) {
                       isDisabled && { backgroundColor: "#f0f0f0" },
                     ]}
                   >
-                    <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10,opacity: isDisabled ? 0.5 : 1 }}>
+                    <View
+                      style={{
+                        flex: 1,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 10,
+                        opacity: isDisabled ? 0.5 : 1,
+                      }}
+                    >
                       <Image
                         source={{
                           uri: item.avatarUrl || getRandomAvatar(item.username),
                         }}
                         style={styles.judgesImage}
                       />
-                      <View style={{ flex: 1, justifyContent: "center"}}>
+                      <View style={{ flex: 1, justifyContent: "center" }}>
                         <Text style={styles.judgesName}>{item.username}</Text>
                         <Text style={styles.judgesEmail}>{item.email}</Text>
-                        <Text style={styles.judgesCategory}>{categoryLabel}</Text>
+                        <Text style={styles.judgesCategory}>
+                          {categoryLabel}
+                        </Text>
                       </View>
                     </View>
                     {/* Restore or Edit button and Disabled text */}
-                    <View style={{
-                      flexDirection: "column",
-                      alignItems: "flex-end",
-                      justifyContent: "flex-end",
-                      minWidth: 70,
-                      marginLeft: 8,
-                      height: "100%",
-                    }}>
+                    <View
+                      style={{
+                        flexDirection: "column",
+                        alignItems: "flex-end",
+                        justifyContent: "flex-end",
+                        minWidth: 70,
+                        marginLeft: 8,
+                        height: "100%",
+                      }}
+                    >
                       {isDisabled ? (
                         <>
                           <TouchableOpacity
@@ -594,27 +612,44 @@ export default function HomeScreenAdmin({ navigation }: any) {
                             ]}
                             onPress={async () => {
                               try {
-                                await updateDoc(doc(db, "judge-users", item.id), { disabled: false });
+                                await updateDoc(
+                                  doc(db, "judge-users", item.id),
+                                  { disabled: false }
+                                );
                                 setJudgeUsers((prev) =>
                                   prev.map((j) =>
-                                    j.id === item.id ? { ...j, disabled: false } : j
+                                    j.id === item.id
+                                      ? { ...j, disabled: false }
+                                      : j
                                   )
                                 );
-                                Alert.alert("Restored!", "Judge account has been restored.");
+                                Alert.alert(
+                                  "Restored!",
+                                  "Judge account has been restored."
+                                );
                               } catch (e) {
-                                Alert.alert("Error", "Failed to restore judge.");
+                                Alert.alert(
+                                  "Error",
+                                  "Failed to restore judge."
+                                );
                               }
                             }}
                           >
-                            <MaterialCommunityIcons name="restore" size={20} color="#fff" />
+                            <MaterialCommunityIcons
+                              name="restore"
+                              size={20}
+                              color="#fff"
+                            />
                           </TouchableOpacity>
-                          <Text style={{
-                            color: "#AA0003",
-                            fontWeight: "bold",
-                            marginTop: 8,
-                            opacity: 1,
-                            alignSelf: "center"
-                          }}>
+                          <Text
+                            style={{
+                              color: "#AA0003",
+                              fontWeight: "bold",
+                              marginTop: 8,
+                              opacity: 1,
+                              alignSelf: "center",
+                            }}
+                          >
                             Account Disabled
                           </Text>
                         </>
@@ -622,35 +657,43 @@ export default function HomeScreenAdmin({ navigation }: any) {
                         <TouchableOpacity
                           style={styles.editButton}
                           onPress={() => {
-                              setEditJudge(item);
+                            setEditJudge(item);
 
-                              // Find if the category is a subcategory
-                              let foundMainCat = null;
-                              let foundSubCat = null;
-                              for (const mainCat of categorydata) {
-                                if (mainCat.value === item.category) {
+                            // Find if the category is a subcategory
+                            let foundMainCat = null;
+                            let foundSubCat = null;
+                            for (const mainCat of categorydata) {
+                              if (mainCat.value === item.category) {
+                                foundMainCat = mainCat;
+                                break;
+                              }
+                              if (mainCat.subcategories) {
+                                const sub = mainCat.subcategories.find(
+                                  (subcat) => subcat.value === item.category
+                                );
+                                if (sub) {
                                   foundMainCat = mainCat;
+                                  foundSubCat = sub;
                                   break;
                                 }
-                                if (mainCat.subcategories) {
-                                  const sub = mainCat.subcategories.find(
-                                    (subcat) => subcat.value === item.category
-                                  );
-                                  if (sub) {
-                                    foundMainCat = mainCat;
-                                    foundSubCat = sub;
-                                    break;
-                                  }
-                                }
                               }
+                            }
 
-                              setEditCategory(foundMainCat ? foundMainCat.value : item.category);
-                              setEditSubcategory(foundSubCat ? foundSubCat.value : null);
-                              setEditUsername(item.username);
-                              setEditModalVisible(true);
-                            }}
+                            setEditCategory(
+                              foundMainCat ? foundMainCat.value : item.category
+                            );
+                            setEditSubcategory(
+                              foundSubCat ? foundSubCat.value : null
+                            );
+                            setEditUsername(item.username);
+                            setEditModalVisible(true);
+                          }}
                         >
-                          <MaterialCommunityIcons name="pencil-outline" size={20} color="#fff" />
+                          <MaterialCommunityIcons
+                            name="pencil-outline"
+                            size={20}
+                            color="#fff"
+                          />
                         </TouchableOpacity>
                       )}
                     </View>
@@ -699,9 +742,9 @@ export default function HomeScreenAdmin({ navigation }: any) {
                 placeholder="Name"
                 autoCapitalize="none"
                 onChangeText={(text) => {
-                  setUsername(text)
+                  setUsername(text);
                   setUsernameError(null); // Clear error on change
-                  }}
+                }}
                 style={styles.textinput}
               />
               {usernameError && (
@@ -725,7 +768,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
                 secureTextEntry={true}
                 autoCapitalize="none"
                 onChangeText={(text) => {
-                  setConfirmPassword(text)
+                  setConfirmPassword(text);
                   setConfirmPasswordError(null);
                 }}
                 style={styles.textinput}
@@ -769,17 +812,17 @@ export default function HomeScreenAdmin({ navigation }: any) {
                     placeholder="Select Subcategory"
                     value={subcategory}
                     onChange={(item) => {
-                      setSubcategory(item.value)
-                      setSubcategoryError(null);}}
+                      setSubcategory(item.value);
+                      setSubcategoryError(null);
+                    }}
                   />
                   {categoryError && (
-                  <Text style={styles.errorText}>{categoryError}</Text>
-                )}
+                    <Text style={styles.errorText}>{categoryError}</Text>
+                  )}
                 </>
               )}
-              
             </View>
-            
+
             <View style={styles.buttonContainer}>
               <Pressable
                 style={styles.modalCreateButton}
@@ -812,7 +855,6 @@ export default function HomeScreenAdmin({ navigation }: any) {
           setCategoryError(null);
           setSubcategoryError(null);
         }}
-        
       >
         <View style={styles.modal}>
           <View style={styles.modalContent}>
@@ -857,53 +899,61 @@ export default function HomeScreenAdmin({ navigation }: any) {
               )}
 
               {["Robomission", "Future Innovators"].includes(
-                categorydata.find((cat: any) => cat.value === editCategory)?.label || ""
+                categorydata.find((cat: any) => cat.value === editCategory)
+                  ?.label || ""
               ) && (
-              <>
-                <Dropdown
-                  style={styles.dropdown}
-                  data={
-                    categorydata.find((cat: any) => cat.value === editCategory)
-                      ?.subcategories || []
-                  }
-                  labelField="label"
-                  valueField="value"
-                  placeholder="Select Subcategory"
-                  value={editSubcategory}
-                  onChange={(item) => {
-                    setEditSubcategory(item.value);
-                    setEditSubcategoryError(null);
-                  }}
-                />
-                {editSubcategoryError && (
-                  <Text style={styles.errorText}>{editSubcategoryError}</Text>
-                )}
-              </>
+                <>
+                  <Dropdown
+                    style={styles.dropdown}
+                    data={
+                      categorydata.find(
+                        (cat: any) => cat.value === editCategory
+                      )?.subcategories || []
+                    }
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Select Subcategory"
+                    value={editSubcategory}
+                    onChange={(item) => {
+                      setEditSubcategory(item.value);
+                      setEditSubcategoryError(null);
+                    }}
+                  />
+                  {editSubcategoryError && (
+                    <Text style={styles.errorText}>{editSubcategoryError}</Text>
+                  )}
+                </>
               )}
             </View>
-              <View style={styles.buttonContainer}>
-                <Pressable
-                  style={styles.modalCreateButton}
-                  onPress={updateJudgeAccount}
+            <View style={styles.buttonContainer}>
+              <Pressable
+                style={styles.modalCreateButton}
+                onPress={updateJudgeAccount}
+              >
+                <Text style={styles.buttonText}>Save</Text>
+              </Pressable>
+              <Pressable
+                style={styles.modalCancelButton}
+                onPress={() => setEditModalVisible(false)}
+              >
+                <Text>Cancel</Text>
+              </Pressable>
+            </View>
+            <View style={styles.buttonDisableContainer}>
+              <Pressable
+                style={styles.modalDisableButton}
+                onPress={() => setDisableModalVisible(true)}
+              >
+                <Text
+                  style={[
+                    styles.buttonText,
+                    { color: "#AA0003", fontWeight: "bold" },
+                  ]}
                 >
-                  <Text style={styles.buttonText}>Save</Text>
-                </Pressable>
-                <Pressable
-                  style={styles.modalCancelButton}
-                  onPress={() => setEditModalVisible(false)}
-                >
-                  <Text>Cancel</Text>
-                </Pressable>
-              </View>
-              <View style={styles.buttonDisableContainer}> 
-                <Pressable
-                  style={styles.modalDisableButton}
-                  onPress={() => setDisableModalVisible(true)}
-                >
-                  <Text style={[styles.buttonText,{color: "#AA0003", fontWeight: "bold"}]}>Disable Account</Text>
-                </Pressable>
-              </View>
-            
+                  Disable Account
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       </Modal>
@@ -922,15 +972,18 @@ export default function HomeScreenAdmin({ navigation }: any) {
             </Text>
             <View style={styles.modalButtonContainer}>
               <Pressable
-                style={[styles.modalButton,{borderColor: "#432344",}]}
+                style={[styles.modalButton, { borderColor: "#432344" }]}
                 onPress={() => setDisableModalVisible(false)}
               >
-                <Text style={[styles.modalButtonText, {color: "#432344"}]}>
+                <Text style={[styles.modalButtonText, { color: "#432344" }]}>
                   Back
                 </Text>
               </Pressable>
               <Pressable
-                style={[styles.modalButton, {backgroundColor: "#AA3D3F", borderColor: "#AA3D3F" }]}
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: "#AA3D3F", borderColor: "#AA3D3F" },
+                ]}
                 onPress={async () => {
                   if (!editJudge) return;
                   try {
@@ -949,12 +1002,14 @@ export default function HomeScreenAdmin({ navigation }: any) {
                   }
                 }}
               >
-                <Text style={[styles.modalButtonText, {fontWeight: "bold"}]}>Yes</Text>
+                <Text style={[styles.modalButtonText, { fontWeight: "bold" }]}>
+                  Yes
+                </Text>
               </Pressable>
             </View>
           </View>
         </View>
-      </Modal>           
+      </Modal>
 
       {/* Robomission Modal */}
       <Modal
@@ -1039,6 +1094,5 @@ export default function HomeScreenAdmin({ navigation }: any) {
       </Modal>
     </SafeAreaProvider>
   );
-// setEditJudge is now handled by useState above, so this function is not needed and can be removed.
+  // setEditJudge is now handled by useState above, so this function is not needed and can be removed.
 }
-
