@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   Text,
   View,
@@ -16,6 +16,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import styles from "../../components/styles/judgeStyles/LeaderboardStyling";
+import { Feather } from "@expo/vector-icons";
 
 const RECORDS_PER_PAGE = 10;
 const windowHeight = Dimensions.get("window").height;
@@ -26,12 +27,25 @@ function parseTimeString(timeStr: string) {
   return (mm || 0) * 60000 + (ss || 0) * 1000 + (ms || 0);
 }
 
-export default function AdminLeaderboard() {
+export default function AdminLeaderboard({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => navigation.openDrawer()}
+          style={{ marginLeft: 15 }}
+        >
+          <Feather name="menu" size={24} color="black" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -45,9 +59,9 @@ export default function AdminLeaderboard() {
       // Custom sort order
       const order = ["robo-elem", "robo-junior", "robo-senior", "robosports"];
       cats = [
-        ...order
+        ...(order
           .map((catId) => cats.find((cat) => cat.id === catId))
-          .filter(Boolean) as { id: string; label: any }[],
+          .filter(Boolean) as { id: string; label: any }[]),
         ...cats.filter((cat) => !order.includes(cat.id)),
       ];
 
@@ -224,9 +238,10 @@ export default function AdminLeaderboard() {
                 ? rankIcons[overallRank]
                 : `${overallRank + 1}.`;
               return (
-
-                <View style={[styles.containerCard, { backgroundColor: cardBg }]}>
-                  <Text 
+                <View
+                  style={[styles.containerCard, { backgroundColor: cardBg }]}
+                >
+                  <Text
                     style={{
                       width: 25,
                       textAlign: "center",
@@ -241,39 +256,38 @@ export default function AdminLeaderboard() {
                     }}
                   >
                     {rankDisplay}
-
                   </Text>
-                  <Text 
+                  <Text
                     style={{
-                        flex: 1,
-                        fontFamily: "Inter_400Regular",
-                        color: textColor,
-                        marginRight: 5,
-                        marginLeft: 5,
-                        marginVertical: "auto",
-                      }}
+                      flex: 1,
+                      fontFamily: "Inter_400Regular",
+                      color: textColor,
+                      marginRight: 5,
+                      marginLeft: 5,
+                      marginVertical: "auto",
+                    }}
                   >
                     {item.teamName}
                   </Text>
-                  <Text 
+                  <Text
                     style={{
-                        color: textColor,
-                        fontFamily: "Inter_400Regular",
-                        fontWeight: "bold",
-                        marginRight: 5,
-                        marginLeft: 5,
-                        marginVertical: "auto",
-                      }}
+                      color: textColor,
+                      fontFamily: "Inter_400Regular",
+                      fontWeight: "bold",
+                      marginRight: 5,
+                      marginLeft: 5,
+                      marginVertical: "auto",
+                    }}
                   >
                     {item.bestScore} pts
                   </Text>
-                  <Text 
+                  <Text
                     style={{
-                        color: textColor,
-                        fontFamily: "Inter_400Regular",
-                        marginLeft: 5,
-                        marginVertical: "auto",
-                      }}
+                      color: textColor,
+                      fontFamily: "Inter_400Regular",
+                      marginLeft: 5,
+                      marginVertical: "auto",
+                    }}
                   >
                     {item.bestTime}
                   </Text>

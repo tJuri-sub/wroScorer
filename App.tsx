@@ -11,25 +11,25 @@ import {
   TouchableOpacity,
 } from "react-native";
 
-import Entypo from "@expo/vector-icons/Entypo";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+//Global
+import VerifyEmailScreen from "./pages/accountManage/VerifyEmailScreen";
 
+//Judges
 import Leaderboard from "./pages/Leaderboard";
 import HomeScreen from "./pages/HomeScreen";
-import HomeScreenAdmin from "./pages/admin/HomeScreen";
-import Login from "./pages/LoginScreenAdmin";
-import SignUp from "./pages/SignUpScreenAdmin";
-import VerifyEmailScreen from "./pages/accountManage/VerifyEmailScreen";
-import ProfileAdmin from "./pages/admin/Profile";
-import CategoryScreen from "./pages/admin/CategoryScreen";
 import LoginJudge from "./pages/LoginScreenJudge";
 import CategoryScreenJudge from "./pages/CategoryScreen";
 import ScorerScreen from "./pages/ScorerScreen";
 import AllScoresScreen from "./pages/AllScoresScreen";
 import TeamScoresScreen from "./pages/TeamScoresScreen";
-import TeamScores from "./pages/admin/TeamScores";
 import AllLeaderboardScreen from "./pages/AllLeaderboardScreen";
+
+//Admin
+import HomeScreenAdmin from "./pages/admin/HomeScreen";
+import Login from "./pages/LoginScreenAdmin";
+import SignUp from "./pages/SignUpScreenAdmin";
+import CategoryScreen from "./pages/admin/CategoryScreen";
+import TeamScores from "./pages/admin/TeamScores";
 
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -40,64 +40,15 @@ import AllJudgesScreen from "./pages/admin/AllJudgesScreen";
 import { AntDesign, FontAwesome6 } from "@expo/vector-icons";
 import JudgeDrawerNavigator from "./components/component/JudgeDrawerNavigator";
 import { LogoutModalProvider } from "./components/component/LogoutModalContent";
-import AllLeaderboard from "./pages/admin/Leaderboard";
+import DrawerNavigator from "./components/component/DrawerNavigator";
+import ProfileAdmin from "./pages/admin/Profile";
 import OverallScoresScreen from "./pages/admin/OverallScores";
+import AllLeaderboard from "./pages/admin/Leaderboard";
 
 const Stack = createNativeStackNavigator();
 const InsideStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 const AdminTab = createBottomTabNavigator();
-
-// Judge Bottom Tab Navigator
-// const TabNavigator = () => (
-//   <Tab.Navigator
-//     screenOptions={{
-//       headerShown: false,
-//       tabBarStyle: {
-//         height: 60,
-//         paddingVertical: 5,
-//       },
-//       tabBarActiveTintColor: "#432344",
-//     }}
-//   >
-//     <Tab.Screen
-//       name="Home"
-//       component={HomeScreen}
-//       options={{
-//         headerShown: true,
-//         headerTitle: "ScoreBotics",
-//         headerTitleAlign: "center",
-//         tabBarIcon: ({ color, size }) => (
-//           <Entypo name="home" size={size} color={color} />
-//         ),
-//       }}
-//     />
-//     <Tab.Screen
-//       name="Leaderboard"
-//       component={Leaderboard}
-//       options={{
-//         headerShown: true,
-//         headerTitle: "Leaderboard",
-//         headerTitleAlign: "center",
-//         tabBarIcon: ({ color, size }) => (
-//           <MaterialIcons name="leaderboard" size={size} color={color} />
-//         ),
-//       }}
-//     />
-//     <Tab.Screen
-//       name="Scorer"
-//       component={ScorerScreen}
-//       options={{
-//         headerShown: true,
-//         headerTitle: "Scoreboard",
-//         headerTitleAlign: "center",
-//         tabBarIcon: ({ color, size }) => (
-//           <MaterialIcons name="scoreboard" size={size} color={color} />
-//         ),
-//       }}
-//     />
-//   </Tab.Navigator>
-// );
 
 const JudgeInsideStackNavigator = () => (
   <InsideStack.Navigator
@@ -172,76 +123,11 @@ const JudgeInsideStackNavigator = () => (
   </InsideStack.Navigator>
 );
 
-// Admin Bottom Tab Navigator
-const AdminTabNavigator = () => (
-  <AdminTab.Navigator
-    screenOptions={{
-      headerShown: false,
-      tabBarStyle: {
-        height: 60,
-        paddingVertical: 5,
-      },
-      tabBarActiveTintColor: "#432344",
-    }}
-  >
-    <AdminTab.Screen
-      name="Home"
-      component={HomeScreenAdmin}
-      options={{
-        headerShown: true,
-        headerTitle: "Home Admin",
-        headerTitleAlign: "center",
-        tabBarIcon: ({ color, size }) => (
-          <Entypo name="home" size={size} color={color} />
-        ),
-      }}
-    />
-    <AdminTab.Screen
-      name="OverallScores"
-      component={OverallScoresScreen}
-      options={{
-        headerShown: true,
-        headerTitle: "Scores",
-        headerTitleAlign: "center",
-        tabBarIcon: ({ color, size }) => (
-           <FontAwesome name="table" size={size} color={color} />
-        ),
-      }}
-    />
-    <AdminTab.Screen
-      name="Ranks"
-      component={AllLeaderboard}
-      options={{
-        headerShown: true,
-        headerTitle: "Leaderboard",
-        headerTitleAlign: "center",
-        tabBarIcon: ({ color, size }) => (
-           <FontAwesome6 name="ranking-star" size={size} color={color} />
-        ),
-      }}
-    />
-    <AdminTab.Screen
-      name="Profile"
-      component={ProfileAdmin}
-      options={{
-        headerShown: true,
-        headerTitle: "Profile",
-        headerTitleAlign: "center",
-        tabBarIcon: ({ color, size }) => (
-          <FontAwesome name="user" size={size} color={color} />
-        ),
-      }}
-    />
-    {/* <AdminTab.Screen name="Logs" component={LogsAdmin} /> */}
-    
-  </AdminTab.Navigator>
-);
-
 const AdminInsideStackNavigator = () => (
   <InsideStack.Navigator>
     <InsideStack.Screen
-      name="BottomTabsAdmin"
-      component={AdminTabNavigator}
+      name="AdminDrawer"
+      component={DrawerNavigator}
       options={{ headerShown: false }}
     />
     <InsideStack.Screen name="HomeAdmin" component={HomeScreenAdmin} />
