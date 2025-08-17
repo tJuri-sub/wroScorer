@@ -21,7 +21,7 @@ import {
   updateDoc,
   doc,
 } from "firebase/firestore";
-import styles from "../../components/styles/adminStyles/CategorycreenStyle";
+import styles from "../../components/styles/adminStyles/CategoryscreenStyle";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 
 export default function CategoryScreen({ route, navigation }: any) {
