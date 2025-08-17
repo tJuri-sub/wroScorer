@@ -283,10 +283,7 @@ export default StyleSheet.create({
     padding: 20,
     width: 300,
     alignItems: "center",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.5)",
   },
 
   modalCloseIcon: {
@@ -377,7 +374,7 @@ export default StyleSheet.create({
     borderRadius: 5,
     alignItems: "center",
     width: "100%", // Adjust width to fit two buttons side by side
-    elevation: 2,
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.5)",
     borderWidth: 1,
   },
 
