@@ -4,8 +4,7 @@ import React from "react";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import CustomDrawer from "./CustomDrawer"; // ✅ admin drawer
 import AdminTabNavigator from "./AdminTabNavigator"; // ✅ admin tabs
-import ProfileAdmin from "../../pages/admin/Profile";
-import HomeScreenAdmin from "../../pages/admin/HomeScreen";
+import ProfileAdmin from "../../../pages/admin/Profile";
 
 const Drawer = createDrawerNavigator();
 

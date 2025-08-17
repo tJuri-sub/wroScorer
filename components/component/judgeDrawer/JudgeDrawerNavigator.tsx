@@ -3,7 +3,6 @@ import React from "react";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import CustomJudgeDrawer from "./CustomJudgeDrawer"; // optional
 import TabNavigator from "./TabNavigator"; // where you define the bottom tabs
-import { Dimensions } from "react-native";
 
 const Drawer = createDrawerNavigator();
 

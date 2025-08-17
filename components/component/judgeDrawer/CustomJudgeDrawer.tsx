@@ -3,18 +3,26 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Pressable, Image, StyleSheet } from "react-native";
 import { useFonts, Inter_400Regular } from "@expo-google-fonts/inter";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
-import { useLogoutModal } from "./LogoutModalContent"; // Adjust path if needed
+import { useLogoutModal } from "../LogoutModalContent"; // Adjust path if needed
+import logoutModalStyles from "../../styles/logoutModalStyles";
 
-import { FIREBASE_AUTH, FIREBASE_DB } from "../../firebaseconfig";
+import { FIREBASE_AUTH, FIREBASE_DB } from "../../../firebaseconfig";
 import { doc, getDoc } from "firebase/firestore";
 import { Feather } from "@expo/vector-icons";
+
+import { LogoutModal } from "../logoutModal";
 
 export default function CustomJudgeDrawer({ navigation }: any) {
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
   });
 
-  const { open } = useLogoutModal();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const handleLogout = async () => {
+    // Implement your logout logic here, e.g. FIREBASE_AUTH.signOut()
+  };
+  const { open } = useLogoutModal(handleLogout);
 
   const user = FIREBASE_AUTH.currentUser;
   const [username, setUsername] = useState("");
@@ -56,7 +64,7 @@ export default function CustomJudgeDrawer({ navigation }: any) {
         </View>
         <View style={styles.Header}>
           <Image
-            source={require("../../assets/icon.png")}
+            source={require("../../../assets/icon.png")}
             style={styles.avatar}
           />
           <Text style={styles.name}>ScoreBotics</Text>
@@ -92,10 +100,7 @@ export default function CustomJudgeDrawer({ navigation }: any) {
               styles.menuItem,
               pressed && styles.buttonPressed,
             ]}
-            onPress={() => {
-              open();
-              navigation.closeDrawer();
-            }}
+            onPress={() => setShowLogoutModal(true)}
           >
             <Text style={[styles.menuText, { color: "red" }]}>Logout</Text>
           </Pressable>
@@ -105,6 +110,15 @@ export default function CustomJudgeDrawer({ navigation }: any) {
       <View>
         <Text style={styles.drawerFooter}>© 2025 Felta Multi-Media.</Text>
       </View>
+
+      <LogoutModal
+        show={showLogoutModal}
+        close={() => setShowLogoutModal(false)}
+        navigation={navigation}
+        FIREBASE_AUTH={FIREBASE_AUTH}
+        styles={logoutModalStyles}
+        loginScreen="LoginJudge"
+      />
     </DrawerContentScrollView>
   );
 }

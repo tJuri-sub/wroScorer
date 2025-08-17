@@ -552,156 +552,158 @@ export default function HomeScreenAdmin({ navigation }: any) {
                 <Text style={{ color: "#6c63ff" }}>See All</Text>
               </TouchableOpacity>
             </View>
-            <FlatList
-              data={latestJudges}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={true}
-              // horizontal={true}
-              showsVerticalScrollIndicator={true}
-              renderItem={({ item }) => {
-                const categoryLabel = getCategoryDisplayLabel(item.category);
-                const isDisabled = item.disabled;
-
-                return (
-                  <View
-                    style={[
-                      styles.judgesCard,
-                      isDisabled && { backgroundColor: "#f0f0f0" },
-                    ]}
-                  >
+            <View style={styles.judgesContainer}>
+              <FlatList
+                data={latestJudges}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={true}
+                // horizontal={true}
+                showsVerticalScrollIndicator={true}
+                renderItem={({ item }) => {
+                  const categoryLabel = getCategoryDisplayLabel(item.category);
+                  const isDisabled = item.disabled;
+                  return (
                     <View
-                      style={{
-                        flex: 1,
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 10,
-                        opacity: isDisabled ? 0.5 : 1,
-                      }}
+                      style={[
+                        styles.judgesCard,
+                        isDisabled && { backgroundColor: "#f0f0f0" },
+                      ]}
                     >
-                      <Image
-                        source={{
-                          uri: item.avatarUrl || getRandomAvatar(item.username),
+                      <View
+                        style={{
+                          flex: 1,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 10,
+                          opacity: isDisabled ? 0.5 : 1,
                         }}
-                        style={styles.judgesImage}
-                      />
-                      <View style={{ flex: 1, justifyContent: "center" }}>
-                        <Text style={styles.judgesName}>{item.username}</Text>
-                        <Text style={styles.judgesEmail}>{item.email}</Text>
-                        <Text style={styles.judgesCategory}>
-                          {categoryLabel}
-                        </Text>
+                      >
+                        <Image
+                          source={{
+                            uri:
+                              item.avatarUrl || getRandomAvatar(item.username),
+                          }}
+                          style={styles.judgesImage}
+                        />
+                        <View style={{ flex: 1, justifyContent: "center" }}>
+                          <Text style={styles.judgesName}>{item.username}</Text>
+                          <Text style={styles.judgesEmail}>{item.email}</Text>
+                          <Text style={styles.judgesCategory}>
+                            {categoryLabel}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                    {/* Restore or Edit button and Disabled text */}
-                    <View
-                      style={{
-                        flexDirection: "column",
-                        alignItems: "flex-end",
-                        justifyContent: "flex-end",
-                        minWidth: 70,
-                        marginLeft: 8,
-                        height: "100%",
-                      }}
-                    >
-                      {isDisabled ? (
-                        <>
+                      {/* Restore or Edit button and Disabled text */}
+                      <View
+                        style={{
+                          flexDirection: "column",
+                          alignItems: "flex-end",
+                          justifyContent: "flex-end",
+                          minWidth: 70,
+                          marginLeft: 8,
+                          height: "100%",
+                        }}
+                      >
+                        {isDisabled ? (
+                          <>
+                            <TouchableOpacity
+                              style={[
+                                styles.editButton,
+                                { backgroundColor: "#35A22F", opacity: 1 },
+                              ]}
+                              onPress={async () => {
+                                try {
+                                  await updateDoc(
+                                    doc(db, "judge-users", item.id),
+                                    { disabled: false }
+                                  );
+                                  setJudgeUsers((prev) =>
+                                    prev.map((j) =>
+                                      j.id === item.id
+                                        ? { ...j, disabled: false }
+                                        : j
+                                    )
+                                  );
+                                  Alert.alert(
+                                    "Restored!",
+                                    "Judge account has been restored."
+                                  );
+                                } catch (e) {
+                                  Alert.alert(
+                                    "Error",
+                                    "Failed to restore judge."
+                                  );
+                                }
+                              }}
+                            >
+                              <MaterialCommunityIcons
+                                name="restore"
+                                size={20}
+                                color="#fff"
+                              />
+                            </TouchableOpacity>
+                            <Text
+                              style={{
+                                color: "#AA0003",
+                                fontWeight: "bold",
+                                marginTop: 8,
+                                opacity: 1,
+                                alignSelf: "center",
+                              }}
+                            >
+                              Account Disabled
+                            </Text>
+                          </>
+                        ) : (
                           <TouchableOpacity
-                            style={[
-                              styles.editButton,
-                              { backgroundColor: "#35A22F", opacity: 1 },
-                            ]}
-                            onPress={async () => {
-                              try {
-                                await updateDoc(
-                                  doc(db, "judge-users", item.id),
-                                  { disabled: false }
-                                );
-                                setJudgeUsers((prev) =>
-                                  prev.map((j) =>
-                                    j.id === item.id
-                                      ? { ...j, disabled: false }
-                                      : j
-                                  )
-                                );
-                                Alert.alert(
-                                  "Restored!",
-                                  "Judge account has been restored."
-                                );
-                              } catch (e) {
-                                Alert.alert(
-                                  "Error",
-                                  "Failed to restore judge."
-                                );
+                            style={styles.editButton}
+                            onPress={() => {
+                              setEditJudge(item);
+                              // Find if the category is a subcategory
+                              let foundMainCat = null;
+                              let foundSubCat = null;
+                              for (const mainCat of categorydata) {
+                                if (mainCat.value === item.category) {
+                                  foundMainCat = mainCat;
+                                  break;
+                                }
+                                if (mainCat.subcategories) {
+                                  const sub = mainCat.subcategories.find(
+                                    (subcat) => subcat.value === item.category
+                                  );
+                                  if (sub) {
+                                    foundMainCat = mainCat;
+                                    foundSubCat = sub;
+                                    break;
+                                  }
+                                }
                               }
+                              setEditCategory(
+                                foundMainCat
+                                  ? foundMainCat.value
+                                  : item.category
+                              );
+                              setEditSubcategory(
+                                foundSubCat ? foundSubCat.value : null
+                              );
+                              setEditUsername(item.username);
+                              setEditModalVisible(true);
                             }}
                           >
                             <MaterialCommunityIcons
-                              name="restore"
+                              name="pencil-outline"
                               size={20}
                               color="#fff"
                             />
                           </TouchableOpacity>
-                          <Text
-                            style={{
-                              color: "#AA0003",
-                              fontWeight: "bold",
-                              marginTop: 8,
-                              opacity: 1,
-                              alignSelf: "center",
-                            }}
-                          >
-                            Account Disabled
-                          </Text>
-                        </>
-                      ) : (
-                        <TouchableOpacity
-                          style={styles.editButton}
-                          onPress={() => {
-                            setEditJudge(item);
-
-                            // Find if the category is a subcategory
-                            let foundMainCat = null;
-                            let foundSubCat = null;
-                            for (const mainCat of categorydata) {
-                              if (mainCat.value === item.category) {
-                                foundMainCat = mainCat;
-                                break;
-                              }
-                              if (mainCat.subcategories) {
-                                const sub = mainCat.subcategories.find(
-                                  (subcat) => subcat.value === item.category
-                                );
-                                if (sub) {
-                                  foundMainCat = mainCat;
-                                  foundSubCat = sub;
-                                  break;
-                                }
-                              }
-                            }
-
-                            setEditCategory(
-                              foundMainCat ? foundMainCat.value : item.category
-                            );
-                            setEditSubcategory(
-                              foundSubCat ? foundSubCat.value : null
-                            );
-                            setEditUsername(item.username);
-                            setEditModalVisible(true);
-                          }}
-                        >
-                          <MaterialCommunityIcons
-                            name="pencil-outline"
-                            size={20}
-                            color="#fff"
-                          />
-                        </TouchableOpacity>
-                      )}
+                        )}
+                      </View>
                     </View>
-                  </View>
-                );
-              }}
-              ListEmptyComponent={<Text>No judge users found.</Text>}
-            />
+                  );
+                }}
+                ListEmptyComponent={<Text>No judge users found.</Text>}
+              />
+            </View>
           </View>
         </ScrollView>
         <TouchableOpacity

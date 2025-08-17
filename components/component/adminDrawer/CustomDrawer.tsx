@@ -3,9 +3,11 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Pressable, Image, StyleSheet } from "react-native";
 import { useFonts, Inter_400Regular } from "@expo-google-fonts/inter";
 import { DrawerContentScrollView } from "@react-navigation/drawer";
-import { useLogoutModal } from "./LogoutModalContent"; // Adjust path if needed
+import { useLogoutModal } from "../LogoutModalContent";
+import { LogoutModal } from "../logoutModal";
+import logoutModalStyles from "../../styles/logoutModalStyles";
 
-import { FIREBASE_AUTH, FIREBASE_DB } from "../../firebaseconfig";
+import { FIREBASE_AUTH, FIREBASE_DB } from "../../../firebaseconfig";
 import { doc, getDoc } from "firebase/firestore";
 import { Feather } from "@expo/vector-icons";
 
@@ -17,6 +19,8 @@ export default function CustomDrawer({ navigation }: any) {
   const [adminName, setAdminName] = useState<string | null>(null);
   const [greeting, setGreeting] = useState<string>("Hello");
   const [lastLogin, setLastLogin] = useState<number | null>(null);
+
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -152,18 +156,6 @@ export default function CustomDrawer({ navigation }: any) {
           >
             <Text style={styles.menuText}>Profile</Text>
           </Pressable>
-          {/* 
-          <Pressable
-            style={({ pressed }) => [
-              styles.menuItem,
-              pressed && styles.buttonPressed,
-            ]}
-            onPress={() => {
-              navigation.closeDrawer();
-            }}
-          >
-            <Text style={styles.menuText}>Judges</Text>
-          </Pressable> */}
 
           {/* Logout */}
           <Pressable
@@ -171,10 +163,7 @@ export default function CustomDrawer({ navigation }: any) {
               styles.menuItem,
               pressed && styles.buttonPressed,
             ]}
-            onPress={async () => {
-              await handleLogout();
-              navigation.closeDrawer();
-            }}
+            onPress={() => setShowLogoutModal(true)}
           >
             <Text style={[styles.menuText, { color: "red" }]}>Logout</Text>
           </Pressable>
@@ -184,6 +173,15 @@ export default function CustomDrawer({ navigation }: any) {
       <View>
         <Text style={styles.drawerFooter}>© 2025 Felta Multi-Media.</Text>
       </View>
+
+      <LogoutModal
+        show={showLogoutModal}
+        close={() => setShowLogoutModal(false)}
+        navigation={navigation}
+        FIREBASE_AUTH={FIREBASE_AUTH}
+        styles={logoutModalStyles}
+        loginScreen="LoginAdmin"
+      />
     </DrawerContentScrollView>
   );
 }

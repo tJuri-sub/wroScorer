@@ -18,21 +18,193 @@ import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFonts, Inter_400Regular } from "@expo-google-fonts/inter";
 import { useLogoutModal } from "../components/component/LogoutModalContent";
 
+/* ===========================
+   🔹 Constants & Helpers
+=========================== */
+const CATEGORY_DATA = [
+  {
+    label: "Robomission",
+    value: "robomission",
+    image: require("../assets/images/RoboMissionLogo.png"),
+    desc: "Build and program a robot that solves tasks on playing field",
+    subcategories: [
+      { label: "Elementary", value: "robo-elem" },
+      { label: "Junior", value: "robo-junior" },
+      { label: "Senior", value: "robo-senior" },
+    ],
+  },
+  {
+    label: "Robosports",
+    value: "robosports",
+    image: require("../assets/images/RoboSportsLogo.png"),
+    desc: "Teams compete with 2 robots in an exciting game",
+  },
+  {
+    label: "Future Innovators",
+    value: "future-innovators",
+    image: require("../assets/images/FutureILogo.png"),
+    desc: "Work on project and design and build a robot",
+    subcategories: [
+      { label: "Elementary", value: "fi-elem" },
+      { label: "Junior", value: "fi-junior" },
+      { label: "Senior", value: "fi-senior" },
+    ],
+  },
+  {
+    label: "Future Engineers",
+    value: "future-eng",
+    image: require("../assets/images/FutureELogo.png"),
+    desc: "Advanced robotics following current research trends",
+  },
+];
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Robomission: "#E79300",
+  Robosports: "#35A22F",
+  "Future Innovators": "#B01956",
+  "Future Engineers": "#0270AA",
+};
+
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  const random = ["Hello", "Good day", "Hi"];
+  return random[Math.floor(Math.random() * random.length)];
+};
+
+const getAvatarUrl = (email?: string, fallback = "default") =>
+  `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+    email || fallback
+  )}`;
+
+const resolveCategoryLabel = (judgeCategory: string | null) => {
+  if (!judgeCategory) return "No category assigned";
+
+  const top = CATEGORY_DATA.find((cat) => cat.value === judgeCategory);
+  if (top) return top.label;
+
+  for (const cat of CATEGORY_DATA) {
+    const sub = cat.subcategories?.find((s) => s.value === judgeCategory);
+    if (sub) return `${cat.label} ${sub.label}`;
+  }
+  return judgeCategory;
+};
+
+/* ===========================
+   🔹 UI Subcomponents
+=========================== */
+const ProfileHeader = ({
+  avatarUrl,
+  greeting,
+  judgeName,
+  judgeCategory,
+}: any) => (
+  <View style={styles.header}>
+    <View style={styles.profileCard}>
+      <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+      <View style={styles.nameContainer}>
+        <Text style={styles.greeting}>{greeting}!</Text>
+        <Text style={styles.name}>Judge {judgeName}</Text>
+      </View>
+    </View>
+    <Text style={styles.categoryAssigned}>
+      {resolveCategoryLabel(judgeCategory)}
+    </Text>
+  </View>
+);
+
+const CategoryCard = ({ item, onPress }: any) => {
+  const color = CATEGORY_COLORS[item.label] || "#333";
+
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.card,
+        { backgroundColor: color },
+        pressed && styles.buttonPressed,
+      ]}
+      onPress={onPress}
+    >
+      <View style={styles.cardHeader}>
+        <MaterialCommunityIcons name="dots-vertical" size={24} color="white" />
+      </View>
+      <Image source={item.image} style={styles.sideImage} />
+
+      <View style={styles.ContainerCategory}>
+        {item.label.split(" ").map((word: string, i: number) => (
+          <Text
+            key={i}
+            style={i === 0 ? styles.cardTextThin : styles.cardText}
+            adjustsFontSizeToFit
+          >
+            {word}{" "}
+          </Text>
+        ))}
+        <Text style={styles.cardDesc} numberOfLines={3} adjustsFontSizeToFit>
+          {item.desc}
+        </Text>
+      </View>
+    </Pressable>
+  );
+};
+
+const CategoryModal = ({
+  visible,
+  onClose,
+  title,
+  subcategories,
+  color,
+  navigation,
+  judgeCategory,
+}: any) => (
+  <Modal
+    visible={visible}
+    transparent
+    animationType="fade"
+    onRequestClose={onClose}
+  >
+    <View style={styles.modalOverlayCat}>
+      <View style={styles.modalContentCat}>
+        <Pressable style={styles.modalCloseIcon} onPress={onClose}>
+          <Ionicons name="close" size={24} color="black" />
+        </Pressable>
+        <Text style={styles.modalTitleCat}>{title}</Text>
+
+        {subcategories?.map((sub: any) => (
+          <Pressable
+            key={sub.value}
+            style={[styles.modalButtonCat, color && { backgroundColor: color }]}
+            onPress={() => {
+              onClose();
+              navigation.navigate("CategoryScreen", {
+                category: sub.value,
+                label: `${title.split(" ")[0]} ${sub.label}`,
+                judgeCategory,
+              });
+            }}
+          >
+            <Text style={styles.modalButtonTextCat}>{sub.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  </Modal>
+);
+
+/* ===========================
+   🔹 Main Component
+=========================== */
 export default function HomeScreen({ navigation }: any) {
-  let [fontsLoaded] = useFonts({
-    Inter_400Regular,
-  });
+  const [fontsLoaded] = useFonts({ Inter_400Regular });
+  const [judgeName, setJudgeName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [greeting, setGreeting] = useState(getGreeting());
+  const [robomissionModal, setRobomissionModal] = useState(false);
+  const [futureInnovatorsModal, setFutureInnovatorsModal] = useState(false);
+  const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
 
   const user = FIREBASE_AUTH.currentUser;
-  const [judgeName, setJudgeName] = useState<string | null>(null);
-
-  const [avatarUrl, setAvatarUrl] = useState<string>("");
-  const [greeting, setGreeting] = useState<string>("Hello");
-  const [robomissionModalVisible, setRobomissionModalVisible] = useState(false);
-  const [futureInnovatorsModalVisible, setFutureInnovatorsModalVisible] =
-    useState(false);
-  const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
-  const { show, open, close } = useLogoutModal();
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -49,368 +221,86 @@ export default function HomeScreen({ navigation }: any) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
-      if (!user) {
-        // If not logged in, redirect to login screen
-        navigation.replace("LoginScreen");
-      }
-      // else, user is logged in, do nothing
+      if (!user) navigation.replace("LoginScreen");
     });
     return unsubscribe;
   }, []);
 
-  const categorydata = [
-    {
-      label: "Robomission",
-      image: require("../assets/images/RoboMissionLogo.png"),
-      categoryDesc:
-        "Build and program a robot that solves tasks on playing field",
-      subcategories: [
-        { label: "Elementary", value: "robo-elem" },
-        { label: "Junior", value: "robo-junior" },
-        { label: "Senior", value: "robo-senior" },
-      ],
-    },
-    {
-      label: "Robosports",
-      value: "robosports",
-      image: require("../assets/images/RoboSportsLogo.png"),
-      categoryDesc: "Teams compete with 2 robots in an exciting game",
-    },
-
-    {
-      label: "Future Innovators",
-      image: require("../assets/images/FutureILogo.png"),
-      categoryDesc: "Work on project and design and build a robot",
-      subcategories: [
-        { label: "Elementary", value: "fi-elem" },
-        { label: "Junior", value: "fi-junior" },
-        { label: "Senior", value: "fi-senior" },
-      ],
-    },
-    {
-      label: "Future Engineers",
-      value: "future-eng",
-      image: require("../assets/images/FutureELogo.png"),
-      categoryDesc: "Advanced robotics following current research trends",
-    },
-  ];
-
   useEffect(() => {
-    const hour = new Date().getHours();
-    const greetings = ["Hello", "Good day", "Hi"];
-    if (hour < 12) setGreeting("Good morning");
-    else if (hour < 18) setGreeting("Good afternoon");
-    else setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
-
+    if (!user) return;
     const fetchProfile = async () => {
-      if (user) {
-        const userDoc = await getDoc(doc(FIREBASE_DB, "judge-users", user.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          setJudgeName(data.username);
-          setJudgeCategory(data.category || null);
-          setAvatarUrl(
-            data.avatarUrl ||
-              `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
-                user.email || "default"
-              )}`
-          );
-        } else {
-          setJudgeName(user.email);
-          setAvatarUrl(
-            `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
-              user.email || "default"
-            )}`
-          );
-        }
+      const userDoc = await getDoc(doc(FIREBASE_DB, "judge-users", user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        setJudgeName(data.username || user.email);
+        setJudgeCategory(data.category || null);
+        setAvatarUrl(data.avatarUrl || getAvatarUrl(user.email ?? undefined));
+      } else {
+        setJudgeName(user.email);
+        setAvatarUrl(getAvatarUrl(user.email ?? undefined));
       }
     };
     fetchProfile();
   }, [user]);
 
-  const getAssignedCategoryLabel = () => {
-    if (!judgeCategory) return "No category assigned";
-    const top = categorydata.find((cat) => cat.value === judgeCategory);
-    if (top) return top.label;
-    for (const cat of categorydata) {
-      if (cat.subcategories) {
-        const sub = cat.subcategories.find(
-          (sub) => sub.value === judgeCategory
-        );
-        if (sub) return `${cat.label} ${sub.label}`;
-      }
-    }
-    return judgeCategory;
-  };
-
   return (
     <SafeAreaProvider>
       <ScrollView>
         <SafeAreaView style={[styles.safeArea, { flex: 1 }]}>
-          <View style={{ flex: 1 }}>
-            <View style={styles.header}>
-              <View style={styles.profileCard}>
-                <Image
-                  source={{
-                    uri:
-                      avatarUrl ||
-                      `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
-                        user?.email || "default"
-                      )}`,
-                  }}
-                  style={styles.avatar}
-                />
-                <View style={styles.nameContainer}>
-                  <Text style={styles.greeting}>{greeting}!</Text>
-                  <Text style={styles.name}>Judge {judgeName}</Text>
-                </View>
-              </View>
-              <Text style={styles.categoryAssigned}>
-                {getAssignedCategoryLabel()}
-              </Text>
-            </View>
+          <ProfileHeader
+            avatarUrl={avatarUrl}
+            greeting={greeting}
+            judgeName={judgeName}
+            judgeCategory={judgeCategory}
+          />
 
-            <View style={styles.categoryContainer}>
-              <Text style={styles.categorytitleText}>
-                Competition Categories
-              </Text>
-            </View>
-
-            <FlatList
-              data={categorydata}
-              keyExtractor={(item) => item.label}
-              renderItem={({ item }) => {
-                const categoryColors: Record<string, string> = {
-                  Robomission: "#E79300", // Orange
-                  Robosports: "#35A22F", // Green
-                  "Future Innovators": "#B01956", // Pink
-                  "Future Engineers": "#0270AA", // Blue
-                };
-
-                const cardColor = categoryColors[item.label] || "#333"; // Default to black if no match
-                const [firstWord, ...restWords] = item.label.split(" ");
-                const rest = restWords.join(" ");
-
-                return (
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.card,
-                      { backgroundColor: cardColor },
-                      pressed && styles.buttonPressed,
-                    ]}
-                    onPress={() => {
-                      if (item.label === "Robomission") {
-                        setRobomissionModalVisible(true);
-                      } else if (item.label === "Future Innovators") {
-                        setFutureInnovatorsModalVisible(true);
-                      } else {
-                        navigation.navigate("CategoryScreen", {
-                          category: item.value,
-                          label: item.label,
-                          judgeCategory,
-                        });
-                      }
-                    }}
-                  >
-                    {/* Add three dots icon */}
-                    <View style={styles.cardHeader}>
-                      <MaterialCommunityIcons
-                        name="dots-vertical"
-                        size={24}
-                        color="white"
-                      />
-                    </View>
-                    <Image source={item.image} style={styles.sideImage} />
-                    <View style={styles.ContainerCategory}>
-                      <Text>
-                        {item.label === "Robomission" ? (
-                          <>
-                            <Text
-                              style={styles.cardTextThin}
-                              adjustsFontSizeToFit
-                            >
-                              Robo
-                            </Text>
-                            <Text style={styles.cardText} adjustsFontSizeToFit>
-                              mission
-                            </Text>
-                          </>
-                        ) : item.label === "Robosports" ? (
-                          <>
-                            <Text
-                              style={styles.cardTextThin}
-                              adjustsFontSizeToFit
-                            >
-                              Robo
-                            </Text>
-                            <Text style={styles.cardText} adjustsFontSizeToFit>
-                              sports
-                            </Text>
-                          </>
-                        ) : (
-                          item.label.split(" ").map((word, index) => (
-                            <Text
-                              key={index}
-                              style={
-                                index === 0
-                                  ? styles.cardTextThin
-                                  : styles.cardText
-                              }
-                              numberOfLines={2}
-                              adjustsFontSizeToFit
-                            >
-                              {word}{" "}
-                            </Text>
-                          ))
-                        )}
-                      </Text>
-                      <Text
-                        style={styles.cardDesc}
-                        numberOfLines={3}
-                        adjustsFontSizeToFit
-                        ellipsizeMode="tail"
-                      >
-                        {item.categoryDesc}
-                      </Text>
-                    </View>
-                  </Pressable>
-                );
-              }}
-              contentContainerStyle={{ paddingBottom: 1 }}
-            />
+          <View style={styles.categoryContainer}>
+            <Text style={styles.categorytitleText}>Competition Categories</Text>
           </View>
+
+          <FlatList
+            data={CATEGORY_DATA}
+            keyExtractor={(item) => item.value}
+            renderItem={({ item }) => (
+              <CategoryCard
+                item={item}
+                onPress={() => {
+                  if (item.label === "Robomission") setRobomissionModal(true);
+                  else if (item.label === "Future Innovators")
+                    setFutureInnovatorsModal(true);
+                  else {
+                    navigation.navigate("CategoryScreen", {
+                      category: item.value,
+                      label: item.label,
+                      judgeCategory,
+                    });
+                  }
+                }}
+              />
+            )}
+            contentContainerStyle={{ paddingBottom: 1 }}
+          />
         </SafeAreaView>
       </ScrollView>
 
-      {/* ================================= */}
-      {/* --------------  MODALS  -------------- */}
-      {/* ================================= */}
-
-      {/* Robomission Modal */}
-      <Modal
-        visible={robomissionModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setRobomissionModalVisible(false)}
-      >
-        <View style={styles.modalOverlayCat}>
-          <View style={styles.modalContentCat}>
-            {/* Top-right cancel icon */}
-            <Pressable
-              style={styles.modalCloseIcon}
-              onPress={() => setRobomissionModalVisible(false)}
-            >
-              <Ionicons name="close" size={24} color="black" />
-            </Pressable>
-
-            {/* Modal Title */}
-            <Text style={styles.modalTitleCat}>Robomission Categories</Text>
-
-            {/* Buttons */}
-            {categorydata[0].subcategories?.map((sub) => (
-              <Pressable
-                key={sub.value}
-                style={styles.modalButtonCat}
-                onPress={() => {
-                  setRobomissionModalVisible(false);
-                  navigation.navigate("CategoryScreen", {
-                    category: sub.value,
-                    label: `Robomission ${sub.label}`,
-                    judgeCategory,
-                  });
-                }}
-              >
-                <Text style={styles.modalButtonTextCat}>{sub.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      </Modal>
-
-      {/* Future Innovators Modal */}
-      <Modal
-        visible={futureInnovatorsModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setFutureInnovatorsModalVisible(false)}
-      >
-        <View style={styles.modalOverlayCat}>
-          <View style={styles.modalContentCat}>
-            {/* Top-right cancel icon */}
-            <Pressable
-              style={styles.modalCloseIcon}
-              onPress={() => setFutureInnovatorsModalVisible(false)}
-            >
-              <Ionicons name="close" size={24} color="black" />
-            </Pressable>
-
-            {/* Modal Title */}
-            <Text style={styles.modalTitleCat}>
-              Future Innovators Categories
-            </Text>
-
-            {/* Buttons */}
-            {categorydata[2].subcategories?.map((sub) => (
-              <Pressable
-                key={sub.value}
-                style={[styles.modalButtonCat, { backgroundColor: "#B01956" }]}
-                onPress={() => {
-                  setFutureInnovatorsModalVisible(false);
-                  navigation.navigate("CategoryScreen", {
-                    category: sub.value,
-                    label: `Future Innovators ${sub.label}`,
-                    judgeCategory,
-                  });
-                }}
-              >
-                <Text style={styles.modalButtonTextCat}>{sub.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      </Modal>
-
-      {/* Logout Confirmation Modal */}
-      <Modal
-        visible={show}
-        transparent
-        animationType="fade"
-        onRequestClose={close}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              Are you sure you want to log out?
-            </Text>
-            <View style={styles.modalButtonContainer}>
-              <Pressable
-                style={[
-                  styles.modalButton,
-                  {
-                    backgroundColor: "#fff",
-                    borderWidth: 1,
-                    borderColor: "#432344",
-                  },
-                ]}
-                onPress={close} // Close the modal
-              >
-                <Text style={[styles.modalButtonText, { color: "#432344" }]}>
-                  Back
-                </Text>
-              </Pressable>
-              <Pressable
-                style={[styles.modalButton, { backgroundColor: "#D32F2F" }]} // Red button for "Yes"
-                onPress={() => {
-                  FIREBASE_AUTH.signOut();
-                  navigation.replace("LoginJudge");
-                }}
-              >
-                <Text style={styles.modalButtonText}>Yes</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Modals */}
+      <CategoryModal
+        visible={robomissionModal}
+        onClose={() => setRobomissionModal(false)}
+        title="Robomission Categories"
+        subcategories={CATEGORY_DATA[0].subcategories}
+        navigation={navigation}
+        judgeCategory={judgeCategory}
+      />
+      <CategoryModal
+        visible={futureInnovatorsModal}
+        onClose={() => setFutureInnovatorsModal(false)}
+        title="Future Innovators Categories"
+        subcategories={CATEGORY_DATA[2].subcategories}
+        color="#B01956"
+        navigation={navigation}
+        judgeCategory={judgeCategory}
+      />
     </SafeAreaProvider>
   );
 }
