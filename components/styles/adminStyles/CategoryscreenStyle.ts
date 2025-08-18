@@ -163,11 +163,10 @@ export default StyleSheet.create({
   modalContent: {
     backgroundColor: "#fff",
     width: 340,
-    borderRadius: 20,
-    paddingVertical: 25,
-    paddingHorizontal: 28,
+    borderRadius: 10,
+    padding: 15,
     alignItems: "center",
-    elevation: 8,
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.5)",
   },
 
   modalHeader: {
@@ -175,18 +174,20 @@ export default StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#eee",
     paddingBottom: 10,
-    marginBottom: 18,
+    marginBottom: 10,
     alignItems: "flex-start",
   },
 
   headerTextModal: {
-    fontSize: 22,
+    fontFamily: "inter_400Regular",
+    fontSize: 20,
     fontWeight: "bold",
     marginBottom: 2,
     color: "#222",
   },
 
   headerSubTextModal: {
+    fontFamily: "inter_400Regular",
     fontSize: 14,
     color: "#888",
     marginBottom: 2,
@@ -194,21 +195,24 @@ export default StyleSheet.create({
 
   modalLabel: {
     alignSelf: "flex-start",
-    fontSize: 15,
+    fontFamily: "inter_400Regular",
+    fontSize: 14,
     color: "#432344",
     marginBottom: 6,
     marginTop: 10,
     fontWeight: "500",
+    zIndex: -9999,
   },
 
   modalInput: {
     backgroundColor: "#f3f3f3",
     borderWidth: 1,
     borderColor: "#e0e0e0",
-    borderRadius: 10,
+    borderRadius: 4,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    fontSize: 16,
+    fontFamily: "inter_400Regular",
+    fontSize: 14,
     marginBottom: 8,
     width: "100%",
   },
@@ -220,7 +224,8 @@ export default StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 14,
-    fontSize: 16,
+    fontFamily: "inter_400Regular",
+    fontSize: 14,
     marginBottom: 8,
   },
 
@@ -232,7 +237,8 @@ export default StyleSheet.create({
 
   pageIndicatorText: {
     color: "#6d5477",
-    fontSize: 15,
+    fontFamily: "inter_400Regular",
+    fontSize: 12,
     fontWeight: "500",
     margin: 3,
   },
@@ -254,6 +260,7 @@ export default StyleSheet.create({
   modalButtonCreateText: {
     color: "#fff",
     fontWeight: "bold",
+    fontFamily: "inter_400Regular",
     fontSize: 16,
     letterSpacing: 1,
   },
@@ -278,6 +285,7 @@ export default StyleSheet.create({
   modalButtonText: {
     color: "#432344",
     fontWeight: "bold",
+    fontFamily: "inter_400Regular",
     fontSize: 16,
     letterSpacing: 1,
   },
