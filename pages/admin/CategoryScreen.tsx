@@ -22,7 +22,7 @@ import {
   doc,
 } from "firebase/firestore";
 import styles from "../../components/styles/adminStyles/CategoryscreenStyle";
-import { Feather, MaterialIcons } from "@expo/vector-icons";
+import { AntDesign, Feather, MaterialIcons } from "@expo/vector-icons";
 import { Inter_400Regular, useFonts } from "@expo-google-fonts/inter";
 
 export default function CategoryScreen({ route, navigation }: any) {
@@ -288,6 +288,7 @@ export default function CategoryScreen({ route, navigation }: any) {
       <Text style={styles.subtitle}>Teams in {label}</Text>
       <TextInput
         placeholder="Search team"
+        placeholderTextColor="#999999"
         value={search}
         onChangeText={setSearch}
         style={styles.searchInput}
@@ -301,7 +302,9 @@ export default function CategoryScreen({ route, navigation }: any) {
             page === 1 && styles.paginationButtonDisabled,
           ]}
         >
-          <Text style={styles.paginationButtonText}>Previous</Text>
+          <Text style={styles.paginationButtonText}>
+            <AntDesign name="left" size={16} color="black" />
+          </Text>
         </TouchableOpacity>
         {totalRecords === 0 ? (
           <Text style={styles.paginationInfo}>No teams</Text>
@@ -319,7 +322,9 @@ export default function CategoryScreen({ route, navigation }: any) {
               styles.paginationButtonDisabled,
           ]}
         >
-          <Text style={styles.paginationButtonText}>Next</Text>
+          <Text style={styles.paginationButtonText}>
+            <AntDesign name="right" size={16} color="black" />
+          </Text>
         </TouchableOpacity>
       </View>
 

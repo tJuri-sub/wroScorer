@@ -3,27 +3,30 @@ import { StyleSheet } from "react-native";
 export default StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 10,
   },
 
   title: {
+    fontFamily: "inter_400Regular",
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 8,
   },
 
   subtitle: {
+    fontFamily: "inter_400Regular",
     fontSize: 16,
     marginBottom: 10,
   },
 
   searchInput: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 10,
     borderColor: "#e0e0e0",
     backgroundColor: "#fafafa",
     marginBottom: 10,
+    fontFamily: "inter_400Regular",
     fontSize: 16,
   },
 
@@ -38,6 +41,9 @@ export default StyleSheet.create({
   paginationButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#999999",
   },
 
   paginationButtonDisabled: {
@@ -47,12 +53,14 @@ export default StyleSheet.create({
   paginationButtonText: {
     color: "#432344",
     fontWeight: "bold",
+    fontFamily: "inter_400Regular",
     fontSize: 16,
   },
 
   paginationInfo: {
     marginHorizontal: 10,
-    fontSize: 16,
+    fontFamily: "inter_400Regular",
+    fontSize: 14,
     color: "#333",
   },
 
@@ -61,10 +69,7 @@ export default StyleSheet.create({
     borderRadius: 16,
     padding: 18,
     marginBottom: 18,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    boxShadow: " 0px 2px 3px rgba(0,0,0,0.5)",
     flexDirection: "column",
     minWidth: 0,
   },
@@ -77,7 +82,8 @@ export default StyleSheet.create({
   },
 
   teamCardHeaderText: {
-    fontSize: 15,
+    fontFamily: "inter_400Regular",
+    fontSize: 14,
     color: "#888",
     fontStyle: "italic",
     fontWeight: "500",
@@ -99,6 +105,7 @@ export default StyleSheet.create({
   },
 
   teamCardCountry: {
+    fontFamily: "inter_400Regular",
     fontSize: 16,
     color: "#222",
     fontWeight: "500",
@@ -107,6 +114,7 @@ export default StyleSheet.create({
   },
 
   teamCardTeamName: {
+    fontFamily: "inter_400Regular",
     fontSize: 20,
     fontWeight: "bold",
     color: "#432344",
@@ -116,14 +124,16 @@ export default StyleSheet.create({
   },
 
   teamCardMember: {
-    fontSize: 15,
+    fontFamily: "inter_400Regular",
+    fontSize: 14,
     color: "#333",
     marginLeft: 30,
     marginBottom: 2,
   },
 
   teamCardCoach: {
-    fontSize: 15,
+    fontFamily: "inter_400Regular",
+    fontSize: 14,
     color: "#432344",
     fontStyle: "italic",
     marginTop: 4,
