@@ -598,20 +598,16 @@ export default function CategoryScreen({ route, navigation }: any) {
 
                 <View style={styles.modalButtonRow}>
                   <TouchableOpacity
-                    style={[styles.modalButton, styles.modalButton]}
+                    style={styles.modalButton}
                     onPress={() => setModalVisible(false)}
                   >
-                    <Text
-                      style={[styles.modalButtonText, styles.modalButtonText]}
-                    >
-                      Cancel
-                    </Text>
+                    <Text style={styles.modalButtonText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.modalButtonNext}
                     onPress={handleNext}
                   >
-                    <Text style={styles.modalButtonText}>Next</Text>
+                    <Text style={styles.modalButtonTextNext}>Next</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -692,7 +688,7 @@ export default function CategoryScreen({ route, navigation }: any) {
                     style={styles.modalButtonNext}
                     onPress={handleNext}
                   >
-                    <Text style={styles.modalButtonText}>Next</Text>
+                    <Text style={styles.modalButtonTextNext}>Next</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -744,6 +740,7 @@ export default function CategoryScreen({ route, navigation }: any) {
                       Back
                     </Text>
                   </TouchableOpacity>
+
                   <TouchableOpacity
                     style={styles.modalButtonCreate}
                     onPress={editMode ? handleEditSubmit : handleSubmit}

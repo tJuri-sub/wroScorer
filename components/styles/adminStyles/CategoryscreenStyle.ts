@@ -250,6 +250,7 @@ export default StyleSheet.create({
     marginTop: 18,
     gap: 10,
   },
+
   modalButtonCreate: {
     flex: 1,
     paddingVertical: 12,
@@ -257,6 +258,7 @@ export default StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#432344",
   },
+
   modalButtonCreateText: {
     color: "#fff",
     fontWeight: "bold",
@@ -264,24 +266,35 @@ export default StyleSheet.create({
     fontSize: 16,
     letterSpacing: 1,
   },
+
   modalButton: {
     flex: 1,
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#432344",
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 7,
     alignItems: "center",
   },
+
   modalButtonNext: {
     flex: 1,
-    backgroundColor: "#fff",
-    borderWidth: 2,
+    backgroundColor: "#432344",
+    borderWidth: 1,
     borderColor: "#432344",
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: 7,
     alignItems: "center",
   },
+
+  modalButtonTextNext: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontFamily: "inter_400Regular",
+    fontSize: 16,
+    letterSpacing: 1,
+  },
+
   modalButtonText: {
     color: "#432344",
     fontWeight: "bold",
