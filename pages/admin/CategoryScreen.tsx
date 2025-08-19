@@ -21,10 +21,15 @@ import {
   updateDoc,
   doc,
 } from "firebase/firestore";
-import styles from "../../components/styles/adminStyles/CategorycreenStyle";
-import { Feather, MaterialIcons } from "@expo/vector-icons";
+import styles from "../../components/styles/adminStyles/CategoryscreenStyle";
+import { AntDesign, Feather, MaterialIcons } from "@expo/vector-icons";
+import { Inter_400Regular, useFonts } from "@expo-google-fonts/inter";
 
 export default function CategoryScreen({ route, navigation }: any) {
+  let [fontsLoaded] = useFonts({
+    Inter_400Regular,
+  });
+
   const { category, label } = route.params; // Get category and label from navigation params
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -46,7 +51,7 @@ export default function CategoryScreen({ route, navigation }: any) {
   const [modalVisible, setModalVisible] = useState(false);
   const [step, setStep] = useState(1); // Track the current step
   const [formData, setFormData] = useState({
-    countryName: "",
+    countryName: "Philippines",
     teamNumber: 0,
     podNumber: 0,
     teamName: "",
@@ -210,7 +215,7 @@ export default function CategoryScreen({ route, navigation }: any) {
       setModalVisible(false); // Close the modal
       setStep(1); // Reset to step 1
       setFormData({
-        countryName: "",
+        countryName: "Philippines",
         teamNumber: 0,
         podNumber: 0,
         teamName: "",
@@ -264,7 +269,7 @@ export default function CategoryScreen({ route, navigation }: any) {
       setEditTeamId(null);
       setStep(1);
       setFormData({
-        countryName: "",
+        countryName: "Philippines",
         teamNumber: 0,
         podNumber: 0,
         teamName: "",
@@ -283,6 +288,7 @@ export default function CategoryScreen({ route, navigation }: any) {
       <Text style={styles.subtitle}>Teams in {label}</Text>
       <TextInput
         placeholder="Search team"
+        placeholderTextColor="#999999"
         value={search}
         onChangeText={setSearch}
         style={styles.searchInput}
@@ -296,7 +302,9 @@ export default function CategoryScreen({ route, navigation }: any) {
             page === 1 && styles.paginationButtonDisabled,
           ]}
         >
-          <Text style={styles.paginationButtonText}>Previous</Text>
+          <Text style={styles.paginationButtonText}>
+            <AntDesign name="left" size={16} color="black" />
+          </Text>
         </TouchableOpacity>
         {totalRecords === 0 ? (
           <Text style={styles.paginationInfo}>No teams</Text>
@@ -314,7 +322,9 @@ export default function CategoryScreen({ route, navigation }: any) {
               styles.paginationButtonDisabled,
           ]}
         >
-          <Text style={styles.paginationButtonText}>Next</Text>
+          <Text style={styles.paginationButtonText}>
+            <AntDesign name="right" size={16} color="black" />
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -461,7 +471,7 @@ export default function CategoryScreen({ route, navigation }: any) {
           setEditTeamId(null); // <-- Reset edit team id
           setStep(1); // <-- Reset to first step
           setFormData({
-            countryName: "",
+            countryName: "Philippines",
             teamNumber: 0,
             podNumber: 0,
             teamName: "",
@@ -475,16 +485,12 @@ export default function CategoryScreen({ route, navigation }: any) {
       </TouchableOpacity>
 
       {/* Modal for Team Creation */}
-      <Modal visible={modalVisible} animationType="slide" transparent={true}>
+      <Modal visible={modalVisible} animationType="fade" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             {step === 1 && (
               <>
                 <View style={styles.modalHeader}>
-                  {/* <Image
-                    source={require("../../assets/images/user.png")}
-                    style={styles.modalImage}
-                  /> */}
                   <Text style={styles.headerTextModal}>
                     {editMode ? "Edit Team" : "Create Team"}
                   </Text>
@@ -494,31 +500,55 @@ export default function CategoryScreen({ route, navigation }: any) {
                       : "Enter team information"}
                   </Text>
                 </View>
+
                 <Text style={styles.modalLabel}>Country</Text>
+
                 {formData.countryName ? (
                   <Text style={{ marginBottom: 4, color: "#888" }}>
                     Current Country: {formData.countryName}
                   </Text>
                 ) : null}
-                <CountryPicker
-                  InputFieldStyle={styles.modalInput}
-                  Placeholder="Enter Country"
-                  flagSize={24}
-                  selectedItem={(countryName) => {
-                    setFormData({
-                      ...formData,
-                      countryName: countryName.country,
-                    });
-                    setCountryError(null); // Clear error when country is selected
-                  }}
-                />
+
+                <View style={{ position: "relative" }}>
+                  <CountryPicker
+                    InputFieldStyle={[
+                      styles.countryPicker,
+                      {
+                        width: "100%",
+                        flex: 1,
+                      },
+                    ]}
+                    DropdownContainerStyle={{
+                      maxHeight: 100,
+                      position: "absolute",
+                      top: 70,
+                      zIndex: 9999,
+                      backgroundColor: "#fff",
+                      boxShadow: "0px 2px 3px rgba(0,0,0,0.5)",
+                      width: "100%",
+                    }}
+                    Placeholder="Select a Country"
+                    flagSize={24}
+                    selectedItem={(e: { country: string; code: string }) => {
+                      setFormData({
+                        ...formData,
+                        countryName: e.country,
+                      });
+                      setCountryError(null);
+                    }}
+                  />
+                </View>
                 {countryError && (
                   <Text style={styles.errorText}>{countryError}</Text>
                 )}
+
                 <Text style={styles.modalLabel}>Team Number</Text>
                 <TextInput
                   placeholder="Enter Team Number"
-                  value={String(formData.teamNumber)}
+                  placeholderTextColor="#999999"
+                  value={
+                    formData.teamNumber === 0 ? "" : String(formData.teamNumber)
+                  }
                   onChangeText={(text) => {
                     setFormData({
                       ...formData,
@@ -535,7 +565,10 @@ export default function CategoryScreen({ route, navigation }: any) {
                 <Text style={styles.modalLabel}>Pod Number</Text>
                 <TextInput
                   placeholder="Enter Pod Number"
-                  value={String(formData.podNumber)}
+                  placeholderTextColor="#999999"
+                  value={
+                    formData.podNumber === 0 ? "" : String(formData.podNumber)
+                  }
                   onChangeText={(text) => {
                     setFormData({
                       ...formData,
@@ -552,6 +585,7 @@ export default function CategoryScreen({ route, navigation }: any) {
                 <Text style={styles.modalLabel}>Team Name</Text>
                 <TextInput
                   placeholder="Enter Team Name"
+                  placeholderTextColor="#999999"
                   value={formData.teamName}
                   onChangeText={(text) => {
                     setFormData({ ...formData, teamName: text });
@@ -569,20 +603,16 @@ export default function CategoryScreen({ route, navigation }: any) {
 
                 <View style={styles.modalButtonRow}>
                   <TouchableOpacity
-                    style={[styles.modalButton, styles.modalButton]}
+                    style={styles.modalButton}
                     onPress={() => setModalVisible(false)}
                   >
-                    <Text
-                      style={[styles.modalButtonText, styles.modalButtonText]}
-                    >
-                      Cancel
-                    </Text>
+                    <Text style={styles.modalButtonText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.modalButtonNext}
                     onPress={handleNext}
                   >
-                    <Text style={styles.modalButtonText}>Next</Text>
+                    <Text style={styles.modalButtonTextNext}>Next</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -621,6 +651,7 @@ export default function CategoryScreen({ route, navigation }: any) {
                 <Text style={styles.modalLabel}>Coach Name (optional)</Text>
                 <TextInput
                   placeholder="Enter Coach Name"
+                  placeholderTextColor="#999999"
                   value={formData.coachName}
                   onChangeText={(text) =>
                     setFormData({ ...formData, coachName: text })
@@ -632,6 +663,7 @@ export default function CategoryScreen({ route, navigation }: any) {
                   <TextInput
                     key={index}
                     placeholder={`Enter Member ${index + 1} Name`}
+                    placeholderTextColor="#999999"
                     value={member}
                     onChangeText={(text) => {
                       const updatedMembers = [...formData.members];
@@ -661,7 +693,7 @@ export default function CategoryScreen({ route, navigation }: any) {
                     style={styles.modalButtonNext}
                     onPress={handleNext}
                   >
-                    <Text style={styles.modalButtonText}>Next</Text>
+                    <Text style={styles.modalButtonTextNext}>Next</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -713,6 +745,7 @@ export default function CategoryScreen({ route, navigation }: any) {
                       Back
                     </Text>
                   </TouchableOpacity>
+
                   <TouchableOpacity
                     style={styles.modalButtonCreate}
                     onPress={editMode ? handleEditSubmit : handleSubmit}
