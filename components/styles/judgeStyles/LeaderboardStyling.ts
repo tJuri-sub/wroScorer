@@ -13,7 +13,7 @@ export default StyleSheet.create({
     flexDirection: "row",
     marginVertical: 6,
     boxShadow: "0px 2px 3px rgba(0,0,0,0.2)",
-    marginHorizontal: 5,
+    marginHorizontal: 15,
   },
 
   headerRow: {

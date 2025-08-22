@@ -16,7 +16,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import styles from "../../components/styles/judgeStyles/LeaderboardStyling";
-import { Feather } from "@expo/vector-icons";
+import { AntDesign, Feather } from "@expo/vector-icons";
 
 const RECORDS_PER_PAGE = 10;
 const windowHeight = Dimensions.get("window").height;
@@ -275,12 +275,12 @@ export default function AdminLeaderboard({ navigation }: any) {
             style={{
               padding: 8,
               marginHorizontal: 8,
-              backgroundColor: currentPage === 1 ? "#eee" : "#432344",
+              backgroundColor: currentPage === 1 ? "#eee" : "#999999",
               borderRadius: 6,
             }}
           >
             <Text style={{ color: currentPage === 1 ? "#aaa" : "#fff" }}>
-              Previous
+              <AntDesign name="left" size={16} color="black" />
             </Text>
           </TouchableOpacity>
           <Text style={{ alignSelf: "center", fontSize: 16 }}>
@@ -292,14 +292,14 @@ export default function AdminLeaderboard({ navigation }: any) {
             style={{
               padding: 8,
               marginHorizontal: 8,
-              backgroundColor: currentPage === totalPages ? "#eee" : "#432344",
+              backgroundColor: currentPage === totalPages ? "#eee" : "#999999",
               borderRadius: 6,
             }}
           >
             <Text
               style={{ color: currentPage === totalPages ? "#aaa" : "#fff" }}
             >
-              Next
+              <AntDesign name="right" size={16} color="black" />
             </Text>
           </TouchableOpacity>
         </View>
