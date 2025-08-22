@@ -57,13 +57,13 @@ export default StyleSheet.create({
   },
 
   card: {
-    height: 120,
-    width: screenWidth * 0.9,
+    height: 130,
     borderRadius: 10,
-    backgroundColor: "#E79300",
     display: "flex",
     flexDirection: "row",
-    marginVertical: 5,
+    marginBottom: 16,
+    overflow: "hidden",
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.3)",
   },
 
   buttonPressed: {
