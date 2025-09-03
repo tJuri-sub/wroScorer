@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Dimensions,
   FlatList,
+  TextInput,
 } from "react-native";
 import {
   getFirestore,
@@ -33,6 +34,7 @@ export default function AdminLeaderboard({ navigation }: any) {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState("");
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -156,11 +158,18 @@ export default function AdminLeaderboard({ navigation }: any) {
     };
   }, [selectedCategory]);
 
-  const totalRecords = leaderboard.length;
+  // Filter leaderboard by search
+  const filteredLeaderboard = leaderboard.filter(
+    (team) =>
+      team.teamName &&
+      team.teamName.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  const totalRecords = filteredLeaderboard.length;
   const totalPages = Math.max(1, Math.ceil(totalRecords / RECORDS_PER_PAGE));
   const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
   const endIndex = startIndex + RECORDS_PER_PAGE;
-  const currentRecords = leaderboard.slice(startIndex, endIndex);
+  const currentRecords = filteredLeaderboard.slice(startIndex, endIndex);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
@@ -181,6 +190,15 @@ export default function AdminLeaderboard({ navigation }: any) {
     <View style={{ flex: 1 }}>
       {/* Sticky Tabs */}
       <View style={stickyStyles.tabsContainer}>
+        <View style={{ marginBottom: 8 }}>
+          <TextInput
+            placeholder="Search teams..."
+            placeholderTextColor="#999999"
+            value={search}
+            onChangeText={setSearch}
+            style={[stickyStyles.searchInput, { maxWidth: 340, width: "100%" }]}
+          />
+        </View>
         {/* <Text style={{ color: "#888", fontSize: 14, marginBottom: 8, textAlign: "center" }}>
           Select a category to view its team rankings.
         </Text> */}
@@ -365,5 +383,15 @@ const stickyStyles = StyleSheet.create({
     flex: 1,
     textAlign: "left",
     fontSize: 14,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    borderColor: "#e0e0e0",
+    backgroundColor: "#fafafa",
+    marginBottom: 0,
+    fontFamily: "inter_400Regular",
+    fontSize: 16,
   },
 });
