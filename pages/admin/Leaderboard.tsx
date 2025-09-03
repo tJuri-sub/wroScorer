@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  TextInput,
 } from "react-native";
 import {
   getFirestore,
@@ -33,6 +34,7 @@ export default function AdminLeaderboard({ navigation }: any) {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState("");
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -143,7 +145,11 @@ export default function AdminLeaderboard({ navigation }: any) {
           const bScore = b.bestScore ?? -Infinity;
           if (bScore !== aScore) return bScore - aScore;
           return (a.bestTimeMs ?? Infinity) - (b.bestTimeMs ?? Infinity);
-        });
+        })
+        .map((team, idx) => ({
+          ...team,
+          overallRank: idx + 1, // assign true rank
+        }));
 
       setLeaderboard(leaderboardArr);
       setCurrentPage(1);
@@ -156,11 +162,18 @@ export default function AdminLeaderboard({ navigation }: any) {
     };
   }, [selectedCategory]);
 
-  const totalRecords = leaderboard.length;
+  // Filter leaderboard by search
+  const filteredLeaderboard = leaderboard.filter(
+    (team) =>
+      team.teamName &&
+      team.teamName.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  const totalRecords = filteredLeaderboard.length;
   const totalPages = Math.max(1, Math.ceil(totalRecords / RECORDS_PER_PAGE));
   const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
   const endIndex = startIndex + RECORDS_PER_PAGE;
-  const currentRecords = leaderboard.slice(startIndex, endIndex);
+  const currentRecords = filteredLeaderboard.slice(startIndex, endIndex);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
@@ -181,6 +194,15 @@ export default function AdminLeaderboard({ navigation }: any) {
     <View style={{ flex: 1 }}>
       {/* Sticky Tabs */}
       <View style={stickyStyles.tabsContainer}>
+        <View style={{ marginBottom: 8 }}>
+          <TextInput
+            placeholder="Search teams..."
+            placeholderTextColor="#999999"
+            value={search}
+            onChangeText={setSearch}
+            style={[stickyStyles.searchInput, { maxWidth: 340, width: "100%" }]}
+          />
+        </View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -224,7 +246,7 @@ export default function AdminLeaderboard({ navigation }: any) {
             keyExtractor={(item) => item.teamId}
             contentContainerStyle={{ paddingBottom: 80 }}
             renderItem={({ item, index }) => {
-              const overallRank = startIndex + index;
+              const overallRank = item.overallRank - 1; // zero-based index
               const rankColors = ["#F8AA0C", "#3A9F6C", "#0081CC"];
               const isTopThree = overallRank < 3;
               const cardBg = isTopThree ? rankColors[overallRank] : "#fff";
@@ -232,7 +254,7 @@ export default function AdminLeaderboard({ navigation }: any) {
               const rankIcons = ["🥇", "🥈", "🥉"];
               const rankDisplay = isTopThree
                 ? rankIcons[overallRank]
-                : `${overallRank + 1}.`;
+                : `${item.overallRank}.`;
               return (
                 <View
                   style={[styles.containerCard, { backgroundColor: cardBg }]}
@@ -363,5 +385,15 @@ const stickyStyles = StyleSheet.create({
     borderColor: "#eee",
     zIndex: 10,
     boxShadow: "0px 2px 3px rgba(0,0,0,0.5)",
+  },
+   searchInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    borderColor: "#e0e0e0",
+    backgroundColor: "#fafafa",
+    marginBottom: 0,
+    fontFamily: "inter_400Regular",
+    fontSize: 16,
   },
 });

@@ -340,7 +340,7 @@ export default function AllJudgesScreen({ navigation }: any) {
                   All Judges ({filteredJudges.length})
                 </Text>
                 <TextInput
-                  placeholder="Search by name"
+                  placeholder="Search judge name..."
                   placeholderTextColor="#999999"
                   value={search}
                   onChangeText={setSearch}
