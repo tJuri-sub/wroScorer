@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import styles from "../../components/styles/judgeStyles/LeaderboardStyling";
 import { AntDesign, Feather } from "@expo/vector-icons";
+import { CategoryPills } from "../../components/component/categoryPillsAdmin";
 
 const RECORDS_PER_PAGE = 10;
 const windowHeight = Dimensions.get("window").height;
@@ -29,7 +30,7 @@ function parseTimeString(timeStr: string) {
 }
 
 export default function AdminLeaderboard({ navigation }: any) {
-  const [loading, setLoading] = useState(true);
+  const [scoresLoading, setScoresLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -75,7 +76,7 @@ export default function AdminLeaderboard({ navigation }: any) {
 
   useEffect(() => {
     if (!selectedCategory) return;
-    setLoading(true);
+    setScoresLoading(true);
 
     const db = getFirestore();
     let teamsMap: Record<string, any> = {};
@@ -153,7 +154,7 @@ export default function AdminLeaderboard({ navigation }: any) {
 
       setLeaderboard(leaderboardArr);
       setCurrentPage(1);
-      setLoading(false);
+      setScoresLoading(false);
     });
 
     return () => {
@@ -182,14 +183,6 @@ export default function AdminLeaderboard({ navigation }: any) {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
-
   return (
     <View style={{ flex: 1 }}>
       {/* Sticky Tabs */}
@@ -203,43 +196,22 @@ export default function AdminLeaderboard({ navigation }: any) {
             style={[stickyStyles.searchInput, { maxWidth: 340, width: "100%" }]}
           />
         </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ marginBottom: 8 }}
-        >
-          {categories.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              onPress={() => setSelectedCategory(cat.id)}
-              style={{
-                paddingVertical: 8,
-                paddingHorizontal: 18,
-                marginRight: 8,
-                borderRadius: 20,
-                backgroundColor:
-                  selectedCategory === cat.id ? "#432344" : "#eee",
-                borderWidth: selectedCategory === cat.id ? 2 : 0,
-                borderColor: "#432344",
-              }}
-            >
-              <Text
-                style={{
-                  color: selectedCategory === cat.id ? "#fff" : "#432344",
-                }}
-              >
-                {cat.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <CategoryPills
+          categories={categories}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+        />
       </View>
       {/* Leaderboard List */}
       <View style={{ flex: 1 }}>
-        {currentRecords.length === 0 ? (
-          <Text style={{ textAlign: "center", marginTop: 20 }}>
-            No scores yet!
-          </Text>
+        {scoresLoading ? (
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
+            <ActivityIndicator size="large" />
+          </View>
+        ) : currentRecords.length === 0 ? (
+          <Text style={{ textAlign: "center" }}>No scores yet!</Text>
         ) : (
           <FlatList
             data={currentRecords}
@@ -386,7 +358,7 @@ const stickyStyles = StyleSheet.create({
     zIndex: 10,
     boxShadow: "0px 2px 3px rgba(0,0,0,0.5)",
   },
-   searchInput: {
+  searchInput: {
     borderWidth: 1,
     borderRadius: 8,
     padding: 10,
