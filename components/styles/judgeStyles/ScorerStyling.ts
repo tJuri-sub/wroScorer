@@ -110,8 +110,14 @@ export default StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     fontSize: 17,
-    marginBottom: 18,
+    marginBottom: 15,
     width: "100%",
+  },
+
+  scoreinputTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 6,
   },
 
   timeInputContainer: {
