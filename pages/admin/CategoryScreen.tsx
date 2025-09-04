@@ -20,6 +20,7 @@ import {
   where,
   updateDoc,
   doc,
+  deleteDoc,
 } from "firebase/firestore";
 import styles from "../../components/styles/adminStyles/CategoryscreenStyle";
 import { AntDesign, Feather, MaterialIcons } from "@expo/vector-icons";
@@ -49,6 +50,7 @@ export default function CategoryScreen({ route, navigation }: any) {
   >([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [step, setStep] = useState(1); // Track the current step
   const [formData, setFormData] = useState({
     countryName: "Philippines",
@@ -62,6 +64,9 @@ export default function CategoryScreen({ route, navigation }: any) {
   const [teamNumberError, setTeamNumberError] = useState<string | null>(null);
   const [podNumberError, setPodNumberError] = useState<string | null>(null);
   const [teamNameError, setTeamNameError] = useState<string | null>(null);
+
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
 
   const db = getFirestore();
 
@@ -282,8 +287,58 @@ export default function CategoryScreen({ route, navigation }: any) {
     }
   };
 
+  // Delete selected teams
+  const handleDeleteSelected = async () => {
+    if (selectedTeams.length === 0) {
+      Alert.alert("No selection", "Please select at least one team.");
+      return;
+    }
+
+    try {
+      // delete each selected team
+      await Promise.all(
+        selectedTeams.map((teamId) =>
+          deleteDoc(doc(db, `categories/${category}/teams`, teamId))
+        )
+      );
+
+      // update local state (remove deleted teams)
+      setTeams((prev) => prev.filter((t) => !selectedTeams.includes(t.id)));
+
+      // clear selection
+      setSelectedTeams([]);
+
+      Alert.alert("Deleted", "Selected teams have been deleted.");
+    } catch (error) {
+      console.error("Error deleting teams:", error);
+      Alert.alert("Error", "Failed to delete selected teams.");
+    }
+  };
+
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={{
+          backgroundColor: selectionMode ? "#555" : "#AA3D3F",
+          padding: 12,
+          borderRadius: 6,
+          marginVertical: 10,
+        }}
+        onPress={() => {
+          if (selectionMode) {
+            // exiting selection mode clears selections
+            setSelectedTeams([]);
+          }
+          setSelectionMode(!selectionMode);
+        }}
+      >
+        <Text
+          style={{ color: "#fff", textAlign: "center", fontWeight: "bold" }}
+        >
+          {selectionMode ? "Cancel Selection" : "Select for Deletion"}
+        </Text>
+      </TouchableOpacity>
+
       <Text style={styles.title}>{label}</Text>
       <Text style={styles.subtitle}>Teams in {label}</Text>
       <TextInput
@@ -364,6 +419,27 @@ export default function CategoryScreen({ route, navigation }: any) {
                 >
                   {/* Header Row */}
                   <View style={styles.teamCardHeader}>
+                    {selectionMode && (
+                      <TouchableOpacity
+                        style={{
+                          width: 20,
+                          height: 20,
+                          borderWidth: 1,
+                          borderColor: "#333",
+                          marginRight: 8,
+                          backgroundColor: selectedTeams.includes(item.id)
+                            ? "#333"
+                            : "transparent",
+                        }}
+                        onPress={() =>
+                          setSelectedTeams((prev) =>
+                            prev.includes(item.id)
+                              ? prev.filter((tid) => tid !== item.id)
+                              : [...prev, item.id]
+                          )
+                        }
+                      />
+                    )}
                     <Text style={styles.teamCardHeaderText}>
                       Team Number {item.teamNumber}
                     </Text>
@@ -374,8 +450,6 @@ export default function CategoryScreen({ route, navigation }: any) {
 
                   {/* Country and Team Name Row */}
                   <View style={styles.teamCardRow}>
-                    {/* Replace with your flag component or Image */}
-                    {/* <Image source={require('../assets/flags/ph.png')} style={styles.teamCardFlag} /> */}
                     <Text style={styles.teamCardTeamName}>{item.teamName}</Text>
                     <Text style={styles.teamCardCountry}>
                       {item.countryName}
@@ -395,7 +469,8 @@ export default function CategoryScreen({ route, navigation }: any) {
                   </Text>
                 </View>
 
-                <View>
+                {/* Action Buttons Row */}
+                <View style={styles.actionRow}>
                   {item.disabled ? (
                     <>
                       <TouchableOpacity
@@ -433,27 +508,30 @@ export default function CategoryScreen({ route, navigation }: any) {
                       </Text>
                     </>
                   ) : (
-                    <TouchableOpacity
-                      style={styles.editIcon}
-                      onPress={() => {
-                        setEditMode(true);
-                        setEditTeamId(item.id);
-                        setFormData({
-                          countryName: item.countryName,
-                          teamNumber: item.teamNumber,
-                          podNumber: item.podNumber,
-                          teamName: item.teamName,
-                          coachName: item.coachName,
-                          members: item.members.length
-                            ? item.members
-                            : ["", "", ""],
-                        });
-                        setStep(1);
-                        setModalVisible(true);
-                      }}
-                    >
-                      <MaterialIcons name="edit" size={18} color="#fff" />
-                    </TouchableOpacity>
+                    <>
+                      {/* Edit Button */}
+                      <TouchableOpacity
+                        style={styles.editIcon}
+                        onPress={() => {
+                          setEditMode(true);
+                          setEditTeamId(item.id);
+                          setFormData({
+                            countryName: item.countryName,
+                            teamNumber: item.teamNumber,
+                            podNumber: item.podNumber,
+                            teamName: item.teamName,
+                            coachName: item.coachName,
+                            members: item.members.length
+                              ? item.members
+                              : ["", "", ""],
+                          });
+                          setStep(1);
+                          setModalVisible(true);
+                        }}
+                      >
+                        <MaterialIcons name="edit" size={18} color="#fff" />
+                      </TouchableOpacity>
+                    </>
                   )}
                 </View>
               </TouchableOpacity>
@@ -461,6 +539,23 @@ export default function CategoryScreen({ route, navigation }: any) {
             ListEmptyComponent={<Text>No teams found.</Text>}
           />
         </View>
+      )}
+
+      {selectionMode && selectedTeams.length > 0 && (
+        <TouchableOpacity
+          onPress={() => setShowConfirmModal(true)}
+          style={{
+            backgroundColor: "#AA0003",
+            padding: 12,
+            borderRadius: 8,
+            alignSelf: "center",
+            marginTop: 10,
+          }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "bold" }}>
+            Delete Selected ({selectedTeams.length})
+          </Text>
+        </TouchableOpacity>
       )}
 
       {/* <Button title="Create Team" onPress={() => setModalVisible(true)} /> */}
@@ -483,6 +578,57 @@ export default function CategoryScreen({ route, navigation }: any) {
       >
         <Feather name="plus" size={24} color="white" />
       </TouchableOpacity>
+
+      {/* Confirmation Modal */}
+      <Modal
+        transparent
+        visible={showConfirmModal}
+        animationType="fade"
+        onRequestClose={() => setShowConfirmModal(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#fff",
+              padding: 20,
+              borderRadius: 10,
+              width: "80%",
+            }}
+          >
+            <Text
+              style={{ fontSize: 16, fontWeight: "bold", marginBottom: 10 }}
+            >
+              Confirm Bulk Delete
+            </Text>
+            <Text style={{ marginBottom: 20 }}>
+              Delete {selectedTeams.length} selected team(s)?
+            </Text>
+
+            <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+              <TouchableOpacity onPress={() => setShowConfirmModal(false)}>
+                <Text style={{ marginRight: 20 }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  handleDeleteSelected();
+                  setShowConfirmModal(false);
+                }}
+              >
+                <Text style={{ color: "red", fontWeight: "bold" }}>
+                  Yes, Delete
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Modal for Team Creation */}
       <Modal visible={modalVisible} animationType="fade" transparent={true}>

@@ -140,6 +140,14 @@ export default StyleSheet.create({
     marginLeft: 2,
   },
 
+  actionRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginTop: 10,
+    gap: 8, // RN 0.71+ supports "gap"; if not, use marginRight on children
+  },
+
   editIcon: {
     position: "absolute",
     right: 16,
@@ -147,6 +155,7 @@ export default StyleSheet.create({
     backgroundColor: "#432344",
     borderRadius: 20,
     padding: 8,
+    marginLeft: 6,
   },
 
   createTeamButton: {
