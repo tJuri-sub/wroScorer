@@ -18,6 +18,7 @@ import {
   getFirestore,
   onSnapshot,
   updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../../firebaseconfig";
 import { Dropdown } from "react-native-element-dropdown";
@@ -84,6 +85,9 @@ export default function AllJudgesScreen({ navigation }: any) {
   const [editUsername, setEditUsername] = useState("");
   const [editCategory, setEditCategory] = useState<string | null>(null);
   const [editSubcategory, setEditSubcategory] = useState<string | null>(null);
+
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [judgeToDelete, setJudgeToDelete] = useState<any | null>(null);
 
   // Initialize Firebase
   const auth = getAuth();
@@ -236,6 +240,7 @@ export default function AllJudgesScreen({ navigation }: any) {
                       minWidth: 70,
                       marginLeft: 8,
                       height: "100%",
+                      gap: 8,
                     }}
                   >
                     {isDisabled ? (
@@ -330,6 +335,24 @@ export default function AllJudgesScreen({ navigation }: any) {
                         </TouchableOpacity>
                       </>
                     )}
+
+                    {/* Delete Button */}
+                    <TouchableOpacity
+                      style={[
+                        styles.editButton,
+                        { backgroundColor: "#AA0003" },
+                      ]}
+                      onPress={() => {
+                        setJudgeToDelete(item);
+                        setDeleteModalVisible(true);
+                      }}
+                    >
+                      <MaterialCommunityIcons
+                        name="delete-outline"
+                        size={20}
+                        color="#fff"
+                      />
+                    </TouchableOpacity>
                   </View>
                 </View>
               );
@@ -436,6 +459,59 @@ export default function AllJudgesScreen({ navigation }: any) {
           />
         )}
       </SafeAreaView>
+
+      <Modal
+        visible={deleteModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <View style={styles.modalOverlayDisable}>
+          <View style={styles.modalContentDisable}>
+            <Text style={styles.modalTitle}>
+              Are you sure you want to permanently delete this judge?
+            </Text>
+            <View style={styles.modalButtonContainer}>
+              {/* Cancel */}
+              <Pressable
+                style={[styles.modalButton, { borderColor: "#432344" }]}
+                onPress={() => setDeleteModalVisible(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: "#432344" }]}>
+                  Cancel
+                </Text>
+              </Pressable>
+
+              {/* Confirm Delete */}
+              <Pressable
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: "#AA0003", borderColor: "#AA0003" },
+                ]}
+                onPress={async () => {
+                  if (!judgeToDelete) return;
+                  try {
+                    await deleteDoc(
+                      doc(FIREBASE_DB, "judge-users", judgeToDelete.id)
+                    );
+                    setJudges((prev) =>
+                      prev.filter((j) => j.id !== judgeToDelete.id)
+                    );
+                    setDeleteModalVisible(false);
+                    setJudgeToDelete(null);
+                  } catch (e) {
+                    console.error("Error deleting judge:", e);
+                  }
+                }}
+              >
+                <Text style={[styles.modalButtonText, { fontWeight: "bold" }]}>
+                  Delete
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Modal
         animationType="slide"
@@ -550,7 +626,7 @@ export default function AllJudgesScreen({ navigation }: any) {
       <Modal
         visible={disableModalVisible}
         transparent
-        animationType="fade"
+        animationType="none"
         onRequestClose={() => setDisableModalVisible(false)}
       >
         <View style={styles.modalOverlayDisable}>
