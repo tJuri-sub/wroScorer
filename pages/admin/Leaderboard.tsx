@@ -5,6 +5,7 @@ import {
   FlatList,
   ActivityIndicator,
   ScrollView,
+  Share,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
@@ -19,6 +20,7 @@ import {
 import styles from "../../components/styles/judgeStyles/LeaderboardStyling";
 import { AntDesign, Feather } from "@expo/vector-icons";
 import { CategoryPills } from "../../components/component/categoryPillsAdmin";
+import * as XLSX from "xlsx";
 
 const RECORDS_PER_PAGE = 10;
 const windowHeight = Dimensions.get("window").height;
@@ -30,6 +32,7 @@ function parseTimeString(timeStr: string) {
 }
 
 export default function AdminLeaderboard({ navigation }: any) {
+  const [allLeaderboard, setAllLeaderboard] = useState<any[]>([]);
   const [scoresLoading, setScoresLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -152,7 +155,7 @@ export default function AdminLeaderboard({ navigation }: any) {
           overallRank: idx + 1, // assign true rank
         }));
 
-      setLeaderboard(leaderboardArr);
+      setLeaderboard(leaderboardArr); // your current filtered leaderboard
       setCurrentPage(1);
       setScoresLoading(false);
     });
@@ -162,6 +165,38 @@ export default function AdminLeaderboard({ navigation }: any) {
       scoresUnsub();
     };
   }, [selectedCategory]);
+
+  const exportLeaderboard = (categoryLabel: string) => {
+    if (leaderboard.length === 0) return;
+
+    // 1. Prepare data
+    const data = leaderboard.map((team) => ({
+      Rank: team.overallRank,
+      Team: team.teamName,
+      "Best Score": team.bestScore,
+      "Best Time": team.bestTime,
+    }));
+
+    // 2. Create worksheet and workbook
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Leaderboard");
+
+    // 3. Write workbook to binary string
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+
+    // 4. Create Blob and download link
+    const blob = new Blob([wbout], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+
+    // Use category label in file name
+    const safeCategory = categoryLabel.replace(/\s+/g, "_"); // replace spaces
+    a.download = `leaderboard_${safeCategory}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Filter leaderboard by search
   const filteredLeaderboard = leaderboard.filter(
@@ -187,6 +222,21 @@ export default function AdminLeaderboard({ navigation }: any) {
     <View style={{ flex: 1 }}>
       {/* Sticky Tabs */}
       <View style={stickyStyles.tabsContainer}>
+        <TouchableOpacity
+          onPress={() => exportLeaderboard(selectedCategory)}
+          style={{
+            backgroundColor: "#0081CC",
+            padding: 10,
+            borderRadius: 8,
+            marginTop: 10,
+            alignSelf: "flex-end",
+            marginRight: 16,
+          }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "bold" }}>
+            Export Excel
+          </Text>
+        </TouchableOpacity>
         <View style={{ marginBottom: 8 }}>
           <TextInput
             placeholder="Search teams..."
