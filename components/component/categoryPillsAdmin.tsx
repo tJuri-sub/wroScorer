@@ -1,3 +1,4 @@
+import { Inter_400Regular, useFonts } from "@expo-google-fonts/inter";
 import React, { useRef, useState } from "react";
 import { FlatList, TouchableOpacity, Text, ViewToken } from "react-native";
 
@@ -17,6 +18,9 @@ export const CategoryPills: React.FC<Props> = ({
   selectedCategory,
   setSelectedCategory,
 }) => {
+  let [fontsLoaded] = useFonts({
+    Inter_400Regular,
+  });
   const scrollRef = useRef<FlatList<Category>>(null);
   const [visibleIds, setVisibleIds] = useState<string[]>([]);
 
@@ -61,8 +65,9 @@ export const CategoryPills: React.FC<Props> = ({
           >
             <Text
               style={{
-                color: isSelected ? "#fff" : "#432344",
-                fontWeight: "bold",
+                color: isSelected ? "#fff" : "#432344,",
+                fontWeight: isSelected ? "bold" : "normal",
+                fontFamily: "inter_400Regular",
               }}
             >
               {item.label}

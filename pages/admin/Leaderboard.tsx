@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import styles from "../../components/styles/judgeStyles/LeaderboardStyling";
 import { AntDesign, Feather } from "@expo/vector-icons";
+import { CategoryPills } from "../../components/component/categoryPillsAdmin";
 
 const RECORDS_PER_PAGE = 10;
 const windowHeight = Dimensions.get("window").height;
@@ -195,36 +196,11 @@ export default function AdminLeaderboard({ navigation }: any) {
             style={[stickyStyles.searchInput, { maxWidth: 340, width: "100%" }]}
           />
         </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ marginBottom: 8 }}
-        >
-          {categories.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              onPress={() => setSelectedCategory(cat.id)}
-              style={{
-                paddingVertical: 8,
-                paddingHorizontal: 18,
-                marginRight: 8,
-                borderRadius: 20,
-                backgroundColor:
-                  selectedCategory === cat.id ? "#432344" : "#eee",
-                borderWidth: selectedCategory === cat.id ? 2 : 0,
-                borderColor: "#432344",
-              }}
-            >
-              <Text
-                style={{
-                  color: selectedCategory === cat.id ? "#fff" : "#432344",
-                }}
-              >
-                {cat.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <CategoryPills
+          categories={categories}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+        />
       </View>
       {/* Leaderboard List */}
       <View style={{ flex: 1 }}>
