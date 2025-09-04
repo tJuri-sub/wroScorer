@@ -29,7 +29,7 @@ function parseTimeString(timeStr: string) {
 }
 
 export default function AdminLeaderboard({ navigation }: any) {
-  const [loading, setLoading] = useState(true);
+  const [scoresLoading, setScoresLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -75,7 +75,7 @@ export default function AdminLeaderboard({ navigation }: any) {
 
   useEffect(() => {
     if (!selectedCategory) return;
-    setLoading(true);
+    setScoresLoading(true);
 
     const db = getFirestore();
     let teamsMap: Record<string, any> = {};
@@ -153,7 +153,7 @@ export default function AdminLeaderboard({ navigation }: any) {
 
       setLeaderboard(leaderboardArr);
       setCurrentPage(1);
-      setLoading(false);
+      setScoresLoading(false);
     });
 
     return () => {
@@ -181,14 +181,6 @@ export default function AdminLeaderboard({ navigation }: any) {
   const handlePreviousPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
-
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
 
   return (
     <View style={{ flex: 1 }}>
@@ -236,10 +228,14 @@ export default function AdminLeaderboard({ navigation }: any) {
       </View>
       {/* Leaderboard List */}
       <View style={{ flex: 1 }}>
-        {currentRecords.length === 0 ? (
-          <Text style={{ textAlign: "center", marginTop: 20 }}>
-            No scores yet!
-          </Text>
+        {scoresLoading ? (
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
+            <ActivityIndicator size="large" />
+          </View>
+        ) : currentRecords.length === 0 ? (
+          <Text style={{ textAlign: "center" }}>No scores yet!</Text>
         ) : (
           <FlatList
             data={currentRecords}
@@ -386,7 +382,7 @@ const stickyStyles = StyleSheet.create({
     zIndex: 10,
     boxShadow: "0px 2px 3px rgba(0,0,0,0.5)",
   },
-   searchInput: {
+  searchInput: {
     borderWidth: 1,
     borderRadius: 8,
     padding: 10,
