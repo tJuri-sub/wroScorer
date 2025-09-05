@@ -10,6 +10,7 @@ export default StyleSheet.create({
     fontFamily: "inter_400Regular",
     fontSize: 16,
     marginBottom: 10,
+    marginVertical: "auto",
   },
 
   searchInput: {
@@ -139,6 +140,17 @@ export default StyleSheet.create({
     fontFamily: "inter_400Regular",
     fontSize: 14,
     color: "#333",
+  },
+
+  addJudgeButton: {
+    backgroundColor: "#432344",
+    borderRadius: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   // Modal styles
@@ -384,5 +396,10 @@ export default StyleSheet.create({
     fontWeight: "semibold",
     letterSpacing: 1,
     fontFamily: "inter_400Regular",
+  },
+
+  errorText: {
+    color: "#AA0003",
+    marginBottom: 4,
   },
 });

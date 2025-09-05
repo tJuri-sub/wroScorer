@@ -15,6 +15,10 @@ import {
 import {
   collection,
   doc,
+  where,
+  query,
+  getDocs,
+  setDoc,
   getFirestore,
   onSnapshot,
   updateDoc,
@@ -22,7 +26,7 @@ import {
 } from "firebase/firestore";
 import { FIREBASE_AUTH, FIREBASE_DB } from "../../firebaseconfig";
 import { Dropdown } from "react-native-element-dropdown";
-import { getAuth } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { AntDesign, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Inter_400Regular, useFonts } from "@expo-google-fonts/inter";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -67,6 +71,24 @@ const categorydata = [
   },
 ];
 
+async function updateJudgeAvatars() {
+  const db = getFirestore();
+  const querySnapshot = await getDocs(collection(db, "judge-users"));
+  querySnapshot.forEach(async (judgeDoc) => {
+    const data = judgeDoc.data();
+    if (!data.avatarUrl && data.username) {
+      const avatarUrl = getRandomAvatar(data.username);
+      await updateDoc(doc(db, "judge-users", judgeDoc.id), { avatarUrl });
+    }
+  });
+}
+
+function getRandomAvatar(username: string): string {
+  return `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(
+    username
+  )}`;
+}
+
 export default function AllJudgesScreen({ navigation }: any) {
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -85,6 +107,30 @@ export default function AllJudgesScreen({ navigation }: any) {
   const [editUsername, setEditUsername] = useState("");
   const [editCategory, setEditCategory] = useState<string | null>(null);
   const [editSubcategory, setEditSubcategory] = useState<string | null>(null);
+
+  interface JudgeUser {
+    id: string;
+    username: string;
+    category: string;
+    email: string;
+    avatarUrl: string;
+    createdAt?: any; // Add createdAt property, type can be improved if needed
+    disabled?: boolean; // Add disabled property
+  }
+
+  const [createJudgeModalVisible, setCreateJudgeModalVisible] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<
+    string | null
+  >(null);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [subcategoryError, setSubcategoryError] = useState<string | null>(null);
+  const [confirmpassword, setConfirmPassword] = useState("");
+  const [subcategory, setSubcategory] = useState<string | null>(null);
+  const [judgeUsers, setJudgeUsers] = useState<JudgeUser[]>([]); // State to store judge users
 
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [judgeToDelete, setJudgeToDelete] = useState<any | null>(null);
@@ -185,6 +231,130 @@ export default function AllJudgesScreen({ navigation }: any) {
 
     return categoryValue;
   }
+
+  const createJudgeAccount = async () => {
+    try {
+      // Validate input fields
+      if (!username.trim()) {
+        setUsernameError("Name cannot be empty!");
+        return;
+      }
+      if (!password.trim()) {
+        setPasswordError("Password cannot be empty!");
+        return;
+      }
+      if (password !== confirmpassword) {
+        setConfirmPasswordError("Passwords do not match!");
+        return;
+      }
+      if (!category) {
+        setCategoryError("Please select a category!");
+        return;
+      }
+      if (
+        ["Robomission", "Future Innovators"].includes(
+          categorydata.find((cat: any) => cat.value === category)?.label || ""
+        ) &&
+        !subcategory
+      ) {
+        setSubcategoryError("Please select a subcategory!");
+        return;
+      }
+
+      console.log("Selected category:", category);
+
+      // Generate a email from username
+      const email = `judge_${username}@felta.org`;
+
+      // Check for duplicate username or email
+      const q = query(
+        collection(db, "judge-users"),
+        where("username", "==", username)
+      );
+      const qEmail = query(
+        collection(db, "judge-users"),
+        where("email", "==", email)
+      );
+      const [usernameSnapshot, emailSnapshot] = await Promise.all([
+        getDocs(q),
+        getDocs(qEmail),
+      ]);
+      if (!usernameSnapshot.empty) {
+        Alert.alert("A judge with this username already exists.");
+        return;
+      }
+      if (!emailSnapshot.empty) {
+        Alert.alert("A judge with this email already exists.");
+        return;
+      }
+
+      // Save the currently logged-in admin user
+      const currentAdmin = FIREBASE_AUTH.currentUser;
+
+      // Create user with email and password
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      // Update the user's profile with the avatar URL
+      const avatarUrl = getRandomAvatar(username);
+
+      // Store username and category in Firestore
+      const user = userCredential.user;
+      await setDoc(doc(db, "judge-users", user.uid), {
+        username,
+        role: "judge", // Example: Assigning a 'judge' role
+        category: subcategory || category, // Store the selected category
+        email: email.toLowerCase(), // always store as lowercase
+        avatarUrl,
+        createdAt: new Date(),
+        disabled: false, // Default to not disabled
+      });
+
+      await setDoc(doc(db, "users", user.uid), {
+        role: "judge",
+        email: email.toLowerCase(),
+      });
+
+      // Sign out the newly created judge account
+      await FIREBASE_AUTH.signOut();
+
+      // Re-authenticate the admin user
+      if (currentAdmin) {
+        await FIREBASE_AUTH.updateCurrentUser(currentAdmin);
+      }
+
+      // Reset form fields and close modal
+      setUsername("");
+      setPassword("");
+      setConfirmPassword("");
+      setCategory(null);
+      setSubcategory(null);
+      setCreateJudgeModalVisible(false);
+
+      // Refresh the judge users list
+      const querySnapshot = await getDocs(collection(db, "judge-users"));
+      const users = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        username: doc.data().username || "",
+        category: doc.data().category || "",
+        email: doc.data().email || "",
+        avatarUrl:
+          doc.data().avatarUrl || getRandomAvatar(doc.data().username || ""),
+      })) as JudgeUser[];
+      setJudgeUsers(users);
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert("Error", error.message);
+        console.error("Error creating judge account:", error.message);
+      } else {
+        Alert.alert("Error", "An unknown error occurred.");
+        console.error("Error creating judge account:", error);
+      }
+    }
+  };
 
   return (
     <SafeAreaProvider>
@@ -359,9 +529,33 @@ export default function AllJudgesScreen({ navigation }: any) {
             }}
             ListHeaderComponent={
               <View>
-                <Text style={styles.headerText}>
-                  All Judges ({filteredJudges.length})
-                </Text>
+                <View
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 5,
+                  }}
+                >
+                  <Text style={styles.headerText}>
+                    All Judges ({filteredJudges.length})
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.addJudgeButton}
+                    onPress={() => setCreateJudgeModalVisible(true)}
+                  >
+                    <AntDesign name="plus" size={25} color="white" />
+                    <Text
+                      style={{
+                        color: "#ffffff",
+                        fontFamily: "inter_400Regular",
+                      }}
+                    >
+                      Add Judge
+                    </Text>
+                  </TouchableOpacity>
+                </View>
                 <TextInput
                   placeholder="Search judge name..."
                   placeholderTextColor="#999999"
@@ -459,6 +653,138 @@ export default function AllJudgesScreen({ navigation }: any) {
           />
         )}
       </SafeAreaView>
+
+      {/* Modal for Creating Judge Account */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={createJudgeModalVisible}
+        aria-hidden={false}
+        onRequestClose={() => {
+          Alert.alert("Modal has been closed.");
+          setCreateJudgeModalVisible(!createJudgeModalVisible);
+          setUsernameError(null);
+          setPasswordError(null);
+          setConfirmPasswordError(null);
+          setCategoryError(null);
+          setSubcategoryError(null);
+        }}
+      >
+        <View style={styles.modal}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.headerTextModal}>Create Judge Account</Text>
+              <Text style={styles.headerSubTextModal}>
+                Create Judge's account and edit access
+              </Text>
+            </View>
+
+            <View style={styles.formContainer}>
+              <TextInput
+                placeholder="Name"
+                autoCapitalize="none"
+                onChangeText={(text) => {
+                  setUsername(text);
+                  setUsernameError(null); // Clear error on change
+                }}
+                style={styles.textinput}
+              />
+              {usernameError && (
+                <Text style={styles.errorText}>{usernameError}</Text>
+              )}
+              <TextInput
+                placeholder="Password"
+                secureTextEntry={true}
+                autoCapitalize="none"
+                onChangeText={(text) => {
+                  setPassword(text);
+                  setPasswordError(null);
+                }}
+                style={styles.textinput}
+              />
+              {passwordError && (
+                <Text style={styles.errorText}>{passwordError}</Text>
+              )}
+              <TextInput
+                placeholder="Confirm Password"
+                secureTextEntry={true}
+                autoCapitalize="none"
+                onChangeText={(text) => {
+                  setConfirmPassword(text);
+                  setConfirmPasswordError(null);
+                }}
+                style={styles.textinput}
+              />
+              {confirmPasswordError && (
+                <Text style={styles.errorText}>{confirmPasswordError}</Text>
+              )}
+              <Dropdown
+                style={styles.dropdown}
+                data={categorydata}
+                search
+                maxHeight={300}
+                labelField="label"
+                valueField="value"
+                placeholder="Select Category"
+                searchPlaceholder="Search..."
+                value={category}
+                onChange={(item) => {
+                  setCategory(item.value);
+                  setCategoryError(null);
+                  // Reset subcategory if not Robomission or Future Innovators
+                  if (!item.subcategories) setSubcategory(null);
+                }}
+              />
+              {categoryError && (
+                <Text style={styles.errorText}>{categoryError}</Text>
+              )}
+              {["Robomission", "Future Innovators"].includes(
+                categorydata.find((cat: any) => cat.value === category)
+                  ?.label || ""
+              ) && (
+                <>
+                  <Dropdown
+                    style={styles.dropdown}
+                    data={
+                      categorydata.find((cat: any) => cat.value === category)
+                        ?.subcategories || []
+                    }
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Select Subcategory"
+                    value={subcategory}
+                    onChange={(item) => {
+                      setSubcategory(item.value);
+                      setSubcategoryError(null);
+                    }}
+                  />
+                  {categoryError && (
+                    <Text style={styles.errorText}>{categoryError}</Text>
+                  )}
+                </>
+              )}
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <Pressable
+                style={styles.modalCreateButton}
+                onPress={createJudgeAccount}
+              >
+                <Text style={styles.buttonText}>{"Create"}</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.modalCancelButton}
+                onPress={() =>
+                  setCreateJudgeModalVisible(!createJudgeModalVisible)
+                }
+              >
+                <Text>Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Modal
         visible={deleteModalVisible}
