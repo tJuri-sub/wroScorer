@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import styles from "../../components/styles/judgeStyles/LeaderboardStyling";
 import { AntDesign, Feather } from "@expo/vector-icons";
+import * as XLSX from "xlsx";
 
 import { CategoryPills } from "../../components/component/categoryPillsAdmin";
 
@@ -162,6 +163,38 @@ export default function AdminLeaderboard({ navigation }: any) {
     };
   }, [selectedCategory]);
 
+  const exportLeaderboard = (categoryLabel: string) => {
+    if (leaderboard.length === 0) return;
+
+    // 1. Prepare data
+    const data = leaderboard.map((team) => ({
+      Rank: team.overallRank,
+      Team: team.teamName,
+      "Round 1 Score": team.round1Score ?? "N/A",
+      "Round 2 Score": team.round2Score ?? "N/A",
+    }));
+
+    // Create worksheet and workbook
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Leaderboard");
+
+    // Export
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([wbout], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+
+    const catLabel =
+      categories.find((c) => c.id === selectedCategory)?.label ||
+      selectedCategory;
+
+    a.download = `leaderboard_${catLabel.replace(/\s+/g, "_")}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Filter leaderboard by search
   const filteredLeaderboard = leaderboard.filter(
     (team) =>
@@ -186,6 +219,21 @@ export default function AdminLeaderboard({ navigation }: any) {
     <View style={{ flex: 1 }}>
       {/* Sticky Tabs */}
       <View style={stickyStyles.tabsContainer}>
+        <TouchableOpacity
+          onPress={() => exportLeaderboard(selectedCategory)}
+          style={{
+            backgroundColor: "#0081CC",
+            padding: 10,
+            borderRadius: 8,
+            marginTop: 10,
+            alignSelf: "flex-end",
+            marginRight: 16,
+          }}
+        >
+          <Text style={{ color: "#fff", fontWeight: "bold" }}>
+            Export Excel
+          </Text>
+        </TouchableOpacity>
         <View style={{ marginBottom: 8 }}>
           <TextInput
             placeholder="Search teams..."
