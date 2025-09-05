@@ -245,16 +245,6 @@ export default function AdminLeaderboard({ navigation }: any) {
             style={[stickyStyles.searchInput, { maxWidth: 340, width: "100%" }]}
           />
         </View>
-        {/* <Text
-          style={{
-            color: "#888",
-            fontSize: 14,
-            marginBottom: 8,
-            textAlign: "center",
-          }}
-        >
-          Select a category to view its team rankings.
-        </Text> */}
         <CategoryPills
           categories={categories}
           selectedCategory={selectedCategory}
@@ -374,10 +364,6 @@ const stickyStyles = StyleSheet.create({
     paddingLeft: 16,
   },
   paginationContainer: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
     backgroundColor: "#fafafa",
     flexDirection: "column",
     justifyContent: "center",
@@ -385,7 +371,6 @@ const stickyStyles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
     borderColor: "#eee",
-    zIndex: 10,
     elevation: 10,
   },
   header: {
