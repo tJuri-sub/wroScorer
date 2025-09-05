@@ -36,7 +36,8 @@
     "react-native-table-component": "^1.2.2",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "^0.20.0",
-    "rn-country-dropdown-picker": "^2.1.8"
+    "rn-country-dropdown-picker": "^2.1.8",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

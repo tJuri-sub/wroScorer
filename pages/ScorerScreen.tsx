@@ -55,6 +55,11 @@ export default function ScorerScreen({ navigation }: any) {
   // Inline error message
   const [submitError, setSubmitError] = useState("");
 
+  // Future Engineers states
+  const [feRoundType, setFeRoundType] = useState<"open" | "obstacle">("open");
+  const [inputDocScore, setInputDocScore] = useState("");
+  const [fePill, setFePill] = useState<"open" | "obstacle">("open");
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
@@ -167,10 +172,28 @@ export default function ScorerScreen({ navigation }: any) {
     return team.totalScore ? "complete" : "no-score";
   }
 
-  // Future Engineers: placeholder logic (update when implemented)
-  if (judgeCategory === "future-engineers") {
-    // Example: if team.futureEngScore exists
-    return team.futureEngScore ? "complete" : "no-score";
+  // Future Engineers: two rounds with open/obstacle
+  let filteredTeams = teams.filter((team) => !team.disabled);
+
+  if (judgeCategory === "future-eng") {
+    if (fePill === "open") {
+      const hasR1 = team.openScore1 !== null && team.openScore1 !== undefined;
+      const hasR2 = team.openScore2 !== null && team.openScore2 !== undefined;
+      if (!hasR1 && !hasR2) return "no-score";
+      if (hasR1 && !hasR2) return "round1-only";
+      if (hasR1 && hasR2) return "complete";
+      return "no-score";
+    } else if (fePill === "obstacle") {
+      const hasOpen1 = team.openScore1 !== null && team.openScore1 !== undefined;
+      const hasOpen2 = team.openScore2 !== null && team.openScore2 !== undefined;
+      if (!hasOpen1 || !hasOpen2) return "not-qualified";
+      const hasR1 = team.obstacleScore1 !== null && team.obstacleScore1 !== undefined;
+      const hasR2 = team.obstacleScore2 !== null && team.obstacleScore2 !== undefined;
+      if (!hasR1 && !hasR2) return "no-score";
+      if (hasR1 && !hasR2) return "round1-only";
+      if (hasR1 && hasR2) return "complete";
+      return "no-score";
+    }
   }
 
   // Default
@@ -190,7 +213,7 @@ export default function ScorerScreen({ navigation }: any) {
     }
   };
 
-  // Render modal content based on category
+  // Scoring Modal content based on category
   function renderScorerModalContent() {
     if (!scoringTeam) return null;
 
@@ -325,19 +348,85 @@ export default function ScorerScreen({ navigation }: any) {
           </>
         );
       }
-      case "future-engineers":
-        // Placeholder for future implementation
+      case "future-eng": {
+        // Determine if scoring round 2 of obstacle
+        const isObstacleRound2 =
+          feRoundType === "obstacle" &&
+          scoringTeam &&
+          scoringTeam.obstacleScore1 != null &&
+          (scoringTeam.obstacleScore2 == null || scoringStep === 2);
+
+        const roundStep =
+          feRoundType === "open"
+            ? (scoringTeam.openScore1 == null ? 1 : 2)
+            : (scoringTeam.obstacleScore1 == null ? 1 : 2);
+            
+
         return (
-          <Text style={{ marginVertical: 20, textAlign: "center" }}>
-            Future Engineers scoring coming soon!
-          </Text>
+          <>
+            <Text style={styles.scoreinputTitle}>
+              {feRoundType === "open" ? "Open - Qualifying" : "Obstacles - Final"}
+            </Text>
+            
+            <TextInput
+              style={styles.scoreinput}
+              placeholder={`Enter ${feRoundType === "open" ? "Open" : "Obstacle"} Round ${roundStep} Score`}
+              keyboardType="numeric"
+              value={inputScore}
+              onChangeText={(text) =>
+                setInputScore(text.replace(/[^0-9]/g, ""))
+              }
+            />
+            <View style={styles.timeInputContainer}>
+              <TextInput
+                style={[styles.input, { flex: 1, marginRight: 4 }]}
+                placeholder="mm"
+                keyboardType="numeric"
+                value={inputMinute}
+                onChangeText={(text) =>
+                  setInputMinute(text.replace(/[^0-9]/g, ""))
+                }
+                maxLength={1}
+              />
+              <Text style={{ fontSize: 18, color: "#888" }}>:</Text>
+              <TextInput
+                style={[styles.input, { flex: 1, marginHorizontal: 4 }]}
+                placeholder="ss"
+                keyboardType="numeric"
+                value={inputSecond}
+                onChangeText={(text) =>
+                  setInputSecond(text.replace(/[^0-9]/g, ""))
+                }
+                maxLength={2}
+              />
+              <Text style={{ fontSize: 18, color: "#888" }}>.</Text>
+              <TextInput
+                style={[styles.input, { flex: 1, marginLeft: 4 }]}
+                placeholder="ms"
+                keyboardType="numeric"
+                value={inputMs}
+                onChangeText={(text) =>
+                  setInputMs(text.replace(/[^0-9]/g, ""))
+                }
+                maxLength={3}
+              />
+            </View>
+            {isObstacleRound2 && (
+              <>
+                <Text style={styles.scoreinputTitle}>Documentation / Github (optional, max 30)</Text>
+                <TextInput
+                  style={styles.scoreinput}
+                  placeholder="Documentation / Github"
+                  keyboardType="numeric"
+                  value={inputDocScore}
+                  onChangeText={(text) => setInputDocScore(text.replace(/[^0-9]/g, ""))}
+                  maxLength={2}
+                />
+              </>
+            )}
+          </>
         );
-      default:
-        return (
-          <Text style={{ marginVertical: 20, textAlign: "center" }}>
-            Unknown category.
-          </Text>
-        );
+      }
     }
   }
 
@@ -498,9 +587,115 @@ export default function ScorerScreen({ navigation }: any) {
       return;
     }
 
-    // Future Engineers (leave empty for now)
-    if (judgeCategory === "future-engineers") {
-      // TODO: Implement Future Engineers scoring logic here
+    // Future Engineers
+    if (judgeCategory === "future-eng") {
+      if (inputScore.trim() === "") {
+        setSubmitError("Please input the score.");
+        return;
+      }
+      if (inputMinute.trim() === "" && inputSecond.trim() === "" && inputMs.trim() === "") {
+        setSubmitError("Please input the time.");
+        return;
+      }
+
+      let timeVal = Number(inputMinute);
+      if (timeVal > 180) timeVal = 180;
+
+      // Parse and cap time at 3 minutes (180,000 ms)
+      let mm = Number(inputMinute) || 0;
+      let ss = Number(inputSecond) || 0;
+      let ms = Number(inputMs) || 0;
+      let totalMs = mm * 60000 + ss * 1000 + ms;
+      const maxMs = 3 * 60 * 1000; // 180,000 ms (3 mins)
+      if (totalMs > maxMs) totalMs = maxMs;
+
+      // Convert back to mm:ss.ms for storage and display
+      const cappedMm = Math.floor(totalMs / 60000);
+      const cappedSs = Math.floor((totalMs % 60000) / 1000);
+      const cappedMs = Math.floor((totalMs % 1000) / 10); // 2 digits for ms
+      const inputTime = `${String(cappedMm).padStart(2, "0")}:${String(cappedSs).padStart(2, "0")}.${String(cappedMs).padStart(2, "0")}`;
+
+      const docScoreVal = inputDocScore.trim() === "" ? 0 : Number(inputDocScore);
+
+      try {
+        const update: any = {
+          teamName: scoringTeam.teamName,
+          teamId: scoringTeam.id,
+          category: judgeCategory,
+          docScore: Number(inputDocScore),
+        };
+
+        if (feRoundType === "open") {
+          if (
+            scoringTeam.openScore1 === null ||
+            scoringTeam.openScore1 === undefined
+          ) {
+            update.openScore1 = Number(inputScore);
+            update.openTime1 = timeVal;
+          } else {
+            update.openScore2 = Number(inputScore);
+            update.openTime2 = timeVal;
+          }
+        } else {
+          if (
+            scoringTeam.obstacleScore1 === null ||
+            scoringTeam.obstacleScore1 === undefined
+          ) {
+            update.obstacleScore1 = Number(inputScore);
+            update.obstacleTime1 = timeVal;
+          } else {
+            update.obstacleScore2 = Number(inputScore);
+            update.obstacleTime2 = timeVal;
+          }
+        }
+
+        // Calculate best scores and times
+        const openScores = [
+          update.openScore1 ?? scoringTeam.openScore1,
+          update.openScore2 ?? scoringTeam.openScore2,
+        ].filter((v) => v !== undefined && v !== null);
+        const openTimes = [
+          update.openTime1 ?? scoringTeam.openTime1,
+          update.openTime2 ?? scoringTeam.openTime2,
+        ].filter((v) => v !== undefined && v !== null);
+
+        const obstacleScores = [
+          update.obstacleScore1 ?? scoringTeam.obstacleScore1,
+          update.obstacleScore2 ?? scoringTeam.obstacleScore2,
+        ].filter((v) => v !== undefined && v !== null);
+        const obstacleTimes = [
+          update.obstacleTime1 ?? scoringTeam.obstacleTime1,
+          update.obstacleTime2 ?? scoringTeam.obstacleTime2,
+        ].filter((v) => v !== undefined && v !== null);
+
+        update.totalScore =
+          Math.max(...openScores, 0) +
+          Math.max(...obstacleScores, 0) +
+          update.docScore;
+
+        let totalTime =
+          (Math.min(...openTimes, 180) || 0) +
+          (Math.min(...obstacleTimes, 180) || 0);
+        if (totalTime > 180) totalTime = 180;
+        update.totalTime = totalTime;
+
+        setScoreModalVisible(false);
+        setScoringTeam(null);
+
+        const scoresRef = doc(FIREBASE_DB, "scores3", scoringTeam.id);
+        await setDoc(scoresRef, update, { merge: true });
+
+        setTeams((teams) =>
+          teams.map((t) => (t.id === scoringTeam.id ? { ...t, ...update } : t))
+        );
+
+        setInputScore("");
+        setInputMinute("");
+        setInputDocScore("");
+      } catch (e) {
+        console.error("Score submission error:", e);
+        setSubmitError("Failed to submit score. Please try again.");
+      }
       return;
     }
   };
@@ -512,6 +707,31 @@ export default function ScorerScreen({ navigation }: any) {
       </View>
     );
   }
+
+  {/* Filter and Sort Teams */}
+  let filteredTeams = teams
+    .filter((team) => !team.disabled)
+    .filter((team) =>
+      team.teamName?.toLowerCase().includes(search.toLowerCase())
+    );
+
+  // Future Engineers pill filtering
+  if (judgeCategory === "future-eng") {
+    if (fePill === "obstacle") {
+      filteredTeams = filteredTeams.filter((team) => {
+        const hasOpen1 = team.openScore1 !== null && team.openScore1 !== undefined;
+        const hasOpen2 = team.openScore2 !== null && team.openScore2 !== undefined;
+        return hasOpen1 && hasOpen2;
+      });
+    }
+  }
+
+  // Sorting (by team number, or customize as needed)
+  filteredTeams = filteredTeams.sort((a, b) => {
+    const aNum = Number(a.teamNumber) || 0;
+    const bNum = Number(b.teamNumber) || 0;
+    return aNum - bNum;
+  });
 
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
@@ -528,18 +748,39 @@ export default function ScorerScreen({ navigation }: any) {
           value={search}
           onChangeText={setSearch}
         />
+        {/* Future Engineers Pills */}
+        {judgeCategory === "future-eng" && (
+          <View style={{ flexDirection: "row", marginBottom: 12 }}>
+            <TouchableOpacity
+              style={[
+                styles.fePill,
+                fePill === "open" && styles.fePillActive,
+              ]}
+              onPress={() => setFePill("open")}
+            >
+              <Text style={[
+                styles.fePillText,
+                fePill === "open" && styles.fePillTextActive,
+              ]}> Open - Qualifying</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.fePill,
+                fePill === "obstacle" && styles.fePillActive,
+              ]}
+              onPress={() => setFePill("obstacle")}
+            >
+              <Text style={[
+                styles.fePillText,
+                fePill === "obstacle" && styles.fePillTextActive,
+                ]}>Obstacles - Final</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Scoring Team Card */}
         <FlatList
-          data={teams
-            .filter((team) => !team.disabled)
-            .filter((team) =>
-              team.teamName?.toLowerCase().includes(search.toLowerCase())
-            )
-            .sort((a, b) => {
-              const aNum = Number(a.teamNumber) || 0;
-              const bNum = Number(b.teamNumber) || 0;
-              return aNum - bNum;
-            })}
+          data={filteredTeams}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => {
             const status = getCardStatus(item);
@@ -729,16 +970,189 @@ export default function ScorerScreen({ navigation }: any) {
               );
             }
 
-            // Future Engineers: placeholder
-            if (judgeCategory === "future-engineers") {
-              // TODO: Implement Future Engineers score card UI here
+            // Future Engineers
+            if (judgeCategory === "future-eng") {
+              const status = getCardStatus(item);
+              const isComplete = status === "complete";
+              const isNotQualified = status === "not-qualified";
+              let cardStatusText = "";
+              if (fePill === "open") {
+                cardStatusText =
+                  status === "no-score"
+                    ? "No Score yet"
+                    : status === "round1-only"
+                    ? "Round 1 Done"
+                    : "Complete";
+              } else {
+                cardStatusText = isNotQualified
+                  ? "Not qualified yet"
+                  : status === "no-score"
+                  ? "No Score yet"
+                  : status === "round1-only"
+                  ? "Round 1 Done"
+                  : "Complete";
+              }
+
+              // For obstacle, disable if not qualified or complete
+              const isCardDisabled =
+                (fePill === "obstacle" && (isNotQualified || isComplete)) ||
+                (fePill === "open" && isComplete);
+
+              // For open, show openScore/time; for obstacle, show obstacleScore/time
+              const score1 = fePill === "open" ? item.openScore1 : item.obstacleScore1;
+              const score2 = fePill === "open" ? item.openScore2 : item.obstacleScore2;
+              const time1 = fePill === "open" ? item.openTime1 : item.obstacleTime1;
+              const time2 = fePill === "open" ? item.openTime2 : item.obstacleTime2;
+
+              // For open rounds
+              const openScores = [
+                { score: item.openScore1, time: item.openTime1 },
+                { score: item.openScore2, time: item.openTime2 }
+              ].filter(v => v.score != null);
+
+              let maxOpenScore: any | null = null;
+              let minOpenTime = null;
+              if (openScores.length) {
+                maxOpenScore = Math.max(...openScores.map(v => v.score));
+                // Find all rounds with max score, pick the one with the lowest time
+                const tied = openScores.filter(v => v.score === maxOpenScore);
+                minOpenTime = tied.length > 1
+                  ? tied.reduce((min, curr) =>
+                      (curr.time && min.time && curr.time < min.time) ? curr : min, tied[0]
+                    ).time
+                  : tied[0].time;
+              }
+
+              // For obstacle rounds
+              const obsScores = [
+                { score: item.obstacleScore1, time: item.obstacleTime1 },
+                { score: item.obstacleScore2, time: item.obstacleTime2 }
+              ].filter(v => v.score != null);
+
+              let maxObsScore: any | null = null;
+              let minObsTime = null;
+              if (obsScores.length) {
+                maxObsScore = Math.max(...obsScores.map(v => v.score));
+                const tied = obsScores.filter(v => v.score === maxObsScore);
+                minObsTime = tied.length > 1
+                  ? tied.reduce((min, curr) =>
+                      (curr.time && min.time && curr.time < min.time) ? curr : min, tied[0]
+                    ).time
+                  : tied[0].time;
+              }
+
               return (
-                <View style={styles.teamCard}>
-                  <Text style={styles.teamCardTitle}>{item.teamName}</Text>
-                  <Text style={{ fontStyle: "italic", color: "#888" }}>
-                    Future Engineers scoring coming soon!
+                <Pressable
+                  disabled={isCardDisabled}
+                  onPress={() => {
+                    setFeRoundType(fePill);
+                    openScoreModal(item);
+                  }}
+                  style={({ pressed }) => [
+                    styles.teamCard,
+                    {
+                      backgroundColor: getCardColor(status),
+                      opacity: isCardDisabled ? 0.7 : 1,
+                    },
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <Text style={styles.teamCardTeamNumber}>
+                    Team no. {item.teamNumber}
                   </Text>
-                </View>
+                  <Text style={styles.teamCardTitle}>{item.teamName}</Text>
+                  <View
+                    style={{
+                      borderBottomWidth: 1,
+                      borderColor: "#bcbcbcff",
+                      paddingVertical: 10,
+                      marginBottom: 10,
+                    }}
+                  >
+                    <View style={{ flexDirection: "row" }}>
+                      {/* Round column in fe */}
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.teamData}>
+                          Round 1:{" "}
+                          <Text
+                            style={
+                              score1 != null &&
+                              (
+                                (fePill === "open" && score1 === maxOpenScore && time1 === minOpenTime) ||
+                                (fePill === "obstacle" && score1 === maxObsScore && time1 === minObsTime)
+                              )
+                                ? { color: "#388e3c", fontWeight: "bold", textDecorationLine: "underline" }
+                                : {}
+                            }
+                          >
+                            {score1 ? score1 : "—"}
+                          </Text>
+                        </Text>
+                        <Text style={styles.teamData}>
+                          Round 2:{" "}
+                          <Text
+                            style={
+                              score2 != null &&
+                              (
+                                (fePill === "open" && score2 === maxOpenScore && time2 === minOpenTime) ||
+                                (fePill === "obstacle" && score2 === maxObsScore && time2 === minObsTime)
+                              )
+                                ? { color: "#388e3c", fontWeight: "bold", textDecorationLine: "underline" }
+                                : {}
+                            }
+                          >
+                            {score2 ? score2 : "—"}
+                          </Text>
+                        </Text>
+                      </View>
+                      {/* Time column in fe*/}
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.teamData}>
+                          Time 1:{" "}
+                          <Text
+                            style={
+                              time1 != null
+                                ? { color: "#1976d2", fontWeight: "bold" }
+                                : {}
+                            }
+                          >
+                            {time1 ? time1 : "—"}
+                          </Text>
+                        </Text>
+                        <Text style={styles.teamData}>
+                          Time 2:{" "}
+                          <Text
+                            style={
+                              time2 != null
+                                ? { color: "#1976d2", fontWeight: "bold" }
+                                : {}
+                            }
+                          > 
+                            {time2 ? time2 : "—"}
+                          </Text>
+                        </Text>
+                      </View>
+                    </View>
+                    {/* Documentation only for obstacle */}
+                    {fePill === "obstacle" && (
+                      <Text style={styles.teamData}>
+                        Documentation:{" "}
+                        <Text style={{ fontWeight: "bold", color: "#432344" }}>
+                          {item.docScore ?? "—"}
+                        </Text>
+                      </Text>
+                    )}
+                  </View>
+                  <Text
+                    style={{
+                      fontFamily: "inter_400Regular",
+                      fontStyle: "italic",
+                      color: "#6B7280",
+                    }}
+                  >
+                    Status: {cardStatusText}
+                  </Text>
+                </Pressable>
               );
             }
 

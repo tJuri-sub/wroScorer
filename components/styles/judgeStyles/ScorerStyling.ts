@@ -176,4 +176,28 @@ export default StyleSheet.create({
   buttonPressed: {
     transform: [{ scale: 0.98 }],
   },
+
+  // FE Pills
+  fePill: {
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    backgroundColor: "#f3f0f6",
+    marginRight: 10,
+    marginBottom: 4,
+    borderWidth: 0,
+    minWidth: 0,
+  },
+  fePillActive: {
+    backgroundColor: "#432344",
+  },
+  fePillText: {
+    color: "#432344",
+    fontWeight: "600",
+    fontFamily: "inter_400Regular",
+    fontSize: 16,
+  },
+  fePillTextActive: {
+    color: "#fff",
+  },
 });
