@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import styles from "../../components/styles/judgeStyles/LeaderboardStyling";
 import { AntDesign, Feather } from "@expo/vector-icons";
+import * as XLSX from "xlsx";
 
 import { CategoryPills } from "../../components/component/categoryPillsAdmin";
 
@@ -50,8 +51,25 @@ export default function AdminLeaderboard({ navigation }: any) {
           <Feather name="menu" size={24} color="black" />
         </TouchableOpacity>
       ),
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => exportOverallScores(selectedCategory)}
+          style={{
+            //   backgroundColor: "#0081CC",
+            //   paddingVertical: 8,
+            //   paddingHorizontal: 12,
+            //   borderRadius: 8,
+            marginRight: 15,
+          }}
+        >
+          {/* <Text style={{ color: "#fff", fontWeight: "bold" }}>
+            Export Excel
+          </Text> */}
+          <AntDesign name="export" size={24} color="black" />
+        </TouchableOpacity>
+      ),
     });
-  }, [navigation]);
+  }, [navigation, selectedCategory]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -161,6 +179,38 @@ export default function AdminLeaderboard({ navigation }: any) {
       scoresUnsub();
     };
   }, [selectedCategory]);
+
+  const exportOverallScores = (categoryLabel: string) => {
+    if (leaderboard.length === 0) return;
+
+    // 1. Prepare data
+    const data = leaderboard.map((team) => ({
+      Rank: team.overallRank,
+      Team: team.teamName,
+      "Round 1 Score": team.round1Score ?? "N/A",
+      "Round 2 Score": team.round2Score ?? "N/A",
+    }));
+
+    // Create worksheet and workbook
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Leaderboard");
+
+    // Export
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([wbout], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+
+    const catLabel =
+      categories.find((c) => c.id === selectedCategory)?.label ||
+      selectedCategory;
+
+    a.download = `leaderboard_${catLabel.replace(/\s+/g, "_")}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Filter leaderboard by search
   const filteredLeaderboard = leaderboard.filter(
