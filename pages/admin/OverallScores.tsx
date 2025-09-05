@@ -51,8 +51,25 @@ export default function AdminLeaderboard({ navigation }: any) {
           <Feather name="menu" size={24} color="black" />
         </TouchableOpacity>
       ),
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => exportOverallScores(selectedCategory)}
+          style={{
+            //   backgroundColor: "#0081CC",
+            //   paddingVertical: 8,
+            //   paddingHorizontal: 12,
+            //   borderRadius: 8,
+            marginRight: 15,
+          }}
+        >
+          {/* <Text style={{ color: "#fff", fontWeight: "bold" }}>
+            Export Excel
+          </Text> */}
+          <AntDesign name="export" size={24} color="black" />
+        </TouchableOpacity>
+      ),
     });
-  }, [navigation]);
+  }, [navigation, selectedCategory]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -163,7 +180,7 @@ export default function AdminLeaderboard({ navigation }: any) {
     };
   }, [selectedCategory]);
 
-  const exportLeaderboard = (categoryLabel: string) => {
+  const exportOverallScores = (categoryLabel: string) => {
     if (leaderboard.length === 0) return;
 
     // 1. Prepare data
@@ -219,21 +236,6 @@ export default function AdminLeaderboard({ navigation }: any) {
     <View style={{ flex: 1 }}>
       {/* Sticky Tabs */}
       <View style={stickyStyles.tabsContainer}>
-        <TouchableOpacity
-          onPress={() => exportLeaderboard(selectedCategory)}
-          style={{
-            backgroundColor: "#0081CC",
-            padding: 10,
-            borderRadius: 8,
-            marginTop: 10,
-            alignSelf: "flex-end",
-            marginRight: 16,
-          }}
-        >
-          <Text style={{ color: "#fff", fontWeight: "bold" }}>
-            Export Excel
-          </Text>
-        </TouchableOpacity>
         <View style={{ marginBottom: 8 }}>
           <TextInput
             placeholder="Search teams..."
