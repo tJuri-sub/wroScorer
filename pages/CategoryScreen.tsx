@@ -140,18 +140,12 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
           >
             <View style={styles.teamCard}>
               {/* Header Row */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  marginBottom: 6,
-                }}
-              >
+              <View style={styles.teamCardHeader}>
                 <Text style={[styles.teamCardHeaderText, { flex: 1 }]}>
-                  Team Number {item.teamNumber}
+                  Team Number: {item.teamNumber}
                 </Text>
                 <Text style={styles.teamCardHeaderText}>
-                  Pod Number {item.podNumber}
+                  Table Number: {item.podNumber}
                 </Text>
               </View>
               {/* Country and Team Name Row */}
@@ -166,13 +160,13 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
                 {item.members &&
                   item.members.map((member: string, index: number) => (
                     <Text style={styles.teamCardMember} key={index}>
-                      Member {index + 1}: {member || "N/A"}
+                      Member {index + 1}: {member || "-"}
                     </Text>
                   ))}
               </View>
               {/* Coach */}
               <Text style={styles.teamCardCoach}>
-                Coach Name: {item.coachName}
+                Team Coach: {item.coachName || "-"}
               </Text>
             </View>
           </TouchableOpacity>
@@ -185,7 +179,13 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
       />
 
       {/* Pagination Controls */}
-      <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 10 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "center",
+          marginTop: 10,
+        }}
+      >
         <TouchableOpacity
           onPress={handlePreviousPage}
           disabled={currentPage === 1}
@@ -196,7 +196,9 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
             borderRadius: 6,
           }}
         >
-          <Text style={{ color: currentPage === 1 ? "#aaa" : "#fff" }}>Previous</Text>
+          <Text style={{ color: currentPage === 1 ? "#aaa" : "#fff" }}>
+            Previous
+          </Text>
         </TouchableOpacity>
         <Text style={{ alignSelf: "center", fontSize: 16 }}>
           Page {currentPage} of {totalPages}
@@ -211,13 +213,22 @@ export default function CategoryScreenJudge({ route, navigation }: any) {
             borderRadius: 6,
           }}
         >
-          <Text style={{ color: currentPage === totalPages ? "#aaa" : "#fff" }}>Next</Text>
+          <Text style={{ color: currentPage === totalPages ? "#aaa" : "#fff" }}>
+            Next
+          </Text>
         </TouchableOpacity>
       </View>
       {/* Records summary */}
-        <Text style={{ marginBottom: 5, marginTop: 5, color: "#555", textAlign: "center" }}>
-          Showing {currentRecords.length} of {filteredTeams.length} teams
-        </Text>
+      <Text
+        style={{
+          marginBottom: 5,
+          marginTop: 5,
+          color: "#555",
+          textAlign: "center",
+        }}
+      >
+        Showing {currentRecords.length} of {filteredTeams.length} teams
+      </Text>
     </View>
   );
 }

@@ -54,6 +54,7 @@ export default StyleSheet.create({
 
   scoreText: { fontSize: 14, marginBottom: 2 },
 
+  // TEAM CARD
   teamCard: {
     backgroundColor: "#fff",
     borderRadius: 16,
@@ -64,31 +65,29 @@ export default StyleSheet.create({
     width: "95%",
     margin: "auto",
   },
+
   teamCardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: 8,
+    borderBottomWidth: 1,
+    paddingBottom: 10,
   },
+
   teamCardHeaderText: {
     fontSize: 15,
     color: "#888",
     fontStyle: "italic",
     fontWeight: "500",
   },
+
   teamCardRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 6,
   },
-  teamCardFlag: {
-    width: 24,
-    height: 16,
-    marginRight: 6,
-    borderRadius: 3,
-    borderWidth: 0.5,
-    borderColor: "#ccc",
-  },
+
   teamCardCountry: {
     fontSize: 16,
     color: "#222",
@@ -96,6 +95,7 @@ export default StyleSheet.create({
     marginRight: 8,
     textAlign: "right",
   },
+
   teamCardTeamName: {
     fontSize: 20,
     fontWeight: "bold",
@@ -104,17 +104,18 @@ export default StyleSheet.create({
     textAlign: "left",
     flexWrap: "wrap",
   },
+
   teamCardMember: {
-    fontSize: 15,
+    fontSize: 14,
     color: "#333",
-    marginLeft: 30,
-    marginBottom: 2,
+    marginLeft: 20,
   },
+
   teamCardCoach: {
-    fontSize: 15,
+    fontSize: 14,
     color: "#432344",
     fontStyle: "italic",
-    marginTop: 4,
+    marginTop: 2,
     marginLeft: 2,
   },
 });

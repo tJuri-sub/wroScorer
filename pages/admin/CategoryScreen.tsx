@@ -111,7 +111,7 @@ export default function CategoryScreen({ route, navigation }: any) {
               teamNumber: data.teamNumber || 0,
               podNumber: data.podNumber || 0,
               teamName: data.teamName || "Unknown Team",
-              coachName: data.coachName || "Unknown Coach",
+              coachName: data.coachName,
               members: data.members || [],
               disabled: data.disabled || false,
             };
@@ -210,7 +210,7 @@ export default function CategoryScreen({ route, navigation }: any) {
           teamNumber: data.teamNumber || 0,
           podNumber: data.podNumber || 0,
           teamName: data.teamName || "Unknown Team",
-          coachName: data.coachName || "Unknown Coach",
+          coachName: data.coachName,
           members: data.members || [],
         };
       });
@@ -263,7 +263,7 @@ export default function CategoryScreen({ route, navigation }: any) {
           teamNumber: data.teamNumber || 0,
           podNumber: data.podNumber || 0,
           teamName: data.teamName || "Unknown Team",
-          coachName: data.coachName || "Unknown Coach",
+          coachName: data.coachName,
           members: data.members || [],
         };
       });
@@ -459,13 +459,13 @@ export default function CategoryScreen({ route, navigation }: any) {
                   {/* Members */}
                   {item.members.map((member, index) => (
                     <Text style={styles.teamCardMember} key={index}>
-                      Member {index + 1}: {member || "N/A"}
+                      Member {index + 1}: {member || "-"}
                     </Text>
                   ))}
 
                   {/* Coach */}
                   <Text style={styles.teamCardCoach}>
-                    Coach Name: {item.coachName}
+                    Team Coach: {item.coachName || "-"}
                   </Text>
                 </View>
 
@@ -952,7 +952,7 @@ export default function CategoryScreen({ route, navigation }: any) {
                         teamNumber: data.teamNumber || 0,
                         podNumber: data.podNumber || 0,
                         teamName: data.teamName || "Unknown Team",
-                        coachName: data.coachName || "Unknown Coach",
+                        coachName: data.coachName,
                         members: data.members || [],
                         disabled: data.disabled ?? false,
                       };

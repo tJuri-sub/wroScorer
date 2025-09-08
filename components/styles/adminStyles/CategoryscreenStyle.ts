@@ -69,9 +69,10 @@ export default StyleSheet.create({
     borderRadius: 16,
     padding: 18,
     marginBottom: 18,
-    boxShadow: " 0px 2px 3px rgba(0,0,0,0.5)",
+    boxShadow: "0px 2px 3px rgba(0,0,0,0.3)",
     flexDirection: "column",
-    minWidth: 0,
+    width: "95%",
+    margin: "auto",
   },
 
   teamCardHeader: {
@@ -79,11 +80,12 @@ export default StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: 8,
+    borderBottomWidth: 1,
+    paddingBottom: 10,
   },
 
   teamCardHeaderText: {
-    fontFamily: "inter_400Regular",
-    fontSize: 14,
+    fontSize: 15,
     color: "#888",
     fontStyle: "italic",
     fontWeight: "500",
@@ -93,15 +95,6 @@ export default StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 6,
-  },
-
-  teamCardFlag: {
-    width: 24,
-    height: 16,
-    marginRight: 6,
-    borderRadius: 3,
-    borderWidth: 0.5,
-    borderColor: "#ccc",
   },
 
   teamCardCountry: {
@@ -114,7 +107,6 @@ export default StyleSheet.create({
   },
 
   teamCardTeamName: {
-    fontFamily: "inter_400Regular",
     fontSize: 20,
     fontWeight: "bold",
     color: "#432344",
@@ -127,8 +119,7 @@ export default StyleSheet.create({
     fontFamily: "inter_400Regular",
     fontSize: 14,
     color: "#333",
-    marginLeft: 30,
-    marginBottom: 2,
+    marginLeft: 20,
   },
 
   teamCardCoach: {
@@ -136,7 +127,7 @@ export default StyleSheet.create({
     fontSize: 14,
     color: "#432344",
     fontStyle: "italic",
-    marginTop: 4,
+    marginTop: 2,
     marginLeft: 2,
   },
 
