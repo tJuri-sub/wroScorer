@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Modal,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import CountryPicker from "rn-country-dropdown-picker"; // Import the new country picker
 import {
@@ -23,7 +24,12 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import styles from "../../components/styles/adminStyles/CategoryscreenStyle";
-import { AntDesign, Feather, MaterialIcons } from "@expo/vector-icons";
+import {
+  AntDesign,
+  Feather,
+  MaterialCommunityIcons,
+  MaterialIcons,
+} from "@expo/vector-icons";
 import { Inter_400Regular, useFonts } from "@expo-google-fonts/inter";
 
 export default function CategoryScreen({ route, navigation }: any) {
@@ -67,6 +73,28 @@ export default function CategoryScreen({ route, navigation }: any) {
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => {
+            if (selectionMode) {
+              setSelectedTeams([]);
+            }
+            setSelectionMode(!selectionMode);
+          }}
+          style={{ marginRight: 15 }}
+        >
+          {selectionMode ? (
+            <MaterialCommunityIcons name="cancel" size={24} color="black" />
+          ) : (
+            <Feather name="trash-2" size={24} color="red" />
+          )}
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, selectionMode]);
 
   const db = getFirestore();
 
@@ -317,7 +345,7 @@ export default function CategoryScreen({ route, navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={{
           backgroundColor: selectionMode ? "#555" : "#AA3D3F",
           padding: 12,
@@ -337,7 +365,7 @@ export default function CategoryScreen({ route, navigation }: any) {
         >
           {selectionMode ? "Cancel Selection" : "Select for Deletion"}
         </Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <Text style={styles.title}>{label}</Text>
       <Text style={styles.subtitle}>Teams in {label}</Text>
@@ -384,7 +412,9 @@ export default function CategoryScreen({ route, navigation }: any) {
       </View>
 
       {loading ? (
-        <Text>Loading teams...</Text>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" />
+        </View>
       ) : (
         <View style={{ marginBottom: 20, flex: 1 }}>
           <FlatList
@@ -419,30 +449,39 @@ export default function CategoryScreen({ route, navigation }: any) {
                 >
                   {/* Header Row */}
                   <View style={styles.teamCardHeader}>
-                    {selectionMode && (
-                      <TouchableOpacity
-                        style={{
-                          width: 20,
-                          height: 20,
-                          borderWidth: 1,
-                          borderColor: "#333",
-                          marginRight: 8,
-                          backgroundColor: selectedTeams.includes(item.id)
-                            ? "#333"
-                            : "transparent",
-                        }}
-                        onPress={() =>
-                          setSelectedTeams((prev) =>
-                            prev.includes(item.id)
-                              ? prev.filter((tid) => tid !== item.id)
-                              : [...prev, item.id]
-                          )
-                        }
-                      />
-                    )}
-                    <Text style={styles.teamCardHeaderText}>
-                      Team Number {item.teamNumber}
-                    </Text>
+                    <View
+                      style={{ display: "flex", flexDirection: "row", gap: 10 }}
+                    >
+                      {selectionMode && (
+                        <TouchableOpacity
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderWidth: 1,
+                            borderColor: "#333",
+                            backgroundColor: selectedTeams.includes(item.id)
+                              ? "#b3b3b3ff"
+                              : "transparent",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                          onPress={() =>
+                            setSelectedTeams((prev) =>
+                              prev.includes(item.id)
+                                ? prev.filter((tid) => tid !== item.id)
+                                : [...prev, item.id]
+                            )
+                          }
+                        >
+                          {selectedTeams.includes(item.id) && (
+                            <AntDesign name="check" size={16} color="#000" />
+                          )}
+                        </TouchableOpacity>
+                      )}
+                      <Text style={styles.teamCardHeaderText}>
+                        Team Number {item.teamNumber}
+                      </Text>
+                    </View>
                     <Text style={styles.teamCardHeaderText}>
                       Pod Number {item.podNumber}
                     </Text>

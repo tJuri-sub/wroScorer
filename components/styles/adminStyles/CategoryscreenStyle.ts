@@ -6,6 +6,13 @@ export default StyleSheet.create({
     padding: 10,
   },
 
+  centered: {
+    display: "flex",
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   title: {
     fontFamily: "inter_400Regular",
     fontSize: 20,
