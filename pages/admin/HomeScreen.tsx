@@ -273,13 +273,7 @@ export default function HomeScreenAdmin({ navigation }: any) {
                             {rest}
                           </Text>
                         </Text>
-                        <Text
-                          style={styles.cardDesc}
-                          numberOfLines={2}
-                          ellipsizeMode="tail"
-                        >
-                          {item.categoryDesc}
-                        </Text>
+                        <Text style={styles.cardDesc}>{item.categoryDesc}</Text>
                       </View>
                     </Pressable>
                   );

@@ -187,8 +187,8 @@ export default function AdminLeaderboard({ navigation }: any) {
     const data = leaderboard.map((team) => ({
       Rank: team.overallRank,
       Team: team.teamName,
-      "Round 1 Score": team.round1Score ?? "N/A",
-      "Round 2 Score": team.round2Score ?? "N/A",
+      "Round 1 Score": team.round1Score ?? "-",
+      "Round 2 Score": team.round2Score ?? "-",
     }));
 
     // Create worksheet and workbook
@@ -252,11 +252,15 @@ export default function AdminLeaderboard({ navigation }: any) {
         />
       </View>
       {/* Leaderboard List */}
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, marginHorizontal: 10 }}>
         <View style={stickyStyles.header}>
           <Text style={stickyStyles.heading}>Team Name</Text>
-          <Text style={stickyStyles.heading}>Round 1 Score</Text>
-          <Text style={stickyStyles.heading}>Round 2 Score</Text>
+          <Text style={[stickyStyles.heading, stickyStyles.align]}>
+            Round 1{" "}
+          </Text>
+          <Text style={[stickyStyles.heading, stickyStyles.align]}>
+            Round 2{" "}
+          </Text>
         </View>
         {scoresLoading ? (
           <View
@@ -265,7 +269,16 @@ export default function AdminLeaderboard({ navigation }: any) {
             <ActivityIndicator size="large" />
           </View>
         ) : currentRecords.length === 0 ? (
-          <Text style={{ textAlign: "center" }}>No scores yet!</Text>
+          <View
+            style={{
+              flex: 1,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ textAlign: "center" }}>No scores yet!</Text>
+          </View>
         ) : (
           <FlatList
             data={currentRecords}
@@ -363,6 +376,7 @@ const stickyStyles = StyleSheet.create({
     borderColor: "#eee",
     paddingLeft: 16,
   },
+
   paginationContainer: {
     backgroundColor: "#fafafa",
     flexDirection: "column",
@@ -373,6 +387,7 @@ const stickyStyles = StyleSheet.create({
     borderColor: "#eee",
     elevation: 10,
   },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -380,12 +395,20 @@ const stickyStyles = StyleSheet.create({
     backgroundColor: "#432344",
     borderBottomWidth: 1,
     borderColor: "#eee",
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
   },
+
   heading: {
     flex: 1,
     fontSize: 16,
     color: "#fff",
   },
+
+  align: {
+    textAlign: "center",
+  },
+
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -397,11 +420,13 @@ const stickyStyles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
+
   cell: {
     flex: 1,
     textAlign: "left",
     fontSize: 14,
   },
+
   searchInput: {
     borderWidth: 1,
     borderRadius: 8,
