@@ -115,6 +115,7 @@ export default StyleSheet.create({
     fontSize: 14,
     color: "#ffffff",
     fontFamily: "inter_400Regular",
+    flexWrap: "wrap",
   },
 
   judgesContainer: {

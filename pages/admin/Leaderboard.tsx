@@ -263,12 +263,20 @@ export default function AdminLeaderboard({ navigation }: any) {
             <ActivityIndicator size="large" />
           </View>
         ) : currentRecords.length === 0 ? (
-          <Text style={{ textAlign: "center" }}>No scores yet!</Text>
+          <View
+            style={{
+              flex: 1,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ textAlign: "center" }}>No scores yet!</Text>
+          </View>
         ) : (
           <FlatList
             data={currentRecords}
             keyExtractor={(item) => item.teamId}
-            contentContainerStyle={{ paddingBottom: 80 }}
             renderItem={({ item, index }) => {
               const overallRank = item.overallRank - 1; // zero-based index
               const rankColors = ["#F8AA0C", "#3A9F6C", "#0081CC"];
@@ -370,7 +378,9 @@ export default function AdminLeaderboard({ navigation }: any) {
             }}
           >
             <Text
-              style={{ color: currentPage === totalPages ? "#aaa" : "#fff" }}
+              style={{
+                color: currentPage === totalPages ? "#aaa" : "#fff",
+              }}
             >
               <AntDesign name="right" size={16} color="black" />
             </Text>
@@ -396,10 +406,6 @@ const stickyStyles = StyleSheet.create({
     paddingLeft: 16,
   },
   paginationContainer: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
     backgroundColor: "#fafafa",
     flexDirection: "column",
     justifyContent: "center",
@@ -408,7 +414,6 @@ const stickyStyles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: "#eee",
     zIndex: 10,
-    boxShadow: "0px 2px 3px rgba(0,0,0,0.5)",
   },
   searchInput: {
     borderWidth: 1,

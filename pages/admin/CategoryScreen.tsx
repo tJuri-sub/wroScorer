@@ -345,28 +345,6 @@ export default function CategoryScreen({ route, navigation }: any) {
 
   return (
     <View style={styles.container}>
-      {/* <TouchableOpacity
-        style={{
-          backgroundColor: selectionMode ? "#555" : "#AA3D3F",
-          padding: 12,
-          borderRadius: 6,
-          marginVertical: 10,
-        }}
-        onPress={() => {
-          if (selectionMode) {
-            // exiting selection mode clears selections
-            setSelectedTeams([]);
-          }
-          setSelectionMode(!selectionMode);
-        }}
-      >
-        <Text
-          style={{ color: "#fff", textAlign: "center", fontWeight: "bold" }}
-        >
-          {selectionMode ? "Cancel Selection" : "Select for Deletion"}
-        </Text>
-      </TouchableOpacity> */}
-
       <Text style={styles.title}>{label}</Text>
       <Text style={styles.subtitle}>Teams in {label}</Text>
       <TextInput
@@ -376,47 +354,13 @@ export default function CategoryScreen({ route, navigation }: any) {
         onChangeText={setSearch}
         style={styles.searchInput}
       />
-      <View style={styles.paginationContainer}>
-        <TouchableOpacity
-          onPress={() => setPage(page - 1)}
-          disabled={page === 1}
-          style={[
-            styles.paginationButton,
-            page === 1 && styles.paginationButtonDisabled,
-          ]}
-        >
-          <Text style={styles.paginationButtonText}>
-            <AntDesign name="left" size={16} color="black" />
-          </Text>
-        </TouchableOpacity>
-        {totalRecords === 0 ? (
-          <Text style={styles.paginationInfo}>No teams</Text>
-        ) : (
-          <Text style={styles.paginationInfo}>
-            Page {page} of {totalPages} | {totalRecords} teams
-          </Text>
-        )}
-        <TouchableOpacity
-          onPress={() => setPage(page + 1)}
-          disabled={page === totalPages || totalPages === 0}
-          style={[
-            styles.paginationButton,
-            (page === totalPages || totalPages === 0) &&
-              styles.paginationButtonDisabled,
-          ]}
-        >
-          <Text style={styles.paginationButtonText}>
-            <AntDesign name="right" size={16} color="black" />
-          </Text>
-        </TouchableOpacity>
-      </View>
 
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" />
         </View>
       ) : (
-        <View style={{ marginBottom: 20, flex: 1 }}>
+        <View style={{ marginBottom: 70, flex: 1 }}>
           <FlatList
             data={paginatedTeams}
             scrollEnabled={true}
@@ -575,7 +519,54 @@ export default function CategoryScreen({ route, navigation }: any) {
                 </View>
               </TouchableOpacity>
             )}
-            ListEmptyComponent={<Text>No teams found.</Text>}
+            ListFooterComponent={
+              <View style={styles.paginationContainer}>
+                <TouchableOpacity
+                  onPress={() => setPage(page - 1)}
+                  disabled={page === 1}
+                  style={[
+                    styles.paginationButton,
+                    page === 1 && styles.paginationButtonDisabled,
+                  ]}
+                >
+                  <Text style={styles.paginationButtonText}>
+                    <AntDesign name="left" size={16} color="black" />
+                  </Text>
+                </TouchableOpacity>
+                {totalRecords === 0 ? (
+                  <Text style={styles.paginationInfo}>No teams</Text>
+                ) : (
+                  <Text style={styles.paginationInfo}>
+                    Page {page} of {totalPages} | {totalRecords} teams
+                  </Text>
+                )}
+                <TouchableOpacity
+                  onPress={() => setPage(page + 1)}
+                  disabled={page === totalPages || totalPages === 0}
+                  style={[
+                    styles.paginationButton,
+                    (page === totalPages || totalPages === 0) &&
+                      styles.paginationButtonDisabled,
+                  ]}
+                >
+                  <Text style={styles.paginationButtonText}>
+                    <AntDesign name="right" size={16} color="black" />
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            }
+            ListEmptyComponent={
+              <View
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ textAlign: "center" }}>No scores yet!</Text>
+              </View>
+            }
           />
         </View>
       )}
