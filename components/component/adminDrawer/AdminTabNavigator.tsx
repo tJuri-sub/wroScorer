@@ -5,8 +5,9 @@ import OverallScoresScreen from "../../../pages/admin/OverallScores";
 import AllLeaderboard from "../../../pages/admin/Leaderboard";
 
 import Entypo from "@expo/vector-icons/Entypo";
-import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
+import { FontAwesome, FontAwesome6, MaterialIcons } from "@expo/vector-icons";
 import AllJudgesScreen from "../../../pages/admin/AllJudgesScreen";
+import { EventsManager } from "../../../pages/admin/EventsManager";
 
 const Tab = createBottomTabNavigator();
 
@@ -43,6 +44,18 @@ export default function AdminTabNavigator() {
           headerTitleAlign: "center",
           tabBarIcon: ({ color, size }) => (
             <FontAwesome name="table" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Events"
+        component={EventsManager}
+        options={{
+          headerShown: true,
+          headerTitle: "Events",
+          headerTitleAlign: "center",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="event" size={size} color={color} />
           ),
         }}
       />
