@@ -60,6 +60,13 @@ export default function ScorerScreen({ navigation }: any) {
   const [inputDocScore, setInputDocScore] = useState("");
   const [fePill, setFePill] = useState<"open" | "obstacle">("open");
 
+  function parseTimeStringToMs(timeStr: string) {
+  if (!timeStr) return Infinity;
+  const [mm, rest] = timeStr.split(":");
+  const [ss, ms] = rest.split(".");
+  return (Number(mm) || 0) * 60000 + (Number(ss) || 0) * 1000 + (Number(ms) || 0) * 10;
+}
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
@@ -631,10 +638,10 @@ export default function ScorerScreen({ navigation }: any) {
             scoringTeam.openScore1 === undefined
           ) {
             update.openScore1 = Number(inputScore);
-            update.openTime1 = timeVal;
+            update.openTime1 = inputTime;
           } else {
             update.openScore2 = Number(inputScore);
-            update.openTime2 = timeVal;
+            update.openTime2 = inputTime;
           }
         } else {
           if (
@@ -642,10 +649,10 @@ export default function ScorerScreen({ navigation }: any) {
             scoringTeam.obstacleScore1 === undefined
           ) {
             update.obstacleScore1 = Number(inputScore);
-            update.obstacleTime1 = timeVal;
+            update.obstacleTime1 = inputTime;
           } else {
             update.obstacleScore2 = Number(inputScore);
-            update.obstacleTime2 = timeVal;
+            update.obstacleTime2 = inputTime;
           }
         }
 
@@ -1018,7 +1025,7 @@ export default function ScorerScreen({ navigation }: any) {
                 const tied = openScores.filter(v => v.score === maxOpenScore);
                 minOpenTime = tied.length > 1
                   ? tied.reduce((min, curr) =>
-                      (curr.time && min.time && curr.time < min.time) ? curr : min, tied[0]
+                      parseTimeStringToMs(curr.time) < parseTimeStringToMs(min.time) ? curr : min, tied[0]
                     ).time
                   : tied[0].time;
               }
@@ -1036,7 +1043,7 @@ export default function ScorerScreen({ navigation }: any) {
                 const tied = obsScores.filter(v => v.score === maxObsScore);
                 minObsTime = tied.length > 1
                   ? tied.reduce((min, curr) =>
-                      (curr.time && min.time && curr.time < min.time) ? curr : min, tied[0]
+                      parseTimeStringToMs(curr.time) < parseTimeStringToMs(min.time) ? curr : min, tied[0]
                     ).time
                   : tied[0].time;
               }
