@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 
-import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
 
 import {
   View,
@@ -14,9 +22,13 @@ import {
 } from "react-native";
 import styles from "../../components/styles/adminStyles/EventsStyle";
 
+import { Feather, AntDesign } from "@expo/vector-icons";
+
 export const EventsManager = () => {
   const [eventModal, setEventModal] = useState<boolean>(false);
   const [events, setEvents] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   const [creating, setCreating] = useState(false);
 
   type EventInput = {
@@ -52,12 +64,21 @@ export const EventsManager = () => {
         return;
       }
       setCreating(true);
-      await addDoc(collection(db, "events"), {
-        title: inputData.title,
-        date: inputData.date,
-        category: inputData.category,
-        createdAt: new Date().toISOString(),
-      });
+      if (editingId) {
+        await updateDoc(doc(db, "events", editingId), {
+          title: inputData.title,
+          date: inputData.date,
+          category: inputData.category,
+        });
+        setEditingId(null);
+      } else {
+        await addDoc(collection(db, "events"), {
+          title: inputData.title,
+          date: inputData.date,
+          category: inputData.category,
+          createdAt: new Date().toISOString(),
+        });
+      }
       // Fetch updated events list
       const snapshot = await getDocs(collection(db, "events"));
       const eventList = snapshot.docs.map((doc) => ({
@@ -68,11 +89,32 @@ export const EventsManager = () => {
       setInputData({ title: "", date: "", category: "" });
       setEventModal(false);
     } catch (error) {
-      alert("Error creating event.");
+      alert("Error creating/editing event.");
       console.error(error);
     } finally {
       setCreating(false);
     }
+  };
+
+  const handleDeleteEvent = async (id: string) => {
+    const db = getFirestore();
+    try {
+      await deleteDoc(doc(db, "events", id));
+      setEvents(events.filter((event) => event.id !== id));
+    } catch (error) {
+      alert("Error deleting event.");
+      console.error(error);
+    }
+  };
+
+  const handleEditEvent = (event: any) => {
+    setInputData({
+      title: event.title,
+      date: event.date,
+      category: event.category,
+    });
+    setEditingId(event.id); // Add editingId state
+    setEventModal(true);
   };
 
   return (
@@ -98,25 +140,42 @@ export const EventsManager = () => {
         </View>
       ) : (
         <View style={styles.eventContainer}>
-          <Text>Events List</Text>
-          <FlatList
-            data={events}
-            keyExtractor={(item, idx) => idx.toString()}
-            renderItem={({ item }) => (
-              <View style={styles.eventCard}>
-                <Text style={styles.eventTitle}>{item.title}</Text>
-                {/* Add more event details here */}
-              </View>
-            )}
-            ListHeaderComponent={
-              <TouchableOpacity
-                style={styles.addEventButton}
-                onPress={() => setEventModal(true)}
-              >
-                <Text style={styles.textButton}>Create Event</Text>
-              </TouchableOpacity>
-            }
-          />
+          <View style={styles.createButtonHeader}>
+            <TouchableOpacity
+              style={styles.addEventButton}
+              onPress={() => setEventModal(true)}
+            >
+              <Text style={styles.textButton}>Create Event</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.eventList}>
+            <FlatList
+              data={events}
+              keyExtractor={(item, idx) => idx.toString()}
+              renderItem={({ item }) => (
+                <View style={styles.eventCard}>
+                  <Text style={styles.eventTitle}>{item.title}</Text>
+                  <Text style={styles.eventDetail}>Date: {item.date}</Text>
+                  <Text style={styles.eventDetail}>
+                    Category: {item.category}
+                  </Text>
+                  <View style={{ flexDirection: "row", marginTop: 8 }}>
+                    <TouchableOpacity
+                      style={{ marginRight: 16 }}
+                      onPress={() => handleEditEvent(item)}
+                    >
+                      <Feather name="edit" size={20} color="#432344" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteEvent(item.id)}
+                    >
+                      <AntDesign name="delete" size={20} color="red" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            />
+          </View>
         </View>
       )}
 

@@ -6,7 +6,10 @@ export default StyleSheet.create({
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 15,
+    paddingVertical: 10,
   },
+
   contentContainer: {
     display: "flex",
     justifyContent: "center",
@@ -30,15 +33,6 @@ export default StyleSheet.create({
   textButton: {
     fontSize: 16,
     textAlign: "center",
-  },
-
-  eventCard: {
-    width: "100%",
-    backgroundColor: "#fff",
-  },
-
-  eventTitle: {
-    fontWeight: "bold",
   },
 
   headerModal: {
@@ -85,5 +79,36 @@ export default StyleSheet.create({
   eventContainer: {
     flex: 1,
     width: "100%",
+  },
+
+  createButtonHeader: {
+    marginBottom: 15,
+  },
+
+  eventCard: {
+    width: "100%",
+    backgroundColor: "#fff",
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+
+  eventTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  eventDetail: {
+    fontSize: 14,
+    color: "#555",
+    marginTop: 2,
+  },
+
+  eventList: {
+    backgroundColor: "#cacacaff",
+    paddingHorizontal: 5,
+    paddingVertical: 5,
+    flex: 1,
+    borderRadius: 3,
   },
 });
