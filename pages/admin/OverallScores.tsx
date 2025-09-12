@@ -55,16 +55,9 @@ export default function AdminLeaderboard({ navigation }: any) {
         <TouchableOpacity
           onPress={() => exportOverallScores(selectedCategory)}
           style={{
-            //   backgroundColor: "#0081CC",
-            //   paddingVertical: 8,
-            //   paddingHorizontal: 12,
-            //   borderRadius: 8,
             marginRight: 15,
           }}
         >
-          {/* <Text style={{ color: "#fff", fontWeight: "bold" }}>
-            Export Excel
-          </Text> */}
           <AntDesign name="export" size={24} color="black" />
         </TouchableOpacity>
       ),
