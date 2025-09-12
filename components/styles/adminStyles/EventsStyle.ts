@@ -91,6 +91,7 @@ export default StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     borderRadius: 5,
+    boxShadow: "1px 1px 2px rgba(0,0,0,0.5)",
   },
 
   eventTitle: {
@@ -109,6 +110,8 @@ export default StyleSheet.create({
     paddingHorizontal: 5,
     paddingVertical: 5,
     flex: 1,
-    borderRadius: 3,
+    borderRadius: 10,
+    overflow: "hidden",
+    //boxShadow: "inset 1px 1px 2px rgba(0,0,0,0.5)",
   },
 });
