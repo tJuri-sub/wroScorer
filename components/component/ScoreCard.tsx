@@ -55,12 +55,14 @@ export default function ScoreCard({
         <Text style={styles.value}>{score.round1Score ?? "N/A"}</Text>
       </View>
       <View style={styles.row}>
-        <Text style={styles.label}>Time 1:</Text>
+        <Text style={[styles.label, { fontWeight: "normal" }]}>Time 1:</Text>
         <Text style={styles.value}>{score.time1 ?? "N/A"}</Text>
       </View>
       <View style={styles.row}>
-        <Text style={styles.label}>Scored At:</Text>
-        <Text style={styles.value}>{formatDate(score.round1ScoredAt ?? score.timestamp)}</Text>
+        <Text style={[styles.label, { fontWeight: "normal" }]}>Scored At:</Text>
+        <Text style={styles.value}>
+          {formatDate(score.round1ScoredAt ?? score.timestamp)}
+        </Text>
       </View>
       <View style={styles.divider} />
       <View style={styles.row}>
@@ -68,11 +70,11 @@ export default function ScoreCard({
         <Text style={styles.value}>{score.round2Score ?? "N/A"}</Text>
       </View>
       <View style={styles.row}>
-        <Text style={styles.label}>Time 2:</Text>
+        <Text style={[styles.label, { fontWeight: "normal" }]}>Time 2:</Text>
         <Text style={styles.value}>{score.time2 ?? "N/A"}</Text>
       </View>
       <View style={styles.row}>
-        <Text style={styles.label}>Scored At:</Text>
+        <Text style={[styles.label, { fontWeight: "normal" }]}>Scored At:</Text>
         <Text style={styles.value}>{formatDate(score.round2ScoredAt)}</Text>
       </View>
       {score.overallScore !== undefined && (
@@ -100,7 +102,9 @@ export default function ScoreCard({
             }}
             onPress={() => setModalVisible(true)}
           >
-            <Text style={{ color: "#fff", fontWeight: "bold" }}>Delete Score</Text>
+            <Text style={{ color: "#fff", fontWeight: "bold" }}>
+              Delete Score
+            </Text>
           </TouchableOpacity>
           <Modal
             visible={modalVisible}
@@ -108,24 +112,34 @@ export default function ScoreCard({
             animationType="fade"
             onRequestClose={() => setModalVisible(false)}
           >
-            <View style={{
-              flex: 1,
-              justifyContent: "center",
-              alignItems: "center",
-              backgroundColor: "rgba(0,0,0,0.3)"
-            }}>
-              <View style={{
-                backgroundColor: "#fff",
-                padding: 24,
-                borderRadius: 12,
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
                 alignItems: "center",
-                minWidth: 250,
-              }}>
-                <Text style={{ fontSize: 16, marginBottom: 16, textAlign: "center" }}>
+                backgroundColor: "rgba(0,0,0,0.3)",
+              }}
+            >
+              <View
+                style={{
+                  backgroundColor: "#fff",
+                  padding: 24,
+                  borderRadius: 12,
+                  alignItems: "center",
+                  minWidth: 250,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    marginBottom: 16,
+                    textAlign: "center",
+                  }}
+                >
                   Are you sure you want to delete this score?
                 </Text>
                 <View style={{ flexDirection: "row", marginTop: 8 }}>
-                   <TouchableOpacity
+                  <TouchableOpacity
                     style={{
                       backgroundColor: "#eee",
                       padding: 10,
@@ -144,13 +158,15 @@ export default function ScoreCard({
                     }}
                     onPress={handleDelete}
                   >
-                    <Text style={{ color: "#fff", fontWeight: "bold" }}>Delete</Text>
+                    <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                      Delete
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
             </View>
           </Modal>
-          </>
+        </>
       )}
     </View>
   );
