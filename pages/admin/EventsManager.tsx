@@ -20,6 +20,8 @@ import {
   TextInput,
   ActivityIndicator,
 } from "react-native";
+import { Dropdown } from "react-native-element-dropdown";
+
 import styles from "../../components/styles/adminStyles/EventsStyle";
 
 import { Feather, AntDesign } from "@expo/vector-icons";
@@ -30,6 +32,7 @@ export const EventsManager = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [creating, setCreating] = useState(false);
+  const [loadingEvents, setLoadingEvents] = useState(true);
 
   type EventInput = {
     title: string;
@@ -43,8 +46,17 @@ export const EventsManager = () => {
     category: "",
   });
 
+  const categories = [
+    { label: "Robomission-Elementary", value: "Robomission-Elementary" },
+    { label: "Robomission-Junior", value: "Robomission-Junior" },
+    { label: "Robomission-Senior", value: "Robomission-Senior" },
+    { label: "Future Innovators", value: "Future Innovators" },
+    // Add more categories as needed
+  ];
+
   useEffect(() => {
     const fetchEvents = async () => {
+      setLoadingEvents(true);
       const db = getFirestore();
       const snapshot = await getDocs(collection(db, "events"));
       const eventList = snapshot.docs.map((doc) => ({
@@ -52,6 +64,7 @@ export const EventsManager = () => {
         ...doc.data(),
       }));
       setEvents(eventList);
+      setLoadingEvents(false);
     };
     fetchEvents();
   }, []);
@@ -80,6 +93,7 @@ export const EventsManager = () => {
         });
       }
       // Fetch updated events list
+      setLoadingEvents(true); // <--- Add this
       const snapshot = await getDocs(collection(db, "events"));
       const eventList = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -88,6 +102,7 @@ export const EventsManager = () => {
       setEvents(eventList);
       setInputData({ title: "", date: "", category: "" });
       setEventModal(false);
+      setLoadingEvents(false); // <--- Add this
     } catch (error) {
       alert("Error creating/editing event.");
       console.error(error);
@@ -99,11 +114,19 @@ export const EventsManager = () => {
   const handleDeleteEvent = async (id: string) => {
     const db = getFirestore();
     try {
+      setLoadingEvents(true); // <--- Add this
       await deleteDoc(doc(db, "events", id));
-      setEvents(events.filter((event) => event.id !== id));
+      const snapshot = await getDocs(collection(db, "events"));
+      const eventList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setEvents(eventList);
+      setLoadingEvents(false); // <--- Add this
     } catch (error) {
       alert("Error deleting event.");
       console.error(error);
+      setLoadingEvents(false);
     }
   };
 
@@ -119,7 +142,13 @@ export const EventsManager = () => {
 
   return (
     <View style={styles.container}>
-      {events.length === 0 ? (
+      {loadingEvents ? (
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color="#432344" />
+        </View>
+      ) : events.length === 0 ? (
         <View style={styles.contentContainer}>
           <Image
             style={{
@@ -145,34 +174,43 @@ export const EventsManager = () => {
               style={styles.addEventButton}
               onPress={() => setEventModal(true)}
             >
-              <Text style={styles.textButton}>Create Event</Text>
+              <Text style={styles.textButton}>
+                <Text style={styles.addEventButton}>
+                  {editingId ? "Edit Event" : "Create New Event"}
+                </Text>
+              </Text>
             </TouchableOpacity>
           </View>
+
           <View style={styles.eventList}>
             <FlatList
               data={events}
               keyExtractor={(item, idx) => idx.toString()}
               renderItem={({ item }) => (
-                <View style={styles.eventCard}>
-                  <Text style={styles.eventTitle}>{item.title}</Text>
-                  <Text style={styles.eventDetail}>Date: {item.date}</Text>
-                  <Text style={styles.eventDetail}>
-                    Category: {item.category}
-                  </Text>
-                  <View style={{ flexDirection: "row", marginTop: 8 }}>
-                    <TouchableOpacity
-                      style={{ marginRight: 16 }}
-                      onPress={() => handleEditEvent(item)}
-                    >
-                      <Feather name="edit" size={20} color="#432344" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDeleteEvent(item.id)}
-                    >
-                      <AntDesign name="delete" size={20} color="red" />
-                    </TouchableOpacity>
+                <TouchableOpacity>
+                  <View style={styles.eventCard}>
+                    <Text style={styles.eventTitle}>{item.title}</Text>
+                    <Text style={styles.eventDetail}>
+                      Date of event: {item.date}
+                    </Text>
+                    <Text style={styles.eventDetail}>
+                      Category: {item.category}
+                    </Text>
+                    <View style={{ flexDirection: "row", marginTop: 8 }}>
+                      <TouchableOpacity
+                        style={{ marginRight: 16 }}
+                        onPress={() => handleEditEvent(item)}
+                      >
+                        <Feather name="edit" size={20} color="#432344" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleDeleteEvent(item.id)}
+                      >
+                        <AntDesign name="delete" size={20} color="red" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
+                </TouchableOpacity>
               )}
             />
           </View>
@@ -209,7 +247,7 @@ export const EventsManager = () => {
               </View>
 
               <View>
-                <Text style={styles.label}>Date</Text>
+                <Text style={styles.label}>Date of event</Text>
                 <TextInput
                   style={styles.textModalInput}
                   placeholder="ex. 09/20/25"
@@ -223,13 +261,15 @@ export const EventsManager = () => {
 
               <View>
                 <Text style={styles.label}>Category</Text>
-                <TextInput
+                <Dropdown
                   style={styles.textModalInput}
-                  placeholder="ex. Robomission-Elementary"
-                  placeholderTextColor="#999"
-                  value={inputData.category || ""}
-                  onChangeText={(text) =>
-                    setInputData((data) => ({ ...data, category: text }))
+                  data={categories}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Category"
+                  value={inputData.category}
+                  onChange={(item) =>
+                    setInputData((data) => ({ ...data, category: item.value }))
                   }
                 />
               </View>
@@ -262,7 +302,10 @@ export const EventsManager = () => {
                   style={styles.button}
                   onPress={handleCreateEvent}
                 >
-                  <Text style={{ color: "blue" }}>Create Event</Text>
+                  <Text style={{ color: "blue" }}>
+                    {" "}
+                    {editingId ? "Update Event" : "Create Event"}
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
