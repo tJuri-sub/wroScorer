@@ -15,6 +15,7 @@
     "@react-navigation/bottom-tabs": "^7.3.2",
     "@react-navigation/drawer": "^7.5.0",
     "@react-navigation/native-stack": "^7.3.0",
+    "@react-navigation/stack": "^7.4.8",
     "bcryptjs": "^3.0.2",
     "expo": "^53.0.12",
     "expo-font": "~13.3.1",
@@ -28,6 +29,7 @@
     "react-dom": "19.0.0",
     "react-native": "0.79.4",
     "react-native-country-picker-modal": "^2.0.0",
+    "react-native-dropdown-picker": "^5.4.6",
     "react-native-element-dropdown": "^2.12.4",
     "react-native-flags": "^1.0.0",
     "react-native-paper": "^5.14.5",
@@ -36,6 +38,7 @@
     "react-native-table-component": "^1.2.2",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "^0.20.0",
+    "react-navigation-stack": "^2.10.4",
     "rn-country-dropdown-picker": "^2.1.8",
     "xlsx": "^0.18.5"
   },

@@ -15,9 +15,12 @@ import {
   collection,
   getDocs,
   onSnapshot,
+  query,
+  where,
 } from "firebase/firestore";
 import styles from "../../components/styles/judgeStyles/LeaderboardStyling";
 import { AntDesign, Feather } from "@expo/vector-icons";
+import DropDownPicker from "react-native-dropdown-picker";
 import * as XLSX from "xlsx";
 
 import { CategoryPills } from "../../components/component/categoryPillsAdmin";
@@ -31,13 +34,18 @@ function parseTimeString(timeStr: string) {
   return (mm || 0) * 60000 + (ss || 0) * 1000 + (ms || 0);
 }
 
-export default function AdminLeaderboard({ navigation }: any) {
+export default function AdminOverallScores({ navigation }: any) {
   const [scoresLoading, setScoresLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
+
+  // Event filter states
+  const [events, setEvents] = useState<any[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<string>("all");
+  const [eventDropdownOpen, setEventDropdownOpen] = useState(false);
 
   const scrollRef = useRef<FlatList<any>>(null);
 
@@ -88,6 +96,23 @@ export default function AdminLeaderboard({ navigation }: any) {
     fetchCategories();
   }, []);
 
+  // Fetch events for filtering
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const db = getFirestore();
+      const eventsSnap = await getDocs(collection(db, "events"));
+      const eventsList = eventsSnap.docs.map((doc) => ({
+        id: doc.id,
+        title: doc.data().title || "Untitled Event",
+        date: doc.data().date || "",
+      }));
+      // Sort events by date (newest first)
+      eventsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setEvents([{ id: "all", title: "All Events", date: "" }, ...eventsList]);
+    };
+    fetchEvents();
+  }, []);
+
   useEffect(() => {
     if (!selectedCategory) return;
     setScoresLoading(true);
@@ -102,7 +127,22 @@ export default function AdminLeaderboard({ navigation }: any) {
       });
     });
 
-    const scoresUnsub = onSnapshot(collection(db, "scores2"), (scoresSnap) => {
+    // Create query based on event selection
+    let scoresQuery;
+    if (selectedEvent === "all") {
+      scoresQuery = query(
+        collection(db, "scores"),
+        where("category", "==", selectedCategory)
+      );
+    } else {
+      scoresQuery = query(
+        collection(db, "scores"),
+        where("category", "==", selectedCategory),
+        where("eventId", "==", selectedEvent)
+      );
+    }
+
+    const scoresUnsub = onSnapshot(scoresQuery, (scoresSnap) => {
       const scores = scoresSnap.docs
         .map((doc) => {
           const data = doc.data() as {
@@ -113,11 +153,11 @@ export default function AdminLeaderboard({ navigation }: any) {
             category?: string;
             teamId?: string;
             teamName?: string;
+            eventId?: string;
             [key: string]: any;
           };
           return { id: doc.id, ...data };
-        })
-        .filter((score) => score.category === selectedCategory);
+        });
 
       const teamMap: Record<string, any> = {};
       scores.forEach((score) => {
@@ -171,14 +211,18 @@ export default function AdminLeaderboard({ navigation }: any) {
       teamsUnsub();
       scoresUnsub();
     };
-  }, [selectedCategory]);
+  }, [selectedCategory, selectedEvent]);
 
   const exportOverallScores = (categoryLabel: string) => {
     if (leaderboard.length === 0) return;
 
+    // Get event info for filename
+    const eventInfo = selectedEvent === "all" ? "All_Events" : 
+      events.find(e => e.id === selectedEvent)?.title?.replace(/\s+/g, "_") || selectedEvent;
+
     // 1. Prepare data
-    const data = leaderboard.map((team) => ({
-      Rank: team.overallRank,
+    const data = leaderboard.map((team, index) => ({
+      Rank: index + 1,
       Team: team.teamName,
       "Round 1 Score": team.round1Score ?? "-",
       "Round 2 Score": team.round2Score ?? "-",
@@ -187,7 +231,7 @@ export default function AdminLeaderboard({ navigation }: any) {
     // Create worksheet and workbook
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Leaderboard");
+    XLSX.utils.book_append_sheet(wb, ws, "Overall Scores");
 
     // Export
     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
@@ -200,7 +244,7 @@ export default function AdminLeaderboard({ navigation }: any) {
       categories.find((c) => c.id === selectedCategory)?.label ||
       selectedCategory;
 
-    a.download = `leaderboard_${catLabel.replace(/\s+/g, "_")}.xlsx`;
+    a.download = `overall_scores_${catLabel.replace(/\s+/g, "_")}_${eventInfo}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -238,12 +282,46 @@ export default function AdminLeaderboard({ navigation }: any) {
             style={[stickyStyles.searchInput, { maxWidth: 340, width: "100%" }]}
           />
         </View>
+
+        {/* Event Filter Dropdown */}
+        <View style={{ marginBottom: 8, zIndex: 1000 }}>
+          <DropDownPicker
+            open={eventDropdownOpen}
+            setOpen={setEventDropdownOpen}
+            value={selectedEvent}
+            setValue={setSelectedEvent}
+            items={events.map(event => ({
+              label: event.id === "all" ? "All Events" : `${event.title}${event.date ? ` (${event.date})` : ''}`,
+              value: event.id,
+            }))}
+            placeholder="Select Event"
+            style={{
+              borderWidth: 1,
+              borderColor: "#e0e0e0",
+              backgroundColor: "#fafafa",
+              minHeight: 40,
+            }}
+            textStyle={{
+              fontSize: 14,
+            }}
+            dropDownContainerStyle={{
+              borderWidth: 1,
+              borderColor: "#e0e0e0",
+              backgroundColor: "#fafafa",
+            }}
+            listItemLabelStyle={{
+              fontSize: 14,
+            }}
+          />
+        </View>
+
         <CategoryPills
           categories={categories}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
         />
       </View>
+      
       {/* Leaderboard List */}
       <View style={{ flex: 1, marginHorizontal: 10 }}>
         <View style={stickyStyles.header}>
@@ -270,7 +348,9 @@ export default function AdminLeaderboard({ navigation }: any) {
               alignItems: "center",
             }}
           >
-            <Text style={{ textAlign: "center" }}>No scores yet!</Text>
+            <Text style={{ textAlign: "center" }}>
+              {selectedEvent === "all" ? "No scores yet!" : "No scores for this event yet!"}
+            </Text>
           </View>
         ) : (
           <FlatList
@@ -281,39 +361,33 @@ export default function AdminLeaderboard({ navigation }: any) {
               const overallRank = startIndex + index;
               const rankDisplay = `${overallRank + 1}.`;
               return (
-                <FlatList
-                  data={[item]}
-                  keyExtractor={(subItem) => subItem.teamId}
-                  contentContainerStyle={{ paddingTop: 60, paddingBottom: 20 }}
-                  renderItem={({ item: subItem }) => (
-                    <View style={stickyStyles.row}>
-                      <Text style={stickyStyles.cell}>
-                        {rankDisplay} {subItem.teamName}
-                      </Text>
-                      <Text
-                        style={[
-                          stickyStyles.cell,
-                          { textAlign: "center", fontSize: 18 },
-                        ]}
-                      >
-                        {subItem.round1Score ?? "N/A"}
-                      </Text>
-                      <Text
-                        style={[
-                          stickyStyles.cell,
-                          { textAlign: "center", fontSize: 18 },
-                        ]}
-                      >
-                        {subItem.round2Score ?? "N/A"}
-                      </Text>
-                    </View>
-                  )}
-                />
+                <View style={stickyStyles.row}>
+                  <Text style={stickyStyles.cell}>
+                    {rankDisplay} {item.teamName}
+                  </Text>
+                  <Text
+                    style={[
+                      stickyStyles.cell,
+                      { textAlign: "center", fontSize: 18 },
+                    ]}
+                  >
+                    {item.round1Score ?? "N/A"}
+                  </Text>
+                  <Text
+                    style={[
+                      stickyStyles.cell,
+                      { textAlign: "center", fontSize: 18 },
+                    ]}
+                  >
+                    {item.round2Score ?? "N/A"}
+                  </Text>
+                </View>
               );
             }}
           />
         )}
       </View>
+      
       {/* Sticky Pagination Controls */}
       <View style={stickyStyles.paginationContainer}>
         <View style={{ flexDirection: "row" }}>
@@ -353,6 +427,7 @@ export default function AdminLeaderboard({ navigation }: any) {
         </View>
         <Text style={{ color: "#555", marginLeft: 16 }}>
           Showing {currentRecords.length} of {leaderboard.length} teams
+          {selectedEvent !== "all" && ` (${events.find(e => e.id === selectedEvent)?.title || 'Selected Event'})`}
         </Text>
       </View>
     </View>
