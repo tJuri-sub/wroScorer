@@ -48,7 +48,6 @@ const EventsScreen = () => {
 
   // Fetch event and judges - Remove assignModal from dependencies
 useEffect(() => {
-  // Add guard clause to prevent execution if eventId is undefined
   if (!eventId || !category) {
     console.error('EventId or category is undefined');
     setLoading(false);
@@ -73,23 +72,26 @@ useEffect(() => {
       const eventData = eventDoc.data();
       setEvent(eventData);
 
-      // Fetch judges matching event category
+      // Fetch judges matching event category and not disabled
       const judgesSnapshot = await getDocs(collection(db, "judge-users"));
       const judgeList = judgesSnapshot.docs
         .map(doc => {
           const data = doc.data();
-          return { id: doc.id, ...data, category: data.category };
+          return { id: doc.id, ...data, category: data.category, disabled: data.disabled ?? false, };
         })
         .filter(judge => {
             const judgeCat = judge.category || "";
             const eventCat = category || "";
-            return judgeCat === eventCat;
+            return judgeCat === eventCat && !judge.disabled;
         });
       setJudges(judgeList);
 
       // Load assigned judges for this specific category
       const categoryJudges = eventData?.categoryData?.[category]?.judges || [];
-      setSelectedJudges(Array.isArray(categoryJudges) ? categoryJudges : []);
+      const filteredCategoryJudges = categoryJudges.filter((jid: string) =>
+          judgeList.some(j => j.id === jid)
+        );
+      setSelectedJudges(Array.isArray(filteredCategoryJudges) ? filteredCategoryJudges : []);
     } catch (error) {
       console.error('Error fetching event and judges:', error);
     } finally {
@@ -102,11 +104,14 @@ useEffect(() => {
 
 // Add a separate useEffect to update selectedJudges when event changes
 useEffect(() => {
-  if (event && category) {
-    const categoryJudges = event?.categoryData?.[category]?.judges || [];
-    setSelectedJudges(Array.isArray(categoryJudges) ? categoryJudges : []);
-  }
-}, [event, category]);
+    if (event && category) {
+      const categoryJudges = event?.categoryData?.[category]?.judges || [];
+      const filteredCategoryJudges = categoryJudges.filter((jid: string) =>
+        judges.some(j => j.id === jid)
+      );
+      setSelectedJudges(Array.isArray(filteredCategoryJudges) ? filteredCategoryJudges : []);
+    }
+  }, [event, category, judges]);
 
   const handleSaveJudges = async () => {
     if (!eventId || !category) return;
@@ -119,13 +124,18 @@ useEffect(() => {
       const eventRef = doc(db, "events", eventId);
       const eventDoc = await getDoc(eventRef);
       const currentData = eventDoc.data() || {};
+
+      // Only save non-disabled judges
+      const validJudges = selectedJudges.filter(jid =>
+        judges.some(j => j.id === jid)
+      );
       
       // Update the category-specific judges data
       const updatedCategoryData = {
         ...currentData.categoryData,
         [category]: {
           ...currentData.categoryData?.[category],
-          judges: selectedJudges
+          judges: validJudges
         }
       };
       
@@ -148,15 +158,20 @@ useEffect(() => {
       try {
         const db = getFirestore();
         const teamsSnapshot = await getDocs(collection(db, "categories", category, "teams"));
-        const teamList = teamsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const teamList = teamsSnapshot.docs
+          .map(doc => {
+            const data = doc.data();
+            return { id: doc.id, ...data, disabled: data.disabled ?? false };
+          })
+        .filter(team => !team.disabled);
         setTeams(teamList);
 
         // Load assigned teams for this specific category
         const categoryTeams = event?.categoryData?.[category]?.teams || [];
-        setSelectedTeams(Array.isArray(categoryTeams) ? categoryTeams : []);
+        const filteredCategoryTeams = categoryTeams.filter((tid: string) =>
+          teamList.some(t => t.id === tid)
+        );
+        setSelectedTeams(Array.isArray(filteredCategoryTeams) ? filteredCategoryTeams : []);
       } catch (error) {
         console.error('Error fetching teams:', error);
       }
@@ -176,13 +191,18 @@ useEffect(() => {
     const eventRef = doc(db, "events", eventId);
     const eventDoc = await getDoc(eventRef);
     const currentData = eventDoc.data() || {};
+
+    // Only save non-disabled teams
+      const validTeams = selectedTeams.filter(tid =>
+        teams.some(t => t.id === tid)
+      );
     
     // Update the category-specific teams data
     const updatedCategoryData = {
       ...currentData.categoryData,
       [category]: {
         ...currentData.categoryData?.[category],
-        teams: selectedTeams
+        teams: validTeams
       }
     };
     
