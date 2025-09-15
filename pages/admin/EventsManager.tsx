@@ -20,13 +20,16 @@ import {
   TextInput,
   ActivityIndicator,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { Dropdown } from "react-native-element-dropdown";
 
 import styles from "../../components/styles/adminStyles/EventsStyle";
 
 import { Feather, AntDesign } from "@expo/vector-icons";
 
+
 export const EventsManager = () => {
+  const navigation = useNavigation();
   const [eventModal, setEventModal] = useState<boolean>(false);
   const [events, setEvents] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -37,23 +40,16 @@ export const EventsManager = () => {
   type EventInput = {
     title: string;
     date: string;
-    category: string;
+    //category: string;
   };
 
   const [inputData, setInputData] = useState<EventInput>({
     title: "",
     date: "",
-    category: "",
+    //category: "",
   });
 
-  const categories = [
-    { label: "Robomission-Elementary", value: "Robomission-Elementary" },
-    { label: "Robomission-Junior", value: "Robomission-Junior" },
-    { label: "Robomission-Senior", value: "Robomission-Senior" },
-    { label: "Future Innovators", value: "Future Innovators" },
-    // Add more categories as needed
-  ];
-
+  
   useEffect(() => {
     const fetchEvents = async () => {
       setLoadingEvents(true);
@@ -72,7 +68,7 @@ export const EventsManager = () => {
   const handleCreateEvent = async () => {
     const db = getFirestore();
     try {
-      if (!inputData.title || !inputData.date || !inputData.category) {
+      if (!inputData.title || !inputData.date) {
         alert("Please fill all fields.");
         return;
       }
@@ -81,14 +77,12 @@ export const EventsManager = () => {
         await updateDoc(doc(db, "events", editingId), {
           title: inputData.title,
           date: inputData.date,
-          category: inputData.category,
         });
         setEditingId(null);
       } else {
         await addDoc(collection(db, "events"), {
           title: inputData.title,
           date: inputData.date,
-          category: inputData.category,
           createdAt: new Date().toISOString(),
         });
       }
@@ -100,7 +94,7 @@ export const EventsManager = () => {
         ...doc.data(),
       }));
       setEvents(eventList);
-      setInputData({ title: "", date: "", category: "" });
+      setInputData({ title: "", date: ""});
       setEventModal(false);
       setLoadingEvents(false); // <--- Add this
     } catch (error) {
@@ -134,7 +128,6 @@ export const EventsManager = () => {
     setInputData({
       title: event.title,
       date: event.date,
-      category: event.category,
     });
     setEditingId(event.id); // Add editingId state
     setEventModal(true);
@@ -187,14 +180,11 @@ export const EventsManager = () => {
               data={events}
               keyExtractor={(item, idx) => idx.toString()}
               renderItem={({ item }) => (
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => (navigation as any).navigate('EventCategory', { eventId: item.id })}>
                   <View style={styles.eventCard}>
                     <Text style={styles.eventTitle}>{item.title}</Text>
                     <Text style={styles.eventDetail}>
                       Date of event: {item.date}
-                    </Text>
-                    <Text style={styles.eventDetail}>
-                      Category: {item.category}
                     </Text>
                     <View style={{ flexDirection: "row", marginTop: 8 }}>
                       <TouchableOpacity
@@ -259,20 +249,6 @@ export const EventsManager = () => {
                 />
               </View>
 
-              <View>
-                <Text style={styles.label}>Category</Text>
-                <Dropdown
-                  style={styles.textModalInput}
-                  data={categories}
-                  labelField="label"
-                  valueField="value"
-                  placeholder="Select Category"
-                  value={inputData.category}
-                  onChange={(item) =>
-                    setInputData((data) => ({ ...data, category: item.value }))
-                  }
-                />
-              </View>
             </View>
 
             <View

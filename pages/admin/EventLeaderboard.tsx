@@ -5,7 +5,6 @@ import {
   FlatList,
   ActivityIndicator,
   ScrollView,
-  Share,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
@@ -21,12 +20,10 @@ import {
 } from "firebase/firestore";
 import styles from "../../components/styles/judgeStyles/LeaderboardStyling";
 import { AntDesign, Feather } from "@expo/vector-icons";
-import { CategoryPills } from "../../components/component/categoryPillsAdmin";
-import DropDownPicker from "react-native-dropdown-picker";
 import * as XLSX from "xlsx";
+import { useRoute } from "@react-navigation/native";
 
 const RECORDS_PER_PAGE = 10;
-const windowHeight = Dimensions.get("window").height;
 
 function parseTimeString(timeStr: string) {
   if (!timeStr) return Infinity;
@@ -34,152 +31,110 @@ function parseTimeString(timeStr: string) {
   return (mm || 0) * 60000 + (ss || 0) * 1000 + (ms || 0);
 }
 
-export default function Leaderboard({ navigation }: any) {
-  const [allLeaderboard, setAllLeaderboard] = useState<any[]>([]);
-  const [scoresLoading, setScoresLoading] = useState(true);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+export default function EventLeaderboard({ navigation }: any) {
+  const route = useRoute();
+  const params = route.params as { eventId?: string; category?: string; date?: string } || {};
+  const { eventId, category, date } = params;
+
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [scoresLoading, setScoresLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
-
-  // Event filter states
-  const [events, setEvents] = useState<any[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<string>("all");
-  const [eventDropdownOpen, setEventDropdownOpen] = useState(false);
+  const [eventTitle, setEventTitle] = useState("");
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      title: `${category} - Event Leaderboard`,
       headerLeft: () => (
         <TouchableOpacity
-          onPress={() => navigation.openDrawer()}
+          onPress={() => navigation.goBack()}
           style={{ marginLeft: 15 }}
         >
-          <Feather name="menu" size={24} color="black" />
+          <AntDesign name="arrowleft" size={24} color="black" />
         </TouchableOpacity>
       ),
       headerRight: () => (
         <TouchableOpacity
-          onPress={() => exportLeaderboard(selectedCategory)}
-          style={{
-            marginRight: 15,
-          }}
+          onPress={() => exportLeaderboard()}
+          style={{ marginRight: 15 }}
         >
           <AntDesign name="export" size={24} color="black" />
         </TouchableOpacity>
       ),
     });
-  }, [navigation, selectedCategory]);
+  }, [navigation, category]);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      const db = getFirestore();
-      const categoriesSnap = await getDocs(collection(db, "categories"));
-      let cats = categoriesSnap.docs.map((doc) => ({
-        id: doc.id,
-        label: doc.data().label || doc.id,
-      }));
+    if (!eventId || !category) {
+      setScoresLoading(false);
+      return;
+    }
 
-      // Custom sort order
-      const order = ["robo-elem", "robo-junior", "robo-senior", "robosports"];
-      cats = [
-        ...(order
-          .map((catId) => cats.find((cat) => cat.id === catId))
-          .filter(Boolean) as { id: string; label: any }[]),
-        ...cats.filter((cat) => !order.includes(cat.id)),
-      ];
-
-      setCategories(cats);
-      if (cats.length > 0) setSelectedCategory(cats[0].id);
+    // Fetch event title
+    const fetchEventTitle = async () => {
+      try {
+        const db = getFirestore();
+        const eventDoc = await getDocs(query(
+          collection(db, "events"),
+          where("__name__", "==", eventId)
+        ));
+        if (!eventDoc.empty) {
+          const eventData = eventDoc.docs[0].data();
+          setEventTitle(eventData.title || "Event");
+        }
+      } catch (error) {
+        console.error("Error fetching event:", error);
+      }
     };
-    fetchCategories();
-  }, []);
 
-  // Fetch events for filtering
-  useEffect(() => {
-    const fetchEvents = async () => {
-      const db = getFirestore();
-      const eventsSnap = await getDocs(collection(db, "events"));
-      const eventsList = eventsSnap.docs.map((doc) => ({
-        id: doc.id,
-        title: doc.data().title || "Untitled Event",
-        date: doc.data().date || "",
-      }));
-      // Sort events by date (newest first)
-      eventsList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setEvents([{ id: "all", title: "All Events", date: "" }, ...eventsList]);
-    };
-    fetchEvents();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedCategory) return;
+    fetchEventTitle();
     setScoresLoading(true);
 
     const db = getFirestore();
-    let teamsMap: Record<string, any> = {};
+    
+    // Query scores for specific event and category
+    const scoresQuery = query(
+      collection(db, "scores"),
+      where("eventId", "==", eventId),
+      where("category", "==", category)
+    );
 
-    const teamsUnsub = onSnapshot(collection(db, "teams"), (teamsSnap) => {
-      teamsMap = {};
-      teamsSnap.forEach((doc) => {
-        teamsMap[doc.id] = { id: doc.id, ...doc.data() };
-      });
-    });
-
-    // Create query based on event selection
-    let scoresQuery;
-    if (selectedEvent === "all") {
-      scoresQuery = query(
-        collection(db, "scores"),
-        where("category", "==", selectedCategory)
-      );
-    } else {
-      scoresQuery = query(
-        collection(db, "scores"),
-        where("category", "==", selectedCategory),
-        where("eventId", "==", selectedEvent)
-      );
-    }
-
-    const scoresUnsub = onSnapshot(scoresQuery, (scoresSnap) => {
-      const scores = scoresSnap.docs
-        .map((doc) => {
-          const data = doc.data() as {
-            round1Score?: number;
-            round2Score?: number;
-            time1?: string;
-            time2?: string;
-            category?: string;
-            teamId?: string;
-            teamName?: string;
-            eventId?: string;
-            [key: string]: any;
-          };
-          return { id: doc.id, ...data };
-        });
-
+    const unsubscribe = onSnapshot(scoresQuery, (scoresSnap) => {
       const teamMap: Record<string, any> = {};
-      scores.forEach((score) => {
-        const teamId = score.teamId;
-        if (teamId && !teamsMap[teamId]?.disabled) {
+      
+      scoresSnap.docs.forEach((doc) => {
+        const data = doc.data() as {
+          round1Score?: number;
+          round2Score?: number;
+          time1?: string;
+          time2?: string;
+          teamId?: string;
+          teamName?: string;
+          [key: string]: any;
+        };
+        
+        const teamId = data.teamId;
+        if (teamId) {
           if (!teamMap[teamId]) {
             teamMap[teamId] = {
-              teamName: score.teamName || teamsMap[teamId]?.teamName || "",
+              teamName: data.teamName || "",
               teamId: teamId,
-              round1Score: score.round1Score,
-              round2Score: score.round2Score,
-              time1: score.time1,
-              time2: score.time2,
+              round1Score: data.round1Score,
+              round2Score: data.round2Score,
+              time1: data.time1,
+              time2: data.time2,
             };
           }
         }
       });
 
+      // Calculate best scores and times
       Object.values(teamMap).forEach((team: any) => {
         const r1 = team.round1Score ?? null;
         const r2 = team.round2Score ?? null;
         const t1 = team.time1 ?? "";
         const t2 = team.time2 ?? "";
+        
         if (r1 !== null && (r2 === null || r1 >= r2)) {
           team.bestScore = r1;
           team.bestTime = t1;
@@ -202,7 +157,7 @@ export default function Leaderboard({ navigation }: any) {
         })
         .map((team, idx) => ({
           ...team,
-          overallRank: idx + 1, // assign true rank
+          overallRank: idx + 1,
         }));
 
       setLeaderboard(leaderboardArr);
@@ -210,20 +165,12 @@ export default function Leaderboard({ navigation }: any) {
       setScoresLoading(false);
     });
 
-    return () => {
-      teamsUnsub();
-      scoresUnsub();
-    };
-  }, [selectedCategory, selectedEvent]);
+    return () => unsubscribe();
+  }, [eventId, category]);
 
-  const exportLeaderboard = (categoryLabel: string) => {
+  const exportLeaderboard = () => {
     if (leaderboard.length === 0) return;
 
-    // Get event info for filename
-    const eventInfo = selectedEvent === "all" ? "All_Events" : 
-      events.find(e => e.id === selectedEvent)?.title?.replace(/\s+/g, "_") || selectedEvent;
-
-    // 1. Prepare data
     const data = leaderboard.map((team) => ({
       Rank: team.overallRank,
       Team: team.teamName,
@@ -231,23 +178,16 @@ export default function Leaderboard({ navigation }: any) {
       "Best Time": team.bestTime,
     }));
 
-    // 2. Create worksheet and workbook
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Leaderboard");
+    XLSX.utils.book_append_sheet(wb, ws, "Event Leaderboard");
 
-    // 3. Write workbook to binary string
     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-
-    // 4. Create Blob and download link
     const blob = new Blob([wbout], { type: "application/octet-stream" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-
-    // Use category and event info in file name
-    const safeCategory = categoryLabel.replace(/\s+/g, "_");
-    a.download = `leaderboard_${safeCategory}_${eventInfo}.xlsx`;
+    a.download = `event_leaderboard_${category}_${date || 'unknown'}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -272,86 +212,53 @@ export default function Leaderboard({ navigation }: any) {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
+  if (!eventId || !category) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ fontSize: 18, color: 'red' }}>
+          Error: Event ID or Category is missing.
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1 }}>
-      {/* Sticky Tabs */}
-      <View style={stickyStyles.tabsContainer}>
-        <View style={{ marginBottom: 8 }}>
-          <TextInput
-            placeholder="Search teams..."
-            placeholderTextColor="#999999"
-            value={search}
-            onChangeText={setSearch}
-            style={[stickyStyles.searchInput, { maxWidth: 340, width: "100%" }]}
-          />
-        </View>
-        
-        {/* Event Filter Dropdown */}
-        <View style={{ marginBottom: 8, zIndex: 1000 }}>
-          <DropDownPicker
-            open={eventDropdownOpen}
-            setOpen={setEventDropdownOpen}
-            value={selectedEvent}
-            setValue={setSelectedEvent}
-            items={events.map(event => ({
-              label: event.id === "all" ? "All Events" : `${event.title}${event.date ? ` (${event.date})` : ''}`,
-              value: event.id,
-            }))}
-            placeholder="Select Event"
-            style={{
-              borderWidth: 1,
-              borderColor: "#e0e0e0",
-              backgroundColor: "#fafafa",
-              minHeight: 40,
-            }}
-            textStyle={{
-              fontSize: 14,
-            }}
-            dropDownContainerStyle={{
-              borderWidth: 1,
-              borderColor: "#e0e0e0",
-              backgroundColor: "#fafafa",
-            }}
-            listItemLabelStyle={{
-              fontSize: 14,
-            }}
-          />
-        </View>
+      {/* Header Info */}
+      <View style={stickyStyles.headerContainer}>
+        <Text style={stickyStyles.eventTitle}>{eventTitle}</Text>
+        <Text style={stickyStyles.eventInfo}>
+          {category} • {date}
+        </Text>
+      </View>
 
-        <CategoryPills
-          categories={categories}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
+      {/* Search and Controls */}
+      <View style={stickyStyles.tabsContainer}>
+        <TextInput
+          placeholder="Search teams..."
+          placeholderTextColor="#999999"
+          value={search}
+          onChangeText={setSearch}
+          style={stickyStyles.searchInput}
         />
       </View>
-      
+
       {/* Leaderboard List */}
       <View style={{ flex: 1 }}>
         {scoresLoading ? (
-          <View
-            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-          >
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
             <ActivityIndicator size="large" />
           </View>
         ) : currentRecords.length === 0 ? (
-          <View
-            style={{
-              flex: 1,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ textAlign: "center" }}>
-              {selectedEvent === "all" ? "No scores yet!" : "No scores for this event yet!"}
-            </Text>
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <Text style={{ textAlign: "center" }}>No scores yet for this event!</Text>
           </View>
         ) : (
           <FlatList
             data={currentRecords}
             keyExtractor={(item) => item.teamId}
             renderItem={({ item, index }) => {
-              const overallRank = item.overallRank - 1; // zero-based index
+              const overallRank = item.overallRank - 1;
               const rankColors = ["#F8AA0C", "#3A9F6C", "#0081CC"];
               const isTopThree = overallRank < 3;
               const cardBg = isTopThree ? rankColors[overallRank] : "#fff";
@@ -360,17 +267,16 @@ export default function Leaderboard({ navigation }: any) {
               const rankDisplay = isTopThree
                 ? rankIcons[overallRank]
                 : `${item.overallRank}.`;
+              
               return (
-                <View
-                  style={[styles.containerCard, { backgroundColor: cardBg }]}
-                >
+                <View style={[styles.containerCard, { backgroundColor: cardBg }]}>
                   <Text
                     style={{
                       width: 25,
                       textAlign: "center",
                       fontFamily: "Inter_400Regular",
                       fontWeight: isTopThree ? "700" : "500",
-                      fontSize: isTopThree ? 22 : 12, // Enlarged medal icon
+                      fontSize: isTopThree ? 22 : 12,
                       color: textColor,
                       marginRight: 5,
                       marginVertical: "auto",
@@ -420,8 +326,8 @@ export default function Leaderboard({ navigation }: any) {
           />
         )}
       </View>
-      
-      {/* Sticky Pagination Controls */}
+
+      {/* Pagination Controls */}
       <View style={stickyStyles.paginationContainer}>
         <View style={{ flexDirection: "row" }}>
           <TouchableOpacity
@@ -434,9 +340,11 @@ export default function Leaderboard({ navigation }: any) {
               borderRadius: 6,
             }}
           >
-            <Text style={{ color: currentPage === 1 ? "#aaa" : "#fff" }}>
-              <AntDesign name="left" size={16} color="black" />
-            </Text>
+            <AntDesign 
+              name="left" 
+              size={16} 
+              color={currentPage === 1 ? "#aaa" : "white"} 
+            />
           </TouchableOpacity>
           <Text style={{ alignSelf: "center", fontSize: 16 }}>
             Page {currentPage} of {totalPages}
@@ -451,18 +359,15 @@ export default function Leaderboard({ navigation }: any) {
               borderRadius: 6,
             }}
           >
-            <Text
-              style={{
-                color: currentPage === totalPages ? "#aaa" : "#fff",
-              }}
-            >
-              <AntDesign name="right" size={16} color="black" />
-            </Text>
+            <AntDesign 
+              name="right" 
+              size={16} 
+              color={currentPage === totalPages ? "#aaa" : "white"} 
+            />
           </TouchableOpacity>
         </View>
         <Text style={{ color: "#555", marginLeft: 16 }}>
           Showing {currentRecords.length} of {leaderboard.length} teams
-          {selectedEvent !== "all" && ` (${events.find(e => e.id === selectedEvent)?.title || 'Selected Event'})`}
         </Text>
       </View>
     </View>
@@ -470,15 +375,32 @@ export default function Leaderboard({ navigation }: any) {
 }
 
 const stickyStyles = StyleSheet.create({
+  headerContainer: {
+    backgroundColor: "#432344",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+  eventTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 4,
+  },
+  eventInfo: {
+    fontSize: 14,
+    color: "#fff",
+    opacity: 0.9,
+  },
   tabsContainer: {
     backgroundColor: "#fafafa",
     paddingTop: 16,
-    paddingBottom: 0,
+    paddingBottom: 8,
+    paddingHorizontal: 16,
     zIndex: 10,
     elevation: 10,
     borderBottomWidth: 1,
     borderColor: "#eee",
-    paddingLeft: 16,
   },
   paginationContainer: {
     backgroundColor: "#fafafa",
@@ -496,8 +418,8 @@ const stickyStyles = StyleSheet.create({
     padding: 10,
     borderColor: "#e0e0e0",
     backgroundColor: "#fafafa",
-    marginBottom: 0,
     fontFamily: "inter_400Regular",
     fontSize: 16,
+    width: "100%",
   },
 });

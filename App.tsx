@@ -30,6 +30,10 @@ import Login from "./pages/LoginScreenAdmin";
 import SignUp from "./pages/SignUpScreenAdmin";
 import CategoryScreen from "./pages/admin/CategoryScreen";
 import TeamScores from "./pages/admin/TeamScores";
+import EventsScreen from "./pages/admin/EventsScreen";
+import EventCategories from "./pages/admin/EventCategories";
+import EventLeaderboard from "./pages/admin/EventLeaderboard";
+import EventScores from "./pages/admin/EventScores";
 
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -137,6 +141,12 @@ const AdminInsideStackNavigator = () => (
     <InsideStack.Screen name="Judges" component={AllJudgesScreen} />
     <InsideStack.Screen name="TeamScores" component={TeamScores} />
     <InsideStack.Screen name="OverallScores" component={OverallScoresScreen} />
+    <InsideStack.Screen name="EventCategory" component={EventCategories} />
+    <InsideStack.Screen name="Event" component={EventsScreen} />
+    <InsideStack.Screen name="EventLeaderboard" component={EventLeaderboard} />
+    <InsideStack.Screen name="EventScores" component={EventScores} />
+
+    
   </InsideStack.Navigator>
 );
 
