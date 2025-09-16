@@ -14,15 +14,22 @@ export default function ScoreCard({
   score,
   userRole = "",
   onDeleted,
+  category, // Add category prop
 }: {
   score: any;
   userRole?: string;
   onDeleted?: () => void;
+  category: string; // Define category prop type
 }) {
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleDelete = async () => {
     try {
+      // The current delete logic assumes scores are in 'scores' or 'scores2' collections.
+      // If scores for different categories are stored in different collections or subcollections,
+      // this logic will need to be updated to reflect that.
+      // For example, if scores are stored under `events/${eventId}/scores`,
+      // you might need `doc(FIREBASE_DB, `events/${score.eventId}/scores`, score.id)`
       const docRef1 = doc(FIREBASE_DB, "scores", score.id);
       const docRef2 = doc(FIREBASE_DB, "scores2", score.id);
 
@@ -48,8 +55,8 @@ export default function ScoreCard({
     }
   };
 
-  return (
-    <View style={styles.card}>
+  const renderRoboCategoryScores = () => (
+    <>
       <View style={styles.row}>
         <Text style={styles.label}>Round 1 Score:</Text>
         <Text style={styles.value}>{score.round1Score ?? "N/A"}</Text>
@@ -77,10 +84,95 @@ export default function ScoreCard({
         <Text style={[styles.label, { fontWeight: "normal" }]}>Scored At:</Text>
         <Text style={styles.value}>{formatDate(score.round2ScoredAt)}</Text>
       </View>
+    </>
+  );
+
+  const renderFICategoryScores = () => (
+    <>
+      <View style={styles.row}>
+        <Text style={styles.label}>Presentation & Spirit:</Text>
+        <Text style={styles.value}>{score.presentationSpirit ?? "N/A"}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Project Innovation:</Text>
+        <Text style={styles.value}>{score.projectInnovation ?? "N/A"}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Robotic Solution:</Text>
+        <Text style={styles.value}>{score.roboticSolution ?? "N/A"}</Text>
+      </View>
+    </>
+  );
+
+  const renderFutureEngCategoryScores = () => (
+    <>
+      <View style={styles.row}>
+        <Text style={styles.label}>Open Score 1:</Text>
+        <Text style={styles.value}>{score.openScore1 ?? "N/A"}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={[styles.label, { fontWeight: "normal" }]}>Open Time 1:</Text>
+        <Text style={styles.value}>{score.openTime1 ?? "N/A"}</Text>
+      </View>
+      <View style={styles.divider} />
+      <View style={styles.row}>
+        <Text style={styles.label}>Open Score 2:</Text>
+        <Text style={styles.value}>{score.openScore2 ?? "N/A"}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={[styles.label, { fontWeight: "normal" }]}>Open Time 2:</Text>
+        <Text style={styles.value}>{score.openTime2 ?? "N/A"}</Text>
+      </View>
+      <View style={styles.divider} />
+      <View style={styles.row}>
+        <Text style={styles.label}>Obstacle Score 1:</Text>
+        <Text style={styles.value}>{score.obstacleScore1 ?? "N/A"}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={[styles.label, { fontWeight: "normal" }]}>Obstacle Time 1:</Text>
+        <Text style={styles.value}>{score.obstacleTime1 ?? "N/A"}</Text>
+      </View>
+      <View style={styles.divider} />
+      <View style={styles.row}>
+        <Text style={styles.label}>Obstacle Score 2:</Text>
+        <Text style={styles.value}>{score.obstacleScore2 ?? "N/A"}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={[styles.label, { fontWeight: "normal" }]}>Obstacle Time 2:</Text>
+        <Text style={styles.value}>{score.obstacleTime2 ?? "N/A"}</Text>
+      </View>
+      <View style={styles.divider} />
+      <View style={styles.row}>
+        <Text style={styles.label}>Documentation Score:</Text>
+        <Text style={styles.value}>{score.docScore ?? "N/A"}</Text>
+      </View>
+    </>
+  );
+
+  return (
+    <View style={styles.card}>
+      {/* Conditional rendering based on category */}
+      {category.startsWith("robo") && renderRoboCategoryScores()}
+      {category.startsWith("fi-") && renderFICategoryScores()}
+      {category === "future-eng" && renderFutureEngCategoryScores()}
+      {category === "robosports" && (
+        <View style={styles.row}>
+          <Text style={styles.label}>Robosports Scores:</Text>
+          <Text style={styles.value}>Coming Soon</Text>
+        </View>
+      )}
+
+      {/* Common fields */}
       {score.overallScore !== undefined && (
         <View style={styles.row}>
           <Text style={styles.label}>Overall Score:</Text>
           <Text style={styles.value}>{score.overallScore}</Text>
+        </View>
+      )}
+      {score.totalScore !== undefined && ( // For FI and Future-Eng
+        <View style={styles.row}>
+          <Text style={styles.label}>Total Score:</Text>
+          <Text style={styles.value}>{score.totalScore}</Text>
         </View>
       )}
       {score.judge && (
@@ -89,6 +181,7 @@ export default function ScoreCard({
           <Text style={styles.value}>{score.judge}</Text>
         </View>
       )}
+
       {/* Delete button for admin */}
       {userRole === "admin" && (
         <>
