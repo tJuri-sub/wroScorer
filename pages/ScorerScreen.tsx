@@ -22,10 +22,12 @@ import {
   query,
   where,
   onSnapshot,
+  getDoc,
 } from "firebase/firestore";
 import { useFonts, Inter_400Regular } from "@expo-google-fonts/inter";
 import styles from "../components/styles/judgeStyles/ScorerStyling";
 import { Feather } from "@expo/vector-icons";
+import DropDownPicker from "react-native-dropdown-picker";
 
 export default function ScorerScreen({ navigation }: any) {
   let [fontsLoaded] = useFonts({
@@ -36,6 +38,20 @@ export default function ScorerScreen({ navigation }: any) {
   const [judgeCategory, setJudgeCategory] = useState<string | null>(null);
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Event states
+  const [assignedEvents, setAssignedEvents] = useState<any[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<string>("");
+  const [eventDropdownOpen, setEventDropdownOpen] = useState(false);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  // Status filtering (for RoboMission and Future Engineers)
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
 
   // Modal state
   const [scoreModalVisible, setScoreModalVisible] = useState(false);
@@ -61,11 +77,11 @@ export default function ScorerScreen({ navigation }: any) {
   const [fePill, setFePill] = useState<"open" | "obstacle">("open");
 
   function parseTimeStringToMs(timeStr: string) {
-  if (!timeStr) return Infinity;
-  const [mm, rest] = timeStr.split(":");
-  const [ss, ms] = rest.split(".");
-  return (Number(mm) || 0) * 60000 + (Number(ss) || 0) * 1000 + (Number(ms) || 0) * 10;
-}
+    if (!timeStr) return Infinity;
+    const [mm, rest] = timeStr.split(":");
+    const [ss, ms] = rest.split(".");
+    return (Number(mm) || 0) * 60000 + (Number(ss) || 0) * 1000 + (Number(ms) || 0) * 10;
+  }
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -80,59 +96,53 @@ export default function ScorerScreen({ navigation }: any) {
     });
   }, [navigation]);
 
-  // Fetch judge's assigned category and teams
+  // Fetch judge's assigned category and events
   useEffect(() => {
-    let unsubscribeTeams: (() => void) | undefined;
-    let unsubscribeScores: (() => void) | undefined;
-
-    const fetchJudgeAndTeams = async () => {
-      setLoading(true);
+    const fetchJudgeData = async () => {
+      const user = FIREBASE_AUTH.currentUser;
       if (user) {
         try {
-          const docSnap = await getDocs(
-            query(
-              collection(FIREBASE_DB, "judge-users"),
-              where("email", "==", user.email?.toLowerCase())
-            )
-          );
-          if (!docSnap.empty) {
-            const data = docSnap.docs[0].data();
-            setJudgeCategory(data.category);
+          // Get judge info
+          const userDoc = await getDoc(doc(FIREBASE_DB, "judge-users", user.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            const category = data.category || null;
+            setJudgeCategory(category);
 
-            // Listen to teams in judge's category
-            const teamsRef = collection(
-              FIREBASE_DB,
-              `categories/${data.category}/teams`
-            );
-            unsubscribeTeams = onSnapshot(teamsRef, (teamsSnap) => {
-              const teamList = teamsSnap.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-              }));
-
-              // Listen to scores and merge with teams
-              const scoresRef = collection(FIREBASE_DB, "scores3");
-              unsubscribeScores = onSnapshot(scoresRef, (scoresSnap) => {
-                const scoresMap: Record<string, any> = {};
-                scoresSnap.forEach((doc) => {
-                  const score = doc.data();
-                  if (score.category === data.category) {
-                    scoresMap[score.teamId] = score;
-                  }
-                });
-
-                // Merge scores into teams
-                const mergedTeams = teamList.map((team) => ({
-                  ...team,
-                  ...scoresMap[team.id],
-                }));
-                setTeams(mergedTeams);
-                setLoading(false);
-              });
+            // Fetch events where this judge is assigned to this category
+            const eventsRef = collection(FIREBASE_DB, "events");
+            const eventsSnapshot = await getDocs(eventsRef);
+            
+            const judgeEvents: any[] = [];
+            eventsSnapshot.forEach((eventDoc) => {
+              const eventData = eventDoc.data();
+              const categoryData = eventData.categoryData;
+              
+              // Check if judge is assigned to this event's category
+              if (categoryData && categoryData[category] && categoryData[category].judges) {
+                const assignedJudges = categoryData[category].judges || [];
+                if (assignedJudges.includes(user.uid)) {
+                  judgeEvents.push({
+                    id: eventDoc.id,
+                    title: eventData.title || "Untitled Event",
+                    date: eventData.date || "",
+                    ...eventData
+                  });
+                }
+              }
             });
+
+            // Sort by date (newest first)
+            judgeEvents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            setAssignedEvents(judgeEvents);
+            
+            // Auto-select first event if available
+            if (judgeEvents.length > 0) {
+              setSelectedEvent(judgeEvents[0].id);
+            }
           }
         } catch (err) {
-          console.log("Error fetching judge or teams:", err);
+          console.log("Error fetching judge data:", err);
           setLoading(false);
         }
       } else {
@@ -140,72 +150,127 @@ export default function ScorerScreen({ navigation }: any) {
       }
     };
 
-    fetchJudgeAndTeams();
+    fetchJudgeData();
+  }, [user]);
+
+  // Fetch teams and scores for selected event
+  useEffect(() => {
+    let unsubscribeTeams: (() => void) | undefined;
+    let unsubscribeScores: (() => void) | undefined;
+
+    const fetchTeamsAndScores = async () => {
+  if (!judgeCategory || !selectedEvent) {
+    setLoading(false);
+    return;
+  }
+
+  setLoading(true);
+
+     try {
+        // Get event document
+        const eventDoc = await getDoc(doc(FIREBASE_DB, "events", selectedEvent));
+        if (!eventDoc.exists()) {
+          setTeams([]);
+          setLoading(false);
+          return;
+        }
+        const eventData = eventDoc.data();
+        const categoryTeams = eventData?.categoryData?.[judgeCategory]?.teams || [];
+
+        // Fetch team data from categories/{category}/teams
+        const teamDocs = await Promise.all(
+          categoryTeams.map(async (teamId: string) => {
+            const teamDoc = await getDoc(doc(FIREBASE_DB, "categories", judgeCategory, "teams", teamId));
+            return teamDoc.exists() ? { id: teamDoc.id, ...teamDoc.data() } : null;
+          })
+        );
+        const teamList = teamDocs.filter(Boolean);
+
+        // Fetch scores for this event and category
+        const scoresRef = collection(FIREBASE_DB, "events", selectedEvent, "scores");
+        const scoresSnap = await getDocs(scoresRef);
+        const scoresMap: Record<string, any> = {};
+        scoresSnap.forEach((doc) => {
+          const score = doc.data();
+          scoresMap[score.teamId] = score;
+        });
+
+        // Merge scores into teams
+        const mergedTeams = teamList.map((team) => ({
+          ...team,
+          ...scoresMap[team.id],
+        }));
+
+        setTeams(mergedTeams);
+        setLoading(false);
+      } catch (err) {
+        console.log("Error fetching teams or scores:", err);
+        setLoading(false);
+      }
+    };
+
+    fetchTeamsAndScores();
 
     return () => {
       if (unsubscribeTeams) unsubscribeTeams();
       if (unsubscribeScores) unsubscribeScores();
     };
-  }, [user]);
+  }, [judgeCategory, selectedEvent]);
 
   // Card status helpers
   const getCardStatus = (team: any) => {
-  // RoboMission: two rounds
-  if (
-    judgeCategory === "robo-elem" ||
-    judgeCategory === "robo-junior" ||
-    judgeCategory === "robo-senior"
-  ) {
-    const hasR1 = team.round1Score !== null && team.round1Score !== undefined;
-    const hasR2 = team.round2Score !== null && team.round2Score !== undefined;
-    if (!hasR1 && !hasR2) return "no-score";
-    if (hasR1 && !hasR2) return "round1-only";
-    if (hasR1 && hasR2) return "complete";
-    return "no-score";
-  }
-
-  // Robosports: placeholder logic (update when implemented)
-  if (judgeCategory === "robosports") {
-    // Example: if team.robosportsScore exists
-    return team.robosportsScore ? "complete" : "no-score";
-  }
-
-  // Future Innovators: one score set
-  if (
-    judgeCategory === "fi-elem" ||
-    judgeCategory === "fi-junior" ||
-    judgeCategory === "fi-senior"
-  ) {
-    return team.totalScore ? "complete" : "no-score";
-  }
-
-  // Future Engineers: two rounds with open/obstacle
-  let filteredTeams = teams.filter((team) => !team.disabled);
-
-  if (judgeCategory === "future-eng") {
-    if (fePill === "open") {
-      const hasR1 = team.openScore1 !== null && team.openScore1 !== undefined;
-      const hasR2 = team.openScore2 !== null && team.openScore2 !== undefined;
-      if (!hasR1 && !hasR2) return "no-score";
-      if (hasR1 && !hasR2) return "round1-only";
-      if (hasR1 && hasR2) return "complete";
-      return "no-score";
-    } else if (fePill === "obstacle") {
-      const hasOpen1 = team.openScore1 !== null && team.openScore1 !== undefined;
-      const hasOpen2 = team.openScore2 !== null && team.openScore2 !== undefined;
-      if (!hasOpen1 || !hasOpen2) return "not-qualified";
-      const hasR1 = team.obstacleScore1 !== null && team.obstacleScore1 !== undefined;
-      const hasR2 = team.obstacleScore2 !== null && team.obstacleScore2 !== undefined;
+    // RoboMission: two rounds
+    if (
+      judgeCategory === "robo-elem" ||
+      judgeCategory === "robo-junior" ||
+      judgeCategory === "robo-senior"
+    ) {
+      const hasR1 = team.round1Score !== null && team.round1Score !== undefined;
+      const hasR2 = team.round2Score !== null && team.round2Score !== undefined;
       if (!hasR1 && !hasR2) return "no-score";
       if (hasR1 && !hasR2) return "round1-only";
       if (hasR1 && hasR2) return "complete";
       return "no-score";
     }
-  }
 
-  // Default
-  return "no-score";
-};
+    // Robosports: placeholder logic (update when implemented)
+    if (judgeCategory === "robosports") {
+      return team.robosportsScore ? "complete" : "no-score";
+    }
+
+    // Future Innovators: one score set
+    if (
+      judgeCategory === "fi-elem" ||
+      judgeCategory === "fi-junior" ||
+      judgeCategory === "fi-senior"
+    ) {
+      return team.totalScore ? "complete" : "no-score";
+    }
+
+    // Future Engineers: two rounds with open/obstacle
+    if (judgeCategory === "future-eng") {
+      if (fePill === "open") {
+        const hasR1 = team.openScore1 !== null && team.openScore1 !== undefined;
+        const hasR2 = team.openScore2 !== null && team.openScore2 !== undefined;
+        if (!hasR1 && !hasR2) return "no-score";
+        if (hasR1 && !hasR2) return "round1-only";
+        if (hasR1 && hasR2) return "complete";
+        return "no-score";
+      } else if (fePill === "obstacle") {
+        const hasOpen1 = team.openScore1 !== null && team.openScore1 !== undefined;
+        const hasOpen2 = team.openScore2 !== null && team.openScore2 !== undefined;
+        if (!hasOpen1 || !hasOpen2) return "not-qualified";
+        const hasR1 = team.obstacleScore1 !== null && team.obstacleScore1 !== undefined;
+        const hasR2 = team.obstacleScore2 !== null && team.obstacleScore2 !== undefined;
+        if (!hasR1 && !hasR2) return "no-score";
+        if (hasR1 && !hasR2) return "round1-only";
+        if (hasR1 && hasR2) return "complete";
+        return "no-score";
+      }
+    }
+
+    return "no-score";
+  };
 
   const getCardColor = (status: string) => {
     switch (status) {
@@ -220,6 +285,52 @@ export default function ScorerScreen({ navigation }: any) {
     }
   };
 
+  // Get status filter options based on category
+  const getStatusFilterOptions = () => {
+    const isRoboMissionOrFE = 
+      judgeCategory === "robo-elem" ||
+      judgeCategory === "robo-junior" ||
+      judgeCategory === "robo-senior" ||
+      judgeCategory === "future-eng";
+
+    if (!isRoboMissionOrFE) {
+      return [{ label: "All Teams", value: "all" }];
+    }
+
+    return [
+      { label: "All Teams", value: "all" },
+      { label: "No Scores Yet", value: "no-score" },
+      { label: "Round 1 Done", value: "round1-only" },
+      { label: "Complete", value: "complete" },
+    ];
+  };
+
+  // Filter teams by status
+  const filterTeamsByStatus = (teams: any[]) => {
+    if (statusFilter === "all") return teams;
+    return teams.filter(team => getCardStatus(team) === statusFilter);
+  };
+
+  // Get status counts for display
+  const getStatusCounts = () => {
+    const filteredTeams = teams.filter((team) => !team.disabled);
+    const counts = {
+      total: filteredTeams.length,
+      "no-score": 0,
+      "round1-only": 0,
+      complete: 0,
+    };
+
+    filteredTeams.forEach(team => {
+      const status = getCardStatus(team);
+      if (counts.hasOwnProperty(status)) {
+        counts[status as keyof typeof counts]++;
+      }
+    });
+
+    return counts;
+  };
+
   // Scoring Modal content based on category
   function renderScorerModalContent() {
     if (!scoringTeam) return null;
@@ -228,7 +339,6 @@ export default function ScorerScreen({ navigation }: any) {
       case "robo-elem":
       case "robo-junior":
       case "robo-senior": {
-        // Existing scoring UI
         return (
           <>
             <TextInput
@@ -278,7 +388,6 @@ export default function ScorerScreen({ navigation }: any) {
         ); 
       }
       case "robosports":
-        // Placeholder for future implementation
         return (
           <Text style={{ marginVertical: 20, textAlign: "center" }}>
             Robosports scoring coming soon!
@@ -287,8 +396,6 @@ export default function ScorerScreen({ navigation }: any) {
       case "fi-elem":
       case "fi-junior":
       case "fi-senior": {
-        // Future Innovators scoring UI
-        // Show 3 score inputs, labels and max points depend on division
         let maxProject = 75, maxRobotic = 70, maxPresentation = 55;
         if (judgeCategory === "fi-elem") {
           maxProject = 70;
@@ -305,7 +412,7 @@ export default function ScorerScreen({ navigation }: any) {
                 projectError && { borderColor: "red", borderWidth: 2 }
               ]}
               placeholder={`${maxProject}pts max`}
-              placeholderTextColor={presentationError ? "red" : "#999"}
+              placeholderTextColor={projectError ? "red" : "#999"}
               keyboardType="numeric"
               value={inputScore}
               onChangeText={(text) => {
@@ -322,7 +429,7 @@ export default function ScorerScreen({ navigation }: any) {
                 roboticError && { borderColor: "red", borderWidth: 2 }
               ]}
               placeholder={`${maxRobotic}pts max`}
-              placeholderTextColor={presentationError ? "red" : "#999"}
+              placeholderTextColor={roboticError ? "red" : "#999"}
               keyboardType="numeric"
               value={inputMinute}
               onChangeText={(text) => {
@@ -356,7 +463,6 @@ export default function ScorerScreen({ navigation }: any) {
         );
       }
       case "future-eng": {
-        // Determine if scoring round 2 of obstacle
         const isObstacleRound2 =
           feRoundType === "obstacle" &&
           scoringTeam &&
@@ -367,7 +473,6 @@ export default function ScorerScreen({ navigation }: any) {
           feRoundType === "open"
             ? (scoringTeam.openScore1 == null ? 1 : 2)
             : (scoringTeam.obstacleScore1 == null ? 1 : 2);
-            
 
         return (
           <>
@@ -451,7 +556,7 @@ export default function ScorerScreen({ navigation }: any) {
     }
   }
 
-  // Modal open for robomission
+  // Modal open for scoring
   const openScoreModal = (team: any) => {
     if (getCardStatus(team) === "complete") return;
     setScoringTeam(team);
@@ -467,10 +572,14 @@ export default function ScorerScreen({ navigation }: any) {
 
   const handleScoreSubmit = async () => {
     setSubmitError("");
+    setIsSubmitting(true);
     
-    if (!scoringTeam) return;
+     if (!scoringTeam || !selectedEvent) {
+      setIsSubmitting(false); // Stop loading on early return
+      return;
+    }
 
-    // RoboMission categories (existing logic)
+    // RoboMission categories (updated to use new structure)
     if (
       judgeCategory === "robo-elem" ||
       judgeCategory === "robo-junior" ||
@@ -488,6 +597,7 @@ export default function ScorerScreen({ navigation }: any) {
         inputMs.trim() === ""
       ) {
         setSubmitError("Please input both score and time.");
+        setIsSubmitting(false);
         return;
       }
 
@@ -495,6 +605,7 @@ export default function ScorerScreen({ navigation }: any) {
         const update: any = {
           teamName: scoringTeam.teamName,
           teamId: scoringTeam.id,
+          eventId: selectedEvent,
           round1Score: scoringTeam.round1Score ?? null,
           time1: scoringTeam.time1 ?? null,
           round2Score: scoringTeam.round2Score ?? null,
@@ -516,7 +627,14 @@ export default function ScorerScreen({ navigation }: any) {
         setScoreModalVisible(false);
         setScoringTeam(null);
 
-        const scoresRef = doc(FIREBASE_DB, "scores3", scoringTeam.id);
+        // Save to new structure
+        const scoresRef = doc(
+          FIREBASE_DB,
+          "events",
+          selectedEvent,
+          "scores",
+          scoringTeam.id
+        );
         await setDoc(scoresRef, update, { merge: true });
 
         setTeams((teams) =>
@@ -530,17 +648,12 @@ export default function ScorerScreen({ navigation }: any) {
       } catch (e) {
         console.error("Score submission error:", e);
         Alert.alert("Error", "Failed to submit score. Please try again.");
+      } finally {
+        setIsSubmitting(false); // Always stop loading when done
       }
-      return;
-    }
+    };
 
-    // Robosports (leave empty for now)
-    if (judgeCategory === "robosports") {
-      // TODO: Implement Robosports scoring logic here
-      return;
-    }
-
-    // Future Innovators (fi-elem, fi-junior, fi-senior)
+    // Future Innovators (updated structure)
     if (
       judgeCategory === "fi-elem" ||
       judgeCategory === "fi-junior" ||
@@ -563,6 +676,7 @@ export default function ScorerScreen({ navigation }: any) {
         const update: any = {
           teamName: scoringTeam.teamName,
           teamId: scoringTeam.id,
+          eventId: selectedEvent,
           category: judgeCategory,
           projectInnovation: Number(inputScore),
           roboticSolution: Number(inputMinute),
@@ -577,7 +691,13 @@ export default function ScorerScreen({ navigation }: any) {
         setScoreModalVisible(false);
         setScoringTeam(null);
 
-        const scoresRef = doc(FIREBASE_DB, "scores3", scoringTeam.id);
+        const scoresRef = doc(
+          FIREBASE_DB,
+          "events",
+          selectedEvent,
+          "scores",
+          scoringTeam.id
+        );
         await setDoc(scoresRef, update, { merge: true });
 
         setTeams((teams) =>
@@ -594,7 +714,7 @@ export default function ScorerScreen({ navigation }: any) {
       return;
     }
 
-    // Future Engineers
+    // Future Engineers (updated structure)
     if (judgeCategory === "future-eng") {
       if (inputScore.trim() === "") {
         setSubmitError("Please input the score.");
@@ -605,21 +725,16 @@ export default function ScorerScreen({ navigation }: any) {
         return;
       }
 
-      let timeVal = Number(inputMinute);
-      if (timeVal > 180) timeVal = 180;
-
-      // Parse and cap time at 3 minutes (180,000 ms)
       let mm = Number(inputMinute) || 0;
       let ss = Number(inputSecond) || 0;
       let ms = Number(inputMs) || 0;
       let totalMs = mm * 60000 + ss * 1000 + ms;
-      const maxMs = 3 * 60 * 1000; // 180,000 ms (3 mins)
+      const maxMs = 3 * 60 * 1000;
       if (totalMs > maxMs) totalMs = maxMs;
 
-      // Convert back to mm:ss.ms for storage and display
       const cappedMm = Math.floor(totalMs / 60000);
       const cappedSs = Math.floor((totalMs % 60000) / 1000);
-      const cappedMs = Math.floor((totalMs % 1000) / 10); // 2 digits for ms
+      const cappedMs = Math.floor((totalMs % 1000) / 10);
       const inputTime = `${String(cappedMm).padStart(2, "0")}:${String(cappedSs).padStart(2, "0")}.${String(cappedMs).padStart(2, "0")}`;
 
       const docScoreVal = inputDocScore.trim() === "" ? 0 : Number(inputDocScore);
@@ -628,8 +743,9 @@ export default function ScorerScreen({ navigation }: any) {
         const update: any = {
           teamName: scoringTeam.teamName,
           teamId: scoringTeam.id,
+          eventId: selectedEvent,
           category: judgeCategory,
-          docScore: Number(inputDocScore),
+          docScore: docScoreVal,
         };
 
         if (feRoundType === "open") {
@@ -656,23 +772,14 @@ export default function ScorerScreen({ navigation }: any) {
           }
         }
 
-        // Calculate best scores and times
         const openScores = [
           update.openScore1 ?? scoringTeam.openScore1,
           update.openScore2 ?? scoringTeam.openScore2,
         ].filter((v) => v !== undefined && v !== null);
-        const openTimes = [
-          update.openTime1 ?? scoringTeam.openTime1,
-          update.openTime2 ?? scoringTeam.openTime2,
-        ].filter((v) => v !== undefined && v !== null);
-
+        
         const obstacleScores = [
           update.obstacleScore1 ?? scoringTeam.obstacleScore1,
           update.obstacleScore2 ?? scoringTeam.obstacleScore2,
-        ].filter((v) => v !== undefined && v !== null);
-        const obstacleTimes = [
-          update.obstacleTime1 ?? scoringTeam.obstacleTime1,
-          update.obstacleTime2 ?? scoringTeam.obstacleTime2,
         ].filter((v) => v !== undefined && v !== null);
 
         update.totalScore =
@@ -680,16 +787,16 @@ export default function ScorerScreen({ navigation }: any) {
           Math.max(...obstacleScores, 0) +
           update.docScore;
 
-        let totalTime =
-          (Math.min(...openTimes, 180) || 0) +
-          (Math.min(...obstacleTimes, 180) || 0);
-        if (totalTime > 180) totalTime = 180;
-        update.totalTime = totalTime;
-
         setScoreModalVisible(false);
         setScoringTeam(null);
 
-        const scoresRef = doc(FIREBASE_DB, "scores3", scoringTeam.id);
+        const scoresRef = doc(
+          FIREBASE_DB,
+          "events",
+          selectedEvent,
+          "scores",
+          scoringTeam.id
+        );
         await setDoc(scoresRef, update, { merge: true });
 
         setTeams((teams) =>
@@ -715,12 +822,26 @@ export default function ScorerScreen({ navigation }: any) {
     );
   }
 
-  {/* Filter and Sort Teams */}
+  // Show message if no events assigned
+  if (assignedEvents.length === 0) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
+        <Text style={{ textAlign: "center", fontSize: 16, color: "#666" }}>
+          No events assigned to you yet. Please contact the administrator.
+        </Text>
+      </View>
+    );
+  }
+
+  // Filter and Sort Teams
   let filteredTeams = teams
     .filter((team) => !team.disabled)
     .filter((team) =>
       team.teamName?.toLowerCase().includes(search.toLowerCase())
     );
+
+  // Apply status filter
+  filteredTeams = filterTeamsByStatus(filteredTeams);
 
   // Future Engineers pill filtering
   if (judgeCategory === "future-eng") {
@@ -733,28 +854,115 @@ export default function ScorerScreen({ navigation }: any) {
     }
   }
 
-  // Sorting (by team number, or customize as needed)
+  // Sorting (by team number)
   filteredTeams = filteredTeams.sort((a, b) => {
     const aNum = Number(a.teamNumber) || 0;
     const bNum = Number(b.teamNumber) || 0;
     return aNum - bNum;
   });
 
+  // Pagination
+  const totalPages = Math.ceil(filteredTeams.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedTeams = filteredTeams.slice(startIndex, startIndex + itemsPerPage);
+
+  const statusCounts = getStatusCounts();
+
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-      <View style={{ padding: 15 }}>
+      <View style={{ padding: 15, zIndex: 1000 }}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Score Teams</Text>
           <Text style={styles.headerSubtitle}>Tap a team card to score</Text>
         </View>
+
+        {/* Event Selector */}
+        <View style={{ marginBottom: 15, zIndex: 1000 }}>
+          <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 8 }}>
+            Select Event:
+          </Text>
+          <DropDownPicker
+            open={eventDropdownOpen}
+            setOpen={setEventDropdownOpen}
+            value={selectedEvent}
+            setValue={setSelectedEvent}
+            items={assignedEvents.map(event => ({
+              label: `${event.title}${event.date ? ` (${event.date})` : ''}`,
+              value: event.id,
+            }))}
+            placeholder="Select Event"
+            style={{
+              borderWidth: 1,
+              borderColor: "#e0e0e0",
+              backgroundColor: "#fafafa",
+              minHeight: 40,
+            }}
+            textStyle={{ fontSize: 14 }}
+            dropDownContainerStyle={{
+              borderWidth: 1,
+              borderColor: "#e0e0e0",
+              backgroundColor: "#fafafa",
+            }}
+          />
+        </View>
+
+        {/* Current Event Info */}
+        {selectedEvent && (
+          <View style={{ marginBottom: 15, padding: 10, backgroundColor: "#f0f0f0", borderRadius: 8 }}>
+            <Text style={{ fontSize: 14, fontWeight: "bold" }}>
+              Current Event: {assignedEvents.find(e => e.id === selectedEvent)?.title}
+            </Text>
+            <Text style={{ fontSize: 12, color: "#666" }}>
+              Category: {judgeCategory} • {assignedEvents.find(e => e.id === selectedEvent)?.date}
+            </Text>
+          </View>
+        )}
+
+        {/* Status Filter (only for RoboMission and Future Engineers) */}
+        {(judgeCategory === "robo-elem" || judgeCategory === "robo-junior" || 
+          judgeCategory === "robo-senior" || judgeCategory === "future-eng") && (
+          <View style={{ marginBottom: 15, zIndex: 999 }}>
+            <Text style={{ fontSize: 14, fontWeight: "bold", marginBottom: 8 }}>
+              Filter by Status:
+            </Text>
+            <DropDownPicker
+              open={statusDropdownOpen}
+              setOpen={setStatusDropdownOpen}
+              value={statusFilter}
+              setValue={setStatusFilter}
+              items={getStatusFilterOptions().map(option => ({
+                ...option,
+                label: `${option.label}${option.value !== "all" ? ` (${statusCounts[option.value as keyof typeof statusCounts] || 0})` : ` (${statusCounts.total})`}`
+              }))}
+              style={{
+                borderWidth: 1,
+                borderColor: "#e0e0e0",
+                backgroundColor: "#fafafa",
+                minHeight: 40,
+              }}
+              textStyle={{ fontSize: 14 }}
+              dropDownContainerStyle={{
+                borderWidth: 1,
+                borderColor: "#e0e0e0",
+                backgroundColor: "#fafafa",
+              }}
+              onChangeValue={() => setCurrentPage(1)} // Reset to first page when filter changes
+            />
+          </View>
+        )}
+
         {/* Search Bar */}
         <TextInput
           style={styles.searchbar}
           placeholder="Search team name..."
           placeholderTextColor="#999999"
           value={search}
-          onChangeText={setSearch}
+          onChangeText={(text) => {
+            setSearch(text);
+            setCurrentPage(1); // Reset to first page when searching
+          }}
         />
+
         {/* Future Engineers Pills */}
         {judgeCategory === "future-eng" && (
           <View style={{ flexDirection: "row", marginBottom: 12 }}>
@@ -785,9 +993,40 @@ export default function ScorerScreen({ navigation }: any) {
           </View>
         )}
 
-        {/* Scoring Team Card */}
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: 15 }}>
+            <TouchableOpacity
+              style={[
+                { padding: 8, marginHorizontal: 5, borderRadius: 5, backgroundColor: "#e0e0e0" },
+                currentPage === 1 && { opacity: 0.5 }
+              ]}
+              onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              <Text>Previous</Text>
+            </TouchableOpacity>
+            
+            <Text style={{ marginHorizontal: 15, fontSize: 16 }}>
+              Page {currentPage} of {totalPages} ({filteredTeams.length} teams)
+            </Text>
+            
+            <TouchableOpacity
+              style={[
+                { padding: 8, marginHorizontal: 5, borderRadius: 5, backgroundColor: "#e0e0e0" },
+                currentPage === totalPages && { opacity: 0.5 }
+              ]}
+              onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <Text>Next</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Teams List */}
         <FlatList
-          data={filteredTeams}
+          data={paginatedTeams}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => {
             const status = getCardStatus(item);
@@ -902,7 +1141,6 @@ export default function ScorerScreen({ navigation }: any) {
 
             // Robosports: placeholder
             if (judgeCategory === "robosports") {
-              // TODO: Implement Robosports score card UI here
               return (
                 <View style={styles.teamCard}>
                   <Text style={styles.teamCardTitle}>{item.teamName}</Text>
@@ -1193,21 +1431,31 @@ export default function ScorerScreen({ navigation }: any) {
               ) : null}
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
-                  style={styles.cancelButton}
+                  style={[styles.cancelButton, isSubmitting && { opacity: 0.5 }]}
                   onPress={() => {
                     setScoreModalVisible(false);
                     setSubmitError(""); 
                   }}
+                  disabled={isSubmitting}
                 >
                   <Text style={[styles.buttonText, { color: "#432344" }]}>
                     Cancel
                   </Text>
                 </TouchableOpacity>
+               
                 <TouchableOpacity
-                  style={styles.submitButton}
+                  style={[styles.submitButton, isSubmitting && { opacity: 0.7 }]}
                   onPress={handleScoreSubmit}
+                  disabled={isSubmitting}
                 >
-                  <Text style={styles.buttonText}>Submit</Text>
+                  {isSubmitting ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <ActivityIndicator size="small" color="white" style={{ marginRight: 8 }} />
+                      <Text style={styles.buttonText}>Submitting...</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.buttonText}>Submit</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>

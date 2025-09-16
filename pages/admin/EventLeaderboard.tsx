@@ -93,37 +93,26 @@ export default function EventLeaderboard({ navigation }: any) {
     const db = getFirestore();
     
     // Query scores for specific event and category
-    const scoresQuery = query(
-      collection(db, "scores"),
-      where("eventId", "==", eventId),
-      where("category", "==", category)
-    );
-
-    const unsubscribe = onSnapshot(scoresQuery, (scoresSnap) => {
+    const scoresRef = collection(db, "events", eventId, "scores");
+    const unsubscribe = onSnapshot(scoresRef, (scoresSnap) => {
       const teamMap: Record<string, any> = {};
-      
+
       scoresSnap.docs.forEach((doc) => {
-        const data = doc.data() as {
-          round1Score?: number;
-          round2Score?: number;
-          time1?: string;
-          time2?: string;
-          teamId?: string;
-          teamName?: string;
-          [key: string]: any;
-        };
-        
-        const teamId = data.teamId;
-        if (teamId) {
-          if (!teamMap[teamId]) {
-            teamMap[teamId] = {
-              teamName: data.teamName || "",
-              teamId: teamId,
-              round1Score: data.round1Score,
-              round2Score: data.round2Score,
-              time1: data.time1,
-              time2: data.time2,
-            };
+        const data = doc.data();
+        // Optionally filter by category if needed
+        if (data.category === category) {
+          const teamId = data.teamId;
+          if (teamId) {
+            if (!teamMap[teamId]) {
+              teamMap[teamId] = {
+                teamName: data.teamName || "",
+                teamId: teamId,
+                round1Score: data.round1Score,
+                round2Score: data.round2Score,
+                time1: data.time1,
+                time2: data.time2,
+              };
+            }
           }
         }
       });

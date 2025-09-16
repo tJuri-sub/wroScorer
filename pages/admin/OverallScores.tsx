@@ -28,6 +28,107 @@ import { CategoryPills } from "../../components/component/categoryPillsAdmin";
 const RECORDS_PER_PAGE = 10;
 const windowHeight = Dimensions.get("window").height;
 
+// Category-specific scoring logic (same as EventScores)
+const getCategoryFields = (category: string) => {
+  switch (category) {
+    case 'future-eng':
+      return {
+        fields: ['openScore1', 'openScore2', 'obstacleScore1', 'obstacleScore2', 'docScore', 'openTime1', 'openTime2', 'obstacleTime1', 'obstacleTime2'],
+        headers: ['Open R1', 'Open R2', 'Obstacle R1', 'Obstacle R2', 'Docs', 'Total'],
+        calculator: (data: any) => {
+          const openBest = Math.max(data.openScore1 || 0, data.openScore2 || 0);
+          const obstacleBest = Math.max(data.obstacleScore1 || 0, data.obstacleScore2 || 0);
+          const docs = data.docScore || 0;
+          
+          // Calculate total time (sum of best round times)
+          const openBestTime = (data.openScore1 || 0) >= (data.openScore2 || 0) ? 
+            parseTimeToSeconds(data.openTime1) : parseTimeToSeconds(data.openTime2);
+          const obstacleBestTime = (data.obstacleScore1 || 0) >= (data.obstacleScore2 || 0) ? 
+            parseTimeToSeconds(data.obstacleTime1) : parseTimeToSeconds(data.obstacleTime2);
+          
+          let totalTime = openBestTime + obstacleBestTime;
+          if (totalTime > 180) totalTime = 180; // Cap at 180 seconds
+          
+          return {
+            ...data,
+            bestScore: openBest + obstacleBest + docs,
+            totalTime,
+            breakdown: {
+              openBest,
+              obstacleBest,
+              docs,
+              totalScore: openBest + obstacleBest + docs
+            }
+          };
+        }
+      };
+      
+    case 'fi-elem':
+      return {
+        fields: ['projectInnovation', 'roboticSolution', 'presentationSpirit'],
+        headers: ['Project (70)', 'Robotic (65)', 'Presentation (65)', 'Total'],
+        calculator: (data: any) => ({
+          ...data,
+          bestScore: (data.projectInnovation || 0) + (data.roboticSolution || 0) + (data.presentationSpirit || 0),
+          breakdown: {
+            projectInnovation: data.projectInnovation || 0,
+            roboticSolution: data.roboticSolution || 0,
+            presentationSpirit: data.presentationSpirit || 0,
+            totalScore: (data.projectInnovation || 0) + (data.roboticSolution || 0) + (data.presentationSpirit || 0)
+          }
+        })
+      };
+      
+    case 'fi-junior':
+    case 'fi-senior':
+      return {
+        fields: ['projectInnovation', 'roboticSolution', 'presentationSpirit'],
+        headers: ['Project (75)', 'Robotic (70)', 'Presentation (55)', 'Total'],
+        calculator: (data: any) => ({
+          ...data,
+          bestScore: (data.projectInnovation || 0) + (data.roboticSolution || 0) + (data.presentationSpirit || 0),
+          breakdown: {
+            projectInnovation: data.projectInnovation || 0,
+            roboticSolution: data.roboticSolution || 0,
+            presentationSpirit: data.presentationSpirit || 0,
+            totalScore: (data.projectInnovation || 0) + (data.roboticSolution || 0) + (data.presentationSpirit || 0)
+          }
+        })
+      };
+      
+    case 'robosports':
+      // Placeholder for future implementation
+      return {
+        fields: ['round1Score', 'round2Score'],
+        headers: ['Round 1', 'Round 2'],
+        calculator: (data: any) => ({
+          ...data,
+          bestScore: Math.max(data.round1Score || 0, data.round2Score || 0)
+        })
+      };
+      
+    default: // robomissions (robo-elem, robo-junior, robo-senior)
+      return {
+        fields: ['round1Score', 'round2Score'],
+        headers: ['Round 1', 'Round 2'],
+        calculator: (data: any) => ({
+          ...data,
+          bestScore: Math.max(data.round1Score || 0, data.round2Score || 0)
+        })
+      };
+  }
+};
+
+const parseTimeToSeconds = (timeStr: string): number => {
+  if (!timeStr) return 0;
+  const parts = timeStr.split(':');
+  if (parts.length === 3) {
+    const [mm, ss, ms] = parts.map(Number);
+    return (mm || 0) * 60 + (ss || 0) + (ms || 0) / 100;
+  }
+  return 0;
+};
+
 function parseTimeString(timeStr: string) {
   if (!timeStr) return Infinity;
   const [mm, ss, ms] = timeStr.split(":").map(Number);
@@ -48,6 +149,9 @@ export default function AdminOverallScores({ navigation }: any) {
   const [eventDropdownOpen, setEventDropdownOpen] = useState(false);
 
   const scrollRef = useRef<FlatList<any>>(null);
+
+  // Get category-specific configuration
+  const categoryConfig = getCategoryFields(selectedCategory);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -82,7 +186,7 @@ export default function AdminOverallScores({ navigation }: any) {
       }));
 
       // Custom sort order
-      const order = ["robo-elem", "robo-junior", "robo-senior", "robosports"];
+      const order = ["robo-elem", "robo-junior", "robo-senior", "robosports", "fi-elem", "fi-junior", "fi-senior", "future-eng"];
       cats = [
         ...(order
           .map((catId) => cats.find((cat) => cat.id === catId))
@@ -120,6 +224,7 @@ export default function AdminOverallScores({ navigation }: any) {
     const db = getFirestore();
     let teamsMap: Record<string, any> = {};
 
+    // Listen to all teams (for team names, etc.)
     const teamsUnsub = onSnapshot(collection(db, "teams"), (teamsSnap) => {
       teamsMap = {};
       teamsSnap.forEach((doc) => {
@@ -127,89 +232,114 @@ export default function AdminOverallScores({ navigation }: any) {
       });
     });
 
-    // Create query based on event selection
-    let scoresQuery;
+    // Fetch scores based on event selection
+    let scoresUnsub: (() => void) | undefined;
+
     if (selectedEvent === "all") {
-      scoresQuery = query(
-        collection(db, "scores"),
-        where("category", "==", selectedCategory)
-      );
+      // For all events, aggregate scores from each event's subcollection
+      (async () => {
+        const eventsSnap = await getDocs(collection(db, "events"));
+        let allScores: any[] = [];
+        let unsubList: (() => void)[] = [];
+
+        eventsSnap.forEach((eventDoc) => {
+          const eventId = eventDoc.id;
+          const scoresRef = collection(db, "events", eventId, "scores");
+          const unsub = onSnapshot(scoresRef, (scoresSnap) => {
+            scoresSnap.forEach((doc) => {
+              const data = doc.data();
+              if (data.category === selectedCategory) {
+                allScores.push({ id: doc.id, ...data, eventId });
+              }
+            });
+
+            // Build leaderboard
+            const teamMap: Record<string, any> = {};
+            allScores.forEach((score) => {
+              const teamId = score.teamId;
+              if (teamId && !teamsMap[teamId]?.disabled) {
+                if (!teamMap[teamId]) {
+                  teamMap[teamId] = {
+                    teamName: score.teamName || teamsMap[teamId]?.teamName || "",
+                    teamId: teamId,
+                    ...score,
+                  };
+                }
+              }
+            });
+
+            const leaderboardArr = Object.values(teamMap)
+              .map((team: any) => categoryConfig.calculator(team))
+              .filter((team: any) => team.bestScore !== undefined && team.bestScore > 0)
+              .sort((a: any, b: any) => {
+                if (selectedCategory === 'future-eng') {
+                  if (b.bestScore !== a.bestScore) {
+                    return b.bestScore - a.bestScore;
+                  }
+                  return (a.totalTime || Infinity) - (b.totalTime || Infinity);
+                }
+                return b.bestScore - a.bestScore;
+              });
+
+            setLeaderboard(leaderboardArr);
+            setCurrentPage(1);
+            setScoresLoading(false);
+          });
+          unsubList.push(unsub);
+        });
+
+        scoresUnsub = () => {
+          unsubList.forEach((unsub) => unsub());
+        };
+      })();
     } else {
-      scoresQuery = query(
-        collection(db, "scores"),
-        where("category", "==", selectedCategory),
-        where("eventId", "==", selectedEvent)
-      );
-    }
-
-    const scoresUnsub = onSnapshot(scoresQuery, (scoresSnap) => {
-      const scores = scoresSnap.docs
-        .map((doc) => {
-          const data = doc.data() as {
-            round1Score?: number;
-            round2Score?: number;
-            time1?: string;
-            time2?: string;
-            category?: string;
-            teamId?: string;
-            teamName?: string;
-            eventId?: string;
-            [key: string]: any;
-          };
-          return { id: doc.id, ...data };
-        });
-
-      const teamMap: Record<string, any> = {};
-      scores.forEach((score) => {
-        const teamId = score.teamId;
-        if (teamId && !teamsMap[teamId]?.disabled) {
-          if (!teamMap[teamId]) {
-            teamMap[teamId] = {
-              teamName: score.teamName || teamsMap[teamId]?.teamName || "",
-              teamId: teamId,
-              round1Score: score.round1Score,
-              round2Score: score.round2Score,
-              time1: score.time1,
-              time2: score.time2,
-            };
+      // Only fetch scores for the selected event
+      const scoresRef = collection(db, "events", selectedEvent, "scores");
+      scoresUnsub = onSnapshot(scoresRef, (scoresSnap) => {
+        const scores: any[] = [];
+        scoresSnap.forEach((doc) => {
+          const data = doc.data();
+          if (data.category === selectedCategory) {
+            scores.push({ id: doc.id, ...data });
           }
-        }
-      });
-
-      Object.values(teamMap).forEach((team: any) => {
-        const r1 = team.round1Score ?? null;
-        const r2 = team.round2Score ?? null;
-        const t1 = team.time1 ?? "";
-        const t2 = team.time2 ?? "";
-        if (r1 !== null && (r2 === null || r1 >= r2)) {
-          team.bestScore = r1;
-          team.bestTime = t1;
-          team.bestTimeMs = parseTimeString(t1);
-        }
-        if (r2 !== null && (r1 === null || r2 > r1)) {
-          team.bestScore = r2;
-          team.bestTime = t2;
-          team.bestTimeMs = parseTimeString(t2);
-        }
-      });
-
-      const leaderboardArr = Object.values(teamMap)
-        .filter((team: any) => team.bestScore !== undefined)
-        .sort((a: any, b: any) => {
-          const aScore = a.bestScore ?? -Infinity;
-          const bScore = b.bestScore ?? -Infinity;
-          if (bScore !== aScore) return bScore - aScore;
-          return (a.bestTimeMs ?? Infinity) - (b.bestTimeMs ?? Infinity);
         });
 
-      setLeaderboard(leaderboardArr);
-      setCurrentPage(1);
-      setScoresLoading(false);
-    });
+        const teamMap: Record<string, any> = {};
+        scores.forEach((score) => {
+          const teamId = score.teamId;
+          if (teamId && !teamsMap[teamId]?.disabled) {
+            if (!teamMap[teamId]) {
+              teamMap[teamId] = {
+                teamName: score.teamName || teamsMap[teamId]?.teamName || "",
+                teamId: teamId,
+                ...score,
+              };
+            }
+          }
+        });
+
+        const leaderboardArr = Object.values(teamMap)
+          .map((team: any) => categoryConfig.calculator(team))
+          .filter((team: any) => team.bestScore !== undefined && team.bestScore > 0)
+          .sort((a: any, b: any) => {
+            if (selectedCategory === 'future-eng') {
+              if (b.bestScore !== a.bestScore) {
+                return b.bestScore - a.bestScore;
+              }
+              return (a.totalTime || Infinity) - (b.totalTime || Infinity);
+            }
+            return b.bestScore - a.bestScore;
+          });
+
+        setLeaderboard(leaderboardArr);
+        setCurrentPage(1);
+        setScoresLoading(false);
+      });
+    }
 
     return () => {
       teamsUnsub();
-      scoresUnsub();
+      if (scoresUnsub) scoresUnsub();
     };
   }, [selectedCategory, selectedEvent]);
 
@@ -220,13 +350,39 @@ export default function AdminOverallScores({ navigation }: any) {
     const eventInfo = selectedEvent === "all" ? "All_Events" : 
       events.find(e => e.id === selectedEvent)?.title?.replace(/\s+/g, "_") || selectedEvent;
 
-    // 1. Prepare data
-    const data = leaderboard.map((team, index) => ({
-      Rank: index + 1,
-      Team: team.teamName,
-      "Round 1 Score": team.round1Score ?? "-",
-      "Round 2 Score": team.round2Score ?? "-",
-    }));
+    let data;
+    
+    if (selectedCategory === 'future-eng') {
+      data = leaderboard.map((team, index) => ({
+        Rank: index + 1,
+        Team: team.teamName,
+        "Open Round 1": team.openScore1 ?? "-",
+        "Open Round 2": team.openScore2 ?? "-",
+        "Obstacle Round 1": team.obstacleScore1 ?? "-",
+        "Obstacle Round 2": team.obstacleScore2 ?? "-",
+        "Documentation": team.docScore ?? "-",
+        "Total Score": team.bestScore,
+        "Total Time": team.totalTime ? `${team.totalTime}s` : "-",
+      }));
+    } else if (selectedCategory?.startsWith('fi-')) {
+      data = leaderboard.map((team, index) => ({
+        Rank: index + 1,
+        Team: team.teamName,
+        "Project & Innovation": team.projectInnovation ?? "-",
+        "Robotic Solution": team.roboticSolution ?? "-",
+        "Presentation & Team Spirit": team.presentationSpirit ?? "-",
+        "Total Score": team.bestScore,
+      }));
+    } else {
+      // Default robomissions format
+      data = leaderboard.map((team, index) => ({
+        Rank: index + 1,
+        Team: team.teamName,
+        "Round 1 Score": team.round1Score ?? "-",
+        "Round 2 Score": team.round2Score ?? "-",
+        "Best Score": team.bestScore,
+      }));
+    }
 
     // Create worksheet and workbook
     const ws = XLSX.utils.json_to_sheet(data);
@@ -267,6 +423,90 @@ export default function AdminOverallScores({ navigation }: any) {
   };
   const handlePreviousPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  // Render different table headers based on category
+  const renderTableHeader = () => {
+    return (
+      <View style={stickyStyles.header}>
+        <Text style={stickyStyles.heading}>Team Name</Text>
+        {categoryConfig.headers.map((header, index) => (
+          <Text key={index} style={[stickyStyles.heading, stickyStyles.align]}>
+            {header}
+          </Text>
+        ))}
+      </View>
+    );
+  };
+
+  // Render different table rows based on category
+  const renderTableRow = (item: any, index: number) => {
+    const overallRank = startIndex + index;
+    const rankDisplay = `${overallRank + 1}.`;
+    
+    if (selectedCategory === 'future-eng') {
+      return (
+        <View style={stickyStyles.row}>
+          <Text style={stickyStyles.cell}>
+            {rankDisplay} {item.teamName}
+          </Text>
+          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 12 }]}>
+            {item.openScore1 ?? "N/A"}
+          </Text>
+          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 12 }]}>
+            {item.openScore2 ?? "N/A"}
+          </Text>
+          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 12 }]}>
+            {item.obstacleScore1 ?? "N/A"}
+          </Text>
+          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 12 }]}>
+            {item.obstacleScore2 ?? "N/A"}
+          </Text>
+          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 12 }]}>
+            {item.docScore ?? "N/A"}
+          </Text>
+          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 14, fontWeight: "bold" }]}>
+            {item.bestScore}
+            {item.totalTime ? `\n(${item.totalTime}s)` : ''}
+          </Text>
+        </View>
+      );
+    } else if (selectedCategory?.startsWith('fi-')) {
+      return (
+        <View style={stickyStyles.row}>
+          <Text style={stickyStyles.cell}>
+            {rankDisplay} {item.teamName}
+          </Text>
+          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 14 }]}>
+            {item.projectInnovation ?? "N/A"}
+          </Text>
+          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 14 }]}>
+            {item.roboticSolution ?? "N/A"}
+          </Text>
+          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 14 }]}>
+            {item.presentationSpirit ?? "N/A"}
+          </Text>
+          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 16, fontWeight: "bold" }]}>
+            {item.bestScore}
+          </Text>
+        </View>
+      );
+    } else {
+      // Default robomissions format
+      return (
+        <View style={stickyStyles.row}>
+          <Text style={stickyStyles.cell}>
+            {rankDisplay} {item.teamName}
+          </Text>
+          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 18 }]}>
+            {item.round1Score ?? "N/A"}
+          </Text>
+          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 18 }]}>
+            {item.round2Score ?? "N/A"}
+          </Text>
+        </View>
+      );
+    }
   };
 
   return (
@@ -324,15 +564,7 @@ export default function AdminOverallScores({ navigation }: any) {
       
       {/* Leaderboard List */}
       <View style={{ flex: 1, marginHorizontal: 10 }}>
-        <View style={stickyStyles.header}>
-          <Text style={stickyStyles.heading}>Team Name</Text>
-          <Text style={[stickyStyles.heading, stickyStyles.align]}>
-            Round 1{" "}
-          </Text>
-          <Text style={[stickyStyles.heading, stickyStyles.align]}>
-            Round 2{" "}
-          </Text>
-        </View>
+        {renderTableHeader()}
         {scoresLoading ? (
           <View
             style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
@@ -357,33 +589,7 @@ export default function AdminOverallScores({ navigation }: any) {
             data={currentRecords}
             keyExtractor={(item) => item.teamId}
             contentContainerStyle={{ padding: 1 }}
-            renderItem={({ item, index }) => {
-              const overallRank = startIndex + index;
-              const rankDisplay = `${overallRank + 1}.`;
-              return (
-                <View style={stickyStyles.row}>
-                  <Text style={stickyStyles.cell}>
-                    {rankDisplay} {item.teamName}
-                  </Text>
-                  <Text
-                    style={[
-                      stickyStyles.cell,
-                      { textAlign: "center", fontSize: 18 },
-                    ]}
-                  >
-                    {item.round1Score ?? "N/A"}
-                  </Text>
-                  <Text
-                    style={[
-                      stickyStyles.cell,
-                      { textAlign: "center", fontSize: 18 },
-                    ]}
-                  >
-                    {item.round2Score ?? "N/A"}
-                  </Text>
-                </View>
-              );
-            }}
+            renderItem={({ item, index }) => renderTableRow(item, index)}
           />
         )}
       </View>
@@ -401,9 +607,11 @@ export default function AdminOverallScores({ navigation }: any) {
               borderRadius: 6,
             }}
           >
-            <Text style={{ color: currentPage === 1 ? "#aaa" : "#fff" }}>
-              <AntDesign name="left" size={16} color="black" />
-            </Text>
+            <AntDesign 
+              name="left" 
+              size={16} 
+              color={currentPage === 1 ? "#aaa" : "white"} 
+            />
           </TouchableOpacity>
           <Text style={{ alignSelf: "center", fontSize: 16 }}>
             Page {currentPage} of {totalPages}
@@ -418,11 +626,11 @@ export default function AdminOverallScores({ navigation }: any) {
               borderRadius: 6,
             }}
           >
-            <Text
-              style={{ color: currentPage === totalPages ? "#aaa" : "#fff" }}
-            >
-              <AntDesign name="right" size={16} color="black" />
-            </Text>
+            <AntDesign 
+              name="right" 
+              size={16} 
+              color={currentPage === totalPages ? "#aaa" : "white"} 
+            />
           </TouchableOpacity>
         </View>
         <Text style={{ color: "#555", marginLeft: 16 }}>
@@ -469,8 +677,9 @@ const stickyStyles = StyleSheet.create({
 
   heading: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 12,
     color: "#fff",
+    fontWeight: "bold",
   },
 
   align: {
@@ -492,7 +701,7 @@ const stickyStyles = StyleSheet.create({
   cell: {
     flex: 1,
     textAlign: "left",
-    fontSize: 14,
+    fontSize: 12,
   },
 
   searchInput: {
