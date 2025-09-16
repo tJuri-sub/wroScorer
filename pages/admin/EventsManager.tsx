@@ -27,7 +27,6 @@ import styles from "../../components/styles/adminStyles/EventsStyle";
 
 import { Feather, AntDesign } from "@expo/vector-icons";
 
-
 export const EventsManager = () => {
   const navigation = useNavigation();
   const [eventModal, setEventModal] = useState<boolean>(false);
@@ -40,16 +39,13 @@ export const EventsManager = () => {
   type EventInput = {
     title: string;
     date: string;
-    //category: string;
   };
 
   const [inputData, setInputData] = useState<EventInput>({
     title: "",
     date: "",
-    //category: "",
   });
 
-  
   useEffect(() => {
     const fetchEvents = async () => {
       setLoadingEvents(true);
@@ -94,7 +90,7 @@ export const EventsManager = () => {
         ...doc.data(),
       }));
       setEvents(eventList);
-      setInputData({ title: "", date: ""});
+      setInputData({ title: "", date: "" });
       setEventModal(false);
       setLoadingEvents(false); // <--- Add this
     } catch (error) {
@@ -180,7 +176,13 @@ export const EventsManager = () => {
               data={events}
               keyExtractor={(item, idx) => idx.toString()}
               renderItem={({ item }) => (
-                <TouchableOpacity onPress={() => (navigation as any).navigate('EventCategory', { eventId: item.id })}>
+                <TouchableOpacity
+                  onPress={() =>
+                    (navigation as any).navigate("EventCategory", {
+                      eventId: item.id,
+                    })
+                  }
+                >
                   <View style={styles.eventCard}>
                     <Text style={styles.eventTitle}>{item.title}</Text>
                     <Text style={styles.eventDetail}>
@@ -248,7 +250,6 @@ export const EventsManager = () => {
                   }
                 />
               </View>
-
             </View>
 
             <View
