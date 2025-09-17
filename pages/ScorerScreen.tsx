@@ -23,11 +23,43 @@ import {
   where,
   onSnapshot,
   getDoc,
+  orderBy,
+  updateDoc,
 } from "firebase/firestore";
 import { useFonts, Inter_400Regular } from "@expo-google-fonts/inter";
 import styles from "../components/styles/judgeStyles/ScorerStyling";
+import robostyles from "../components/styles/judgeStyles/RobosportsStyling";
 import { Feather } from "@expo/vector-icons";
 import DropDownPicker from "react-native-dropdown-picker";
+import RoboSportsMatchScorer from "../components/component/judgeDrawer/robosports/RoboSportsScorer";
+// Add these imports
+import { Tournament, TournamentBracket } from "../components/component/judgeDrawer/robosports/TournamentTypes";
+import { TournamentManager } from "../components/component/judgeDrawer/robosports/TournamentManager";
+import TournamentSetup from "../components/component/judgeDrawer/robosports/TournamentSetup";
+
+interface GameData {
+  id: string;
+  gameNumber: number;
+  eventId: string;
+  team1Id: string;
+  team2Id: string;
+  team1Name: string;
+  team2Name: string;
+  status: 'created' | 'in-progress' | 'finished';
+  currentMatch: number;
+  matchResults: any[];
+  gameWinner: string | null;
+  team1Points: number;
+  team2Points: number;
+  createdAt: string;
+  completedAt?: string;
+  tournamentId?: string;
+  bracketId?: string;
+  currentMatchState?: {
+    team1Balls: { orange: number; purple: number };
+    team2Balls: { orange: number; purple: number };
+  };
+}
 
 export default function ScorerScreen({ navigation }: any) {
   let [fontsLoaded] = useFonts({
@@ -62,7 +94,7 @@ export default function ScorerScreen({ navigation }: any) {
   const [inputSecond, setInputSecond] = useState("");
   const [inputMs, setInputMs] = useState("");
   const [search, setSearch] = useState("");
-  
+
   // Error states for Future Innovators
   const [projectError, setProjectError] = useState(false);
   const [roboticError, setRoboticError] = useState(false);
@@ -70,6 +102,23 @@ export default function ScorerScreen({ navigation }: any) {
 
   // Inline error message
   const [submitError, setSubmitError] = useState("");
+
+  // RoboSports states
+  const [games, setGames] = useState<GameData[]>([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedTeam1, setSelectedTeam1] = useState<string>('');
+  const [selectedTeam2, setSelectedTeam2] = useState<string>('');
+  const [team1DropdownOpen, setTeam1DropdownOpen] = useState(false);
+  const [team2DropdownOpen, setTeam2DropdownOpen] = useState(false);
+  const [isCreatingGame, setIsCreatingGame] = useState(false);
+  const [activeGame, setActiveGame] = useState<GameData | null>(null);
+  const [showScorerModal, setScorerModal] = useState(false);
+  // Robosports Tournament states
+  const [tournamentMode, setTournamentMode] = useState<'regular' | 'tournament'>('regular');
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
+  const [showTournamentSetup, setShowTournamentSetup] = useState(false);
+
 
   // Future Engineers states
   const [feRoundType, setFeRoundType] = useState<"open" | "obstacle">("open");
@@ -153,20 +202,38 @@ export default function ScorerScreen({ navigation }: any) {
     fetchJudgeData();
   }, [user]);
 
+  // Load RoboSports games when category is robosports
+  useEffect(() => {
+    if (judgeCategory !== "robosports" || !selectedEvent) return;
+
+    const gamesRef = collection(FIREBASE_DB, 'events', selectedEvent, 'robosports-games');
+    const gamesQuery = query(gamesRef, orderBy('gameNumber', 'asc'));
+
+    const unsubscribe = onSnapshot(gamesQuery, (snapshot) => {
+      const loadedGames: GameData[] = [];
+      snapshot.forEach((doc) => {
+        loadedGames.push({ id: doc.id, ...doc.data() } as GameData);
+      });
+      setGames(loadedGames);
+    });
+
+    return () => unsubscribe();
+  }, [judgeCategory, selectedEvent]);
+
   // Fetch teams and scores for selected event
   useEffect(() => {
     let unsubscribeTeams: (() => void) | undefined;
     let unsubscribeScores: (() => void) | undefined;
 
     const fetchTeamsAndScores = async () => {
-  if (!judgeCategory || !selectedEvent) {
-    setLoading(false);
-    return;
-  }
+      if (!judgeCategory || !selectedEvent) {
+        setLoading(false);
+        return;
+      }
 
-  setLoading(true);
+      setLoading(true);
 
-     try {
+      try {
         // Get event document
         const eventDoc = await getDoc(doc(FIREBASE_DB, "events", selectedEvent));
         if (!eventDoc.exists()) {
@@ -216,6 +283,243 @@ export default function ScorerScreen({ navigation }: any) {
       if (unsubscribeScores) unsubscribeScores();
     };
   }, [judgeCategory, selectedEvent]);
+
+  // RoboSports functions
+  const getNextGameNumber = () => {
+    if (games.length === 0) return 1;
+    return Math.max(...games.map(g => g.gameNumber)) + 1;
+  };
+
+  const createNewGame = async () => {
+    if (!selectedTeam1 || !selectedTeam2) {
+      Alert.alert('Error', 'Please select both teams');
+      return;
+    }
+
+    if (selectedTeam1 === selectedTeam2) {
+      Alert.alert('Error', 'Please select different teams');
+      return;
+    }
+
+    // Check if these teams already have an ongoing game
+    const existingGame = games.find(
+      g => g.status !== 'finished' && 
+      ((g.team1Id === selectedTeam1 && g.team2Id === selectedTeam2) ||
+       (g.team1Id === selectedTeam2 && g.team2Id === selectedTeam1))
+    );
+
+    if (existingGame) {
+      Alert.alert('Error', 'These teams already have an ongoing game');
+      return;
+    }
+
+    setIsCreatingGame(true);
+
+    try {
+      const gameNumber = getNextGameNumber();
+      const gameData: Omit<GameData, 'id'> = {
+        gameNumber,
+        eventId: selectedEvent,
+        team1Id: selectedTeam1,
+        team2Id: selectedTeam2,
+        team1Name: teams.find(t => t.id === selectedTeam1)?.teamName || '',
+        team2Name: teams.find(t => t.id === selectedTeam2)?.teamName || '',
+        status: 'created',
+        currentMatch: 1,
+        matchResults: [],
+        gameWinner: null,
+        team1Points: 0,
+        team2Points: 0,
+        createdAt: new Date().toISOString(),
+        currentMatchState: {
+          team1Balls: { orange: 4, purple: 1 },
+          team2Balls: { orange: 4, purple: 1 },
+        },
+      };
+
+      const gameRef = doc(collection(FIREBASE_DB, 'events', selectedEvent, 'robosports-games'));
+      await setDoc(gameRef, gameData);
+
+      setSelectedTeam1('');
+      setSelectedTeam2('');
+      setShowCreateModal(false);
+      
+    } catch (error) {
+      console.error('Error creating game:', error);
+      Alert.alert('Error', 'Failed to create game');
+    } finally {
+      setIsCreatingGame(false);
+    }
+  };
+
+  const openGameScorer = (game: GameData) => {
+    if (game.status === 'finished') return;
+
+    setActiveGame(game);
+    setScorerModal(true);
+
+    // Mark game as in-progress if it was just created
+    if (game.status === 'created') {
+      const gameRef = doc(FIREBASE_DB, 'events', selectedEvent, 'robosports-games', game.id);
+      updateDoc(gameRef, { status: 'in-progress' });
+    }
+  };
+
+  const updateRoboSportsStandings = async () => {
+    if (!selectedEvent || judgeCategory !== "robosports") return;
+    
+    try {
+      // Fetch all completed games
+      const gamesRef = collection(FIREBASE_DB, "events", selectedEvent, "robosports-games");
+      const gamesSnapshot = await getDocs(gamesRef);
+      
+      // Calculate standings
+      const standings: Record<string, any> = {};
+      
+      // Initialize all teams
+      teams.forEach(team => {
+        standings[team.id] = {
+          teamId: team.id,
+          teamName: team.teamName,
+          totalPoints: 0,
+          violations: 0,
+          opponentBallScore: 0,
+          gamesPlayed: 0,
+        };
+      });
+      
+      // Process each game
+      gamesSnapshot.forEach((doc) => {
+        const game = doc.data();
+        
+        // Update team 1
+        if (standings[game.team1Id]) {
+          standings[game.team1Id].totalPoints += game.team1Points;
+          standings[game.team1Id].gamesPlayed += 1;
+          
+          // Count violations for team 1
+          const team1Violations = game.matchResults.filter(
+            (match: any) => match.violation && match.winner !== game.team1Id
+          ).length;
+          standings[game.team1Id].violations += team1Violations;
+          
+          // Calculate opponent ball scores for tie-breaking
+          game.matchResults.forEach((match: any) => {
+            standings[game.team1Id].opponentBallScore += match.team2Score;
+          });
+        }
+        
+        // Update team 2
+        if (standings[game.team2Id]) {
+          standings[game.team2Id].totalPoints += game.team2Points;
+          standings[game.team2Id].gamesPlayed += 1;
+          
+          // Count violations for team 2
+          const team2Violations = game.matchResults.filter(
+            (match: any) => match.violation && match.winner !== game.team2Id
+          ).length;
+          standings[game.team2Id].violations += team2Violations;
+          
+          // Calculate opponent ball scores for tie-breaking
+          game.matchResults.forEach((match: any) => {
+            standings[game.team2Id].opponentBallScore += match.team1Score;
+          });
+        }
+      });
+      
+      // Update teams state with standings data
+      setTeams(prevTeams => 
+        prevTeams.map(team => ({
+          ...team,
+          ...standings[team.id]
+        }))
+      );
+      
+    } catch (error) {
+      console.error("Error updating RoboSports standings:", error);
+    }
+  };
+
+  //function to handle creating tournament games
+  const createTournamentGame = async (bracket: TournamentBracket) => {
+    if (!bracket.team1Id || !bracket.team2Id) return;
+
+    try {
+      const gameNumber = getNextGameNumber();
+      const gameData: Omit<GameData, 'id'> = {
+        gameNumber,
+        eventId: selectedEvent,
+        team1Id: bracket.team1Id,
+        team2Id: bracket.team2Id,
+        team1Name: bracket.team1Name,
+        team2Name: bracket.team2Name,
+        status: 'created',
+        currentMatch: 1,
+        matchResults: [],
+        gameWinner: null,
+        team1Points: 0,
+        team2Points: 0,
+        createdAt: new Date().toISOString(),
+        tournamentId: bracket.tournamentId, // NEW: Link to tournament
+        bracketId: bracket.id, // NEW: Link to bracket
+        currentMatchState: {
+          team1Balls: { orange: 4, purple: 1 },
+          team2Balls: { orange: 4, purple: 1 },
+        },
+      };
+
+      const gameRef = doc(collection(FIREBASE_DB, 'events', selectedEvent, 'robosports-games'));
+      await setDoc(gameRef, gameData);
+
+      // Update bracket status to in-progress
+      const tournamentRef = doc(FIREBASE_DB, 'events', selectedEvent, 'tournaments', bracket.tournamentId);
+      const tournamentDoc = await getDoc(tournamentRef);
+      
+      if (tournamentDoc.exists()) {
+        const tournament = tournamentDoc.data() as Tournament;
+        const updatedBrackets = tournament.brackets.map(b => 
+          b.id === bracket.id 
+            ? { ...b, status: 'in-progress' as const, gameId: gameRef.id }
+            : b
+        );
+        
+        await updateDoc(tournamentRef, { brackets: updatedBrackets });
+      }
+
+      // Open the game scorer
+      setActiveGame({ id: gameRef.id, ...gameData });
+      setScorerModal(true);
+      
+    } catch (error) {
+      console.error('Error creating tournament game:', error);
+      Alert.alert('Error', 'Failed to create tournament game');
+    }
+  };
+
+  // Add this useEffect to load tournaments
+  useEffect(() => {
+    if (judgeCategory !== "robosports" || !selectedEvent) return;
+
+    const tournamentsRef = collection(FIREBASE_DB, 'events', selectedEvent, 'tournaments');
+    const tournamentsQuery = query(tournamentsRef, orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(tournamentsQuery, (snapshot) => {
+      const loadedTournaments: Tournament[] = [];
+      snapshot.forEach((doc) => {
+        loadedTournaments.push({ id: doc.id, ...doc.data() } as Tournament);
+      });
+      setTournaments(loadedTournaments);
+    });
+
+    return () => unsubscribe();
+  }, [judgeCategory, selectedEvent]);
+
+  // Call this function when teams or selectedEvent changes for robosports
+  useEffect(() => {
+    if (judgeCategory === "robosports" && selectedEvent) {
+      updateRoboSportsStandings();
+    }
+  }, [selectedEvent, judgeCategory]);
 
   // Card status helpers
   const getCardStatus = (team: any) => {
@@ -388,11 +692,7 @@ export default function ScorerScreen({ navigation }: any) {
         ); 
       }
       case "robosports":
-        return (
-          <Text style={{ marginVertical: 20, textAlign: "center" }}>
-            Robosports scoring coming soon!
-          </Text>
-        );
+        return null; // Handled in separate component
       case "fi-elem":
       case "fi-junior":
       case "fi-senior": {
@@ -574,8 +874,8 @@ export default function ScorerScreen({ navigation }: any) {
     setSubmitError("");
     setIsSubmitting(true);
     
-     if (!scoringTeam || !selectedEvent) {
-      setIsSubmitting(false); // Stop loading on early return
+    if (!scoringTeam || !selectedEvent) {
+      setIsSubmitting(false);
       return;
     }
 
@@ -649,9 +949,9 @@ export default function ScorerScreen({ navigation }: any) {
         console.error("Score submission error:", e);
         Alert.alert("Error", "Failed to submit score. Please try again.");
       } finally {
-        setIsSubmitting(false); // Always stop loading when done
+        setIsSubmitting(false);
       }
-    };
+    }
 
     // Future Innovators (updated structure)
     if (
@@ -665,10 +965,12 @@ export default function ScorerScreen({ navigation }: any) {
         inputSecond.trim() === ""
       ) {
         setSubmitError("Please input all scores.");
+        setIsSubmitting(false);
         return;
       }
       if (projectError || roboticError || presentationError) {
         setSubmitError("One or more scores exceed the maximum allowed.");
+        setIsSubmitting(false);
         return;
       }
 
@@ -710,6 +1012,8 @@ export default function ScorerScreen({ navigation }: any) {
       } catch (e) {
         console.error("Score submission error:", e);
         Alert.alert("Error", "Failed to submit score. Please try again.");
+      } finally {
+        setIsSubmitting(false);
       }
       return;
     }
@@ -718,10 +1022,12 @@ export default function ScorerScreen({ navigation }: any) {
     if (judgeCategory === "future-eng") {
       if (inputScore.trim() === "") {
         setSubmitError("Please input the score.");
+        setIsSubmitting(false);
         return;
       }
       if (inputMinute.trim() === "" && inputSecond.trim() === "" && inputMs.trim() === "") {
         setSubmitError("Please input the time.");
+        setIsSubmitting(false);
         return;
       }
 
@@ -809,10 +1115,142 @@ export default function ScorerScreen({ navigation }: any) {
       } catch (e) {
         console.error("Score submission error:", e);
         setSubmitError("Failed to submit score. Please try again.");
+      } finally {
+        setIsSubmitting(false);
       }
       return;
     }
   };
+
+  // RoboSports game card renderer
+  const renderGameCard = ({ item: game }: { item: GameData }) => {
+    const getStatusColor = () => {
+      switch (game.status) {
+        case 'created': return '#faf9f6';
+        case 'in-progress': return '#fff9c4';
+        case 'finished': return '#c8e6c9';
+        default: return '#faf9f6';
+      }
+    };
+
+    const getStatusText = () => {
+      switch (game.status) {
+        case 'created': return 'Ready to Start';
+        case 'in-progress': return `In Progress (Match ${game.currentMatch}/3)`;
+        case 'finished': return 'Finished';
+        default: return 'Unknown';
+      }
+    };
+
+    return (
+      <TouchableOpacity
+        style={[robostyles.gameCard, { backgroundColor: getStatusColor() }]}
+        onPress={() => openGameScorer(game)}
+        disabled={game.status === 'finished'}
+      >
+        <Text style={robostyles.gameNumber}>Game #{game.gameNumber}</Text>
+        <Text style={robostyles.teamsText}>
+          {game.team1Name} vs {game.team2Name}
+        </Text>
+        
+        <View style={robostyles.gameDetails}>
+          <Text style={robostyles.statusText}>Status: {getStatusText()}</Text>
+          
+          {game.matchResults.length > 0 && (
+            <View style={robostyles.matchResults}>
+              <Text style={robostyles.resultsTitle}>Match Results:</Text>
+              {game.matchResults.map((result: any, index: number) => (
+                <Text key={index} style={robostyles.resultText}>
+                  M{result.match}: {result.winner ? result.winnerName : 'Tie'} ({result.team1Score} - {result.team2Score})
+                </Text>
+              ))}
+            </View>
+          )}
+          
+          {game.status === 'finished' && (
+            <Text style={robostyles.finalResult}>
+              Winner: {game.gameWinner ? 
+                (game.gameWinner === game.team1Id ? game.team1Name : game.team2Name) : 
+                'Tie'} ({game.team1Points} - {game.team2Points} pts)
+            </Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  // Create Game Modal
+  const renderCreateGameModal = () => (
+    <Modal
+      visible={showCreateModal}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setShowCreateModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Create New Game</Text>
+          
+          <View style={{ marginBottom: 20, zIndex: 1000 }}>
+            <Text style={robostyles.label}>Team 1:</Text>
+            <DropDownPicker
+              open={team1DropdownOpen}
+              setOpen={setTeam1DropdownOpen}
+              value={selectedTeam1}
+              setValue={setSelectedTeam1}
+              items={teams.map(team => ({ 
+                label: `${team.teamNumber} - ${team.teamName}`, 
+                value: team.id 
+              }))}
+              placeholder="Select Team 1"
+              style={robostyles.dropdown}
+              onOpen={() => setTeam2DropdownOpen(false)}
+            />
+          </View>
+
+          <View style={{ marginBottom: 30, zIndex: 999 }}>
+            <Text style={robostyles.label}>Team 2:</Text>
+            <DropDownPicker
+              open={team2DropdownOpen}
+              setOpen={setTeam2DropdownOpen}
+              value={selectedTeam2}
+              setValue={setSelectedTeam2}
+              items={teams
+                .filter(t => t.id !== selectedTeam1)
+                .map(team => ({ 
+                  label: `${team.teamNumber} - ${team.teamName}`, 
+                  value: team.id 
+                }))}
+              placeholder="Select Team 2"
+              style={robostyles.dropdown}
+              onOpen={() => setTeam1DropdownOpen(false)}
+            />
+          </View>
+
+          <View style={robostyles.modalButtons}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowCreateModal(false)}
+            >
+              <Text style={robostyles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[robostyles.createButton, isCreatingGame && robostyles.disabledButton]}
+              onPress={createNewGame}
+              disabled={isCreatingGame || !selectedTeam1 || !selectedTeam2}
+            >
+              {isCreatingGame ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.buttonText}>Create Game</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
 
   if (loading) {
     return (
@@ -873,7 +1311,9 @@ export default function ScorerScreen({ navigation }: any) {
       <View style={{ padding: 15, zIndex: 1000 }}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Score Teams</Text>
-          <Text style={styles.headerSubtitle}>Tap a team card to score</Text>
+          <Text style={styles.headerSubtitle}>
+            {judgeCategory === "robosports" ? "Create and manage games" : "Tap a team card to score"}
+          </Text>
         </View>
 
         {/* Event Selector */}
@@ -918,500 +1358,677 @@ export default function ScorerScreen({ navigation }: any) {
           </View>
         )}
 
-        {/* Status Filter (only for RoboMission and Future Engineers) */}
-        {(judgeCategory === "robo-elem" || judgeCategory === "robo-junior" || 
-          judgeCategory === "robo-senior" || judgeCategory === "future-eng") && (
-          <View style={{ marginBottom: 15, zIndex: 999 }}>
-            <Text style={{ fontSize: 14, fontWeight: "bold", marginBottom: 8 }}>
-              Filter by Status:
-            </Text>
-            <DropDownPicker
-              open={statusDropdownOpen}
-              setOpen={setStatusDropdownOpen}
-              value={statusFilter}
-              setValue={setStatusFilter}
-              items={getStatusFilterOptions().map(option => ({
-                ...option,
-                label: `${option.label}${option.value !== "all" ? ` (${statusCounts[option.value as keyof typeof statusCounts] || 0})` : ` (${statusCounts.total})`}`
-              }))}
-              style={{
-                borderWidth: 1,
-                borderColor: "#e0e0e0",
-                backgroundColor: "#fafafa",
-                minHeight: 40,
-              }}
-              textStyle={{ fontSize: 14 }}
-              dropDownContainerStyle={{
-                borderWidth: 1,
-                borderColor: "#e0e0e0",
-                backgroundColor: "#fafafa",
-              }}
-              onChangeValue={() => setCurrentPage(1)} // Reset to first page when filter changes
-            />
-          </View>
-        )}
 
-        {/* Search Bar */}
-        <TextInput
-          style={styles.searchbar}
-          placeholder="Search team name..."
-          placeholderTextColor="#999999"
-          value={search}
-          onChangeText={(text) => {
-            setSearch(text);
-            setCurrentPage(1); // Reset to first page when searching
-          }}
-        />
+        {/* RoboSports Content */}
+        {judgeCategory === "robosports" && (
+          <View style={{ flex: 1 }}>
+            {/* Tournament Mode Toggle */}
+            <View style={robostyles.modeToggle}>
+              <TouchableOpacity
+                style={[
+                  robostyles.modeButton,
+                  tournamentMode === 'regular' && robostyles.modeButtonActive
+                ]}
+                onPress={() => setTournamentMode('regular')}
+              >
+                <Text style={[
+                  robostyles.modeButtonText,
+                  tournamentMode === 'regular' && robostyles.modeButtonTextActive
+                ]}>Regular Games</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  robostyles.modeButton,
+                  tournamentMode === 'tournament' && robostyles.modeButtonActive
+                ]}
+                onPress={() => setTournamentMode('tournament')}
+              >
+                <Text style={[
+                  robostyles.modeButtonText,
+                  tournamentMode === 'tournament' && robostyles.modeButtonTextActive
+                ]}>Tournament Mode</Text>
+              </TouchableOpacity>
+            </View>
 
-        {/* Future Engineers Pills */}
-        {judgeCategory === "future-eng" && (
-          <View style={{ flexDirection: "row", marginBottom: 12 }}>
-            <TouchableOpacity
-              style={[
-                styles.fePill,
-                fePill === "open" && styles.fePillActive,
-              ]}
-              onPress={() => setFePill("open")}
-            >
-              <Text style={[
-                styles.fePillText,
-                fePill === "open" && styles.fePillTextActive,
-              ]}> Open - Qualifying</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.fePill,
-                fePill === "obstacle" && styles.fePillActive,
-              ]}
-              onPress={() => setFePill("obstacle")}
-            >
-              <Text style={[
-                styles.fePillText,
-                fePill === "obstacle" && styles.fePillTextActive,
-                ]}>Obstacles - Final</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: 15 }}>
-            <TouchableOpacity
-              style={[
-                { padding: 8, marginHorizontal: 5, borderRadius: 5, backgroundColor: "#e0e0e0" },
-                currentPage === 1 && { opacity: 0.5 }
-              ]}
-              onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              <Text>Previous</Text>
-            </TouchableOpacity>
-            
-            <Text style={{ marginHorizontal: 15, fontSize: 16 }}>
-              Page {currentPage} of {totalPages} ({filteredTeams.length} teams)
-            </Text>
-            
-            <TouchableOpacity
-              style={[
-                { padding: 8, marginHorizontal: 5, borderRadius: 5, backgroundColor: "#e0e0e0" },
-                currentPage === totalPages && { opacity: 0.5 }
-              ]}
-              onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-            >
-              <Text>Next</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Teams List */}
-        <FlatList
-          data={paginatedTeams}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => {
-            const status = getCardStatus(item);
-            const isComplete = status === "complete";
-            const { bestScore, bestTime, bestRound } = getBestScoreAndTime(item);
-
-            // RoboMission: current UI
-            if (
-              judgeCategory === "robo-elem" ||
-              judgeCategory === "robo-junior" ||
-              judgeCategory === "robo-senior"
-            ) {
-              return (
-                <Pressable
-                  disabled={isComplete}
-                  onPress={() => openScoreModal(item)}
-                  style={({ pressed }) => [
-                    styles.teamCard,
-                    {
-                      backgroundColor: getCardColor(status),
-                      opacity: isComplete ? 1 : 1,
-                    },
-                    pressed && styles.buttonPressed,
-                  ]}
+            {/* Regular Games Mode */}
+            {tournamentMode === 'regular' && (
+              <View>
+                <TouchableOpacity
+                  style={styles.createGameButton}
+                  onPress={() => setShowCreateModal(true)}
                 >
-                  <Text style={styles.teamCardTeamNumber}>
-                    Team no. {item.teamNumber}
-                  </Text>
-                  <Text style={styles.teamCardTitle}>{item.teamName}</Text>
-                  <View
-                    style={{
-                      borderBottomWidth: 1,
-                      borderColor: "#bcbcbcff",
-                      paddingVertical: 10,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <View style={{ flexDirection: "row" }}>
-                      {/* Round column */}
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.teamData}>
-                          Round 1:{" "}
-                          <Text
-                            style={
-                              bestRound === 1
-                                ? { color: "#388e3c", fontWeight: "bold" }
-                                : {}
-                            }
-                          >
-                            {item.round1Score ?? "—"}
+                  <Text style={[styles.buttonText, { color: 'white' }]}>+ Create New Game</Text>
+                </TouchableOpacity>
+
+                <Text style={[robostyles.gamesHeader, { marginVertical: 15, fontSize: 16, fontWeight: "bold" }]}>
+                  Regular Games ({games.filter(g => !g.tournamentId).length})
+                </Text>
+                
+                <FlatList
+                  data={games.filter(g => !g.tournamentId)}
+                  keyExtractor={(item) => item.id}
+                  renderItem={renderGameCard}
+                  ListEmptyComponent={
+                    <Text style={robostyles.emptyText}>No games created yet. Create your first game!</Text>
+                  }
+                />
+              </View>
+            )}
+
+            {/* Tournament Mode */}
+            {tournamentMode === 'tournament' && (
+              <View>
+                {/* Create Tournament Button */}
+                <TouchableOpacity
+                  style={styles.createGameButton}
+                  onPress={() => setShowTournamentSetup(true)}
+                >
+                  <Text style={[styles.buttonText, { color: 'white' }]}>+ Create Tournament</Text>
+                </TouchableOpacity>
+
+                {/* Tournament Selection */}
+                {tournaments.length > 0 && (
+                  <View style={robostyles.tournamentSelector}>
+                    <Text style={robostyles.selectorLabel}>Active Tournaments:</Text>
+                    <FlatList
+                      data={tournaments}
+                      keyExtractor={(item) => item.id}
+                      renderItem={({ item }) => (
+                        <TouchableOpacity
+                          style={[
+                            robostyles.tournamentCard,
+                            selectedTournament?.id === item.id && robostyles.tournamentCardSelected
+                          ]}
+                          onPress={() => setSelectedTournament(item)}
+                        >
+                          <Text style={robostyles.tournamentName}>{item.name}</Text>
+                          <Text style={robostyles.tournamentInfo}>Single Elimination</Text>
+                          <Text style={robostyles.tournamentStatus}>
+                            Status: {item.status} • {item.teams.length} teams
                           </Text>
-                        </Text>
-                        <Text style={styles.teamData}>
-                          Round 2:{" "}
-                          <Text
-                            style={
-                              bestRound === 2
-                                ? { color: "#388e3c", fontWeight: "bold" }
-                                : {}
-                            }
-                          >
-                            {item.round2Score ?? "—"}
-                          </Text>
-                        </Text>
-                      </View>
-                      {/* Time column */}
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.teamData}>
-                          Time 1:{" "}
-                          <Text
-                            style={
-                              bestRound === 1
-                                ? { color: "#1976d2", fontWeight: "bold" }
-                                : {}
-                            }
-                          >
-                            {item.time1 ?? "—"}
-                          </Text>
-                        </Text>
-                        <Text style={styles.teamData}>
-                          Time 2:{" "}
-                          <Text
-                            style={
-                              bestRound === 2
-                                ? { color: "#1976d2", fontWeight: "bold" }
-                                : {}
-                            }
-                          >
-                            {item.time2 ?? "—"}
-                          </Text>
-                        </Text>
-                      </View>
-                    </View>
+                        </TouchableOpacity>
+                      )}
+                    />
                   </View>
-                  <Text
-                    style={{
-                      fontFamily: "inter_400Regular",
-                      fontStyle: "italic",
-                      color: "#6B7280",
-                    }}
-                  >
-                    Status:{" "}
-                    {status === "no-score"
+                )}
+
+                {/* Ready Tournament Matches */}
+                {selectedTournament && (
+                  <View>
+                    <Text style={[robostyles.gamesHeader, { marginVertical: 15, fontSize: 16, fontWeight: "bold" }]}>
+                      Ready Tournament Matches
+                    </Text>
+                    
+                    <FlatList
+                      data={TournamentManager.getReadyMatches(selectedTournament.brackets)}
+                      keyExtractor={(item) => item.id}
+                      renderItem={({ item: bracket }) => (
+                        <TouchableOpacity
+                          style={robostyles.tournamentMatchCard}
+                          onPress={() => createTournamentGame(bracket)}
+                        >
+                          <Text style={robostyles.matchTitle}>
+                            Round {bracket.roundNumber} - Match {bracket.matchNumber}
+                          </Text>
+                          
+                          <Text style={robostyles.teamsText}>
+                            {bracket.team1Name} vs {bracket.team2Name}
+                          </Text>
+                          
+                          <View style={robostyles.matchStatus}>
+                            <Text style={robostyles.statusText}>Ready to Play</Text>
+                          </View>
+                        </TouchableOpacity>
+                      )}
+                      ListEmptyComponent={
+                        <Text style={robostyles.emptyText}>
+                          {selectedTournament.status === 'completed' 
+                            ? 'Tournament completed!' 
+                            : 'No matches ready to play.'
+                          }
+                        </Text>
+                      }
+                    />
+                  </View>
+                )}
+
+                {/* Tournament Games History */}
+                {selectedTournament && (
+                  <View>
+                    <Text style={[robostyles.gamesHeader, { marginVertical: 15, fontSize: 16, fontWeight: "bold" }]}>
+                      Tournament Games
+                    </Text>
+                    
+                    <FlatList
+                      data={games.filter(g => g.tournamentId === selectedTournament.id)}
+                      keyExtractor={(item) => item.id}
+                      renderItem={renderGameCard}
+                      ListEmptyComponent={
+                        <Text style={robostyles.emptyText}>No tournament games yet.</Text>
+                      }
+                    />
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* Tournament Setup Modal */}
+            <TournamentSetup
+              visible={showTournamentSetup}
+              onClose={() => setShowTournamentSetup(false)}
+              selectedEvent={selectedEvent}
+              teams={teams}
+              onTournamentCreated={(tournament) => {
+                setTournaments(prev => [...prev, tournament]);
+                setSelectedTournament(tournament);
+              }}
+            />
+
+            {/* Keep your existing modals */}
+            {renderCreateGameModal()}
+            
+            {activeGame && (
+              <RoboSportsMatchScorer
+                game={activeGame}
+                visible={showScorerModal}
+                onClose={() => {
+                  setScorerModal(false);
+                  setActiveGame(null);
+                }}
+                selectedEvent={selectedEvent}
+              />
+            )}
+          </View>
+        )}
+
+        {/* Non-RoboSports Content */}
+        {judgeCategory !== "robosports" && (
+          <>
+            {/* Status Filter (only for RoboMission and Future Engineers) */}
+            {(judgeCategory === "robo-elem" || judgeCategory === "robo-junior" || 
+              judgeCategory === "robo-senior" || judgeCategory === "future-eng") && (
+              <View style={{ marginBottom: 15, zIndex: 999 }}>
+                <Text style={{ fontSize: 14, fontWeight: "bold", marginBottom: 8 }}>
+                  Filter by Status:
+                </Text>
+                <DropDownPicker
+                  open={statusDropdownOpen}
+                  setOpen={setStatusDropdownOpen}
+                  value={statusFilter}
+                  setValue={setStatusFilter}
+                  items={getStatusFilterOptions().map(option => ({
+                    ...option,
+                    label: `${option.label}${option.value !== "all" ? ` (${statusCounts[option.value as keyof typeof statusCounts] || 0})` : ` (${statusCounts.total})`}`
+                  }))}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#e0e0e0",
+                    backgroundColor: "#fafafa",
+                    minHeight: 40,
+                  }}
+                  textStyle={{ fontSize: 14 }}
+                  dropDownContainerStyle={{
+                    borderWidth: 1,
+                    borderColor: "#e0e0e0",
+                    backgroundColor: "#fafafa",
+                  }}
+                  onChangeValue={() => setCurrentPage(1)}
+                />
+              </View>
+            )}
+
+            {/* Search Bar */}
+            <TextInput
+              style={styles.searchbar}
+              placeholder="Search team name..."
+              placeholderTextColor="#999999"
+              value={search}
+              onChangeText={(text) => {
+                setSearch(text);
+                setCurrentPage(1);
+              }}
+            />
+
+            {/* Future Engineers Pills */}
+            {judgeCategory === "future-eng" && (
+              <View style={{ flexDirection: "row", marginBottom: 12 }}>
+                <TouchableOpacity
+                  style={[
+                    styles.fePill,
+                    fePill === "open" && styles.fePillActive,
+                  ]}
+                  onPress={() => setFePill("open")}
+                >
+                  <Text style={[
+                    styles.fePillText,
+                    fePill === "open" && styles.fePillTextActive,
+                  ]}> Open - Qualifying</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.fePill,
+                    fePill === "obstacle" && styles.fePillActive,
+                  ]}
+                  onPress={() => setFePill("obstacle")}
+                >
+                  <Text style={[
+                    styles.fePillText,
+                    fePill === "obstacle" && styles.fePillTextActive,
+                    ]}>Obstacles - Final</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: 15 }}>
+                <TouchableOpacity
+                  style={[
+                    { padding: 8, marginHorizontal: 5, borderRadius: 5, backgroundColor: "#e0e0e0" },
+                    currentPage === 1 && { opacity: 0.5 }
+                  ]}
+                  onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <Text>Previous</Text>
+                </TouchableOpacity>
+                
+                <Text style={{ marginHorizontal: 15, fontSize: 16 }}>
+                  Page {currentPage} of {totalPages} ({filteredTeams.length} teams)
+                </Text>
+                
+                <TouchableOpacity
+                  style={[
+                    { padding: 8, marginHorizontal: 5, borderRadius: 5, backgroundColor: "#e0e0e0" },
+                    currentPage === totalPages && { opacity: 0.5 }
+                  ]}
+                  onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <Text>Next</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Teams List */}
+            <FlatList
+              data={paginatedTeams}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => {
+                const status = getCardStatus(item);
+                const isComplete = status === "complete";
+                const { bestScore, bestTime, bestRound } = getBestScoreAndTime(item);
+
+                // RoboMission: current UI
+                if (
+                  judgeCategory === "robo-elem" ||
+                  judgeCategory === "robo-junior" ||
+                  judgeCategory === "robo-senior"
+                ) {
+                  return (
+                    <Pressable
+                      disabled={isComplete}
+                      onPress={() => openScoreModal(item)}
+                      style={({ pressed }) => [
+                        styles.teamCard,
+                        {
+                          backgroundColor: getCardColor(status),
+                          opacity: isComplete ? 1 : 1,
+                        },
+                        pressed && styles.buttonPressed,
+                      ]}
+                    >
+                      <Text style={styles.teamCardTeamNumber}>
+                        Team no. {item.teamNumber}
+                      </Text>
+                      <Text style={styles.teamCardTitle}>{item.teamName}</Text>
+                      <View
+                        style={{
+                          borderBottomWidth: 1,
+                          borderColor: "#bcbcbcff",
+                          paddingVertical: 10,
+                          marginBottom: 10,
+                        }}
+                      >
+                        <View style={{ flexDirection: "row" }}>
+                          {/* Round column */}
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.teamData}>
+                              Round 1:{" "}
+                              <Text
+                                style={
+                                  bestRound === 1
+                                    ? { color: "#388e3c", fontWeight: "bold" }
+                                    : {}
+                                }
+                              >
+                                {item.round1Score ?? "—"}
+                              </Text>
+                            </Text>
+                            <Text style={styles.teamData}>
+                              Round 2:{" "}
+                              <Text
+                                style={
+                                  bestRound === 2
+                                    ? { color: "#388e3c", fontWeight: "bold" }
+                                    : {}
+                                }
+                              >
+                                {item.round2Score ?? "—"}
+                              </Text>
+                            </Text>
+                          </View>
+                          {/* Time column */}
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.teamData}>
+                              Time 1:{" "}
+                              <Text
+                                style={
+                                  bestRound === 1
+                                    ? { color: "#1976d2", fontWeight: "bold" }
+                                    : {}
+                                }
+                              >
+                                {item.time1 ?? "—"}
+                              </Text>
+                            </Text>
+                            <Text style={styles.teamData}>
+                              Time 2:{" "}
+                              <Text
+                                style={
+                                  bestRound === 2
+                                    ? { color: "#1976d2", fontWeight: "bold" }
+                                    : {}
+                                }
+                              >
+                                {item.time2 ?? "—"}
+                              </Text>
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                      <Text
+                        style={{
+                          fontFamily: "inter_400Regular",
+                          fontStyle: "italic",
+                          color: "#6B7280",
+                        }}
+                      >
+                        Status:{" "}
+                        {status === "no-score"
+                          ? "No Score yet"
+                          : status === "round1-only"
+                          ? "Round 1 Done"
+                          : "Complete"}
+                      </Text>
+                    </Pressable>
+                  );
+                }
+
+                // Future Innovators: show individual scores
+                if (
+                  judgeCategory === "fi-elem" ||
+                  judgeCategory === "fi-junior" ||
+                  judgeCategory === "fi-senior"
+                ) {
+                  return (
+                    <Pressable
+                      disabled={isComplete}
+                      onPress={() => openScoreModal(item)}
+                      style={({ pressed }) => [
+                        styles.teamCard,
+                        {
+                          backgroundColor: getCardColor(status),
+                          opacity: isComplete ? 1 : 1,
+                        },
+                        pressed && styles.buttonPressed,
+                      ]}
+                    >
+                      
+                      <Text style={styles.teamCardTeamNumber}>
+                        Team no. {item.teamNumber}
+                      </Text>
+                      <Text style={styles.teamCardTitle}>{item.teamName}</Text>
+                      <View style={{ marginVertical: 10 }}>
+                        <Text style={styles.teamData}>
+                          Project & Innovation:{" "}
+                          <Text style={{ fontWeight: "bold", color: "#432344" }}>
+                            {item.projectInnovation ?? "—"}
+                          </Text>
+                        </Text>
+                        <Text style={styles.teamData}>
+                          Robotic Solution:{" "}
+                          <Text style={{ fontWeight: "bold", color: "#432344" }}>
+                            {item.roboticSolution ?? "—"}
+                          </Text>
+                        </Text>
+                        <Text style={styles.teamData}>
+                          Presentation & Team Spirit:{" "}
+                          <Text style={{ fontWeight: "bold", color: "#432344" }}>
+                            {item.presentationSpirit ?? "—"}
+                          </Text>
+                        </Text>
+                        <Text style={[styles.teamData, { marginTop: 6, fontStyle: "italic" }]}>
+                          Total Score:{" "}
+                          <Text style={{ fontWeight: "bold", color: "#388e3c" }}>
+                            {item.totalScore ?? "—"}
+                          </Text>
+                        </Text>
+                      </View>
+                      <Text
+                        style={{
+                          fontFamily: "inter_400Regular",
+                          fontStyle: "italic",
+                          color: "#6B7280",
+                        }}
+                      >
+                        Status:{" "}
+                        {item.totalScore ? "Scored" : "No Score yet"}
+                      </Text>
+                    </Pressable>
+                  );
+                }
+
+                // Future Engineers
+                if (judgeCategory === "future-eng") {
+                  const status = getCardStatus(item);
+                  const isComplete = status === "complete";
+                  const isNotQualified = status === "not-qualified";
+                  let cardStatusText = "";
+                  if (fePill === "open") {
+                    cardStatusText =
+                      status === "no-score"
+                        ? "No Score yet"
+                        : status === "round1-only"
+                        ? "Round 1 Done"
+                        : "Complete";
+                  } else {
+                    cardStatusText = isNotQualified
+                      ? "Not qualified yet"
+                      : status === "no-score"
                       ? "No Score yet"
                       : status === "round1-only"
                       ? "Round 1 Done"
-                      : "Complete"}
-                  </Text>
-                </Pressable>
-              );
-            }
+                      : "Complete";
+                  }
 
-            // Robosports: placeholder
-            if (judgeCategory === "robosports") {
-              return (
-                <View style={styles.teamCard}>
-                  <Text style={styles.teamCardTitle}>{item.teamName}</Text>
-                  <Text style={{ fontStyle: "italic", color: "#888" }}>
-                    Robosports scoring coming soon!
-                  </Text>
-                </View>
-              );
-            }
+                  // For obstacle, disable if not qualified or complete
+                  const isCardDisabled =
+                    (fePill === "obstacle" && (isNotQualified || isComplete)) ||
+                    (fePill === "open" && isComplete);
 
-            // Future Innovators: show individual scores
-            if (
-              judgeCategory === "fi-elem" ||
-              judgeCategory === "fi-junior" ||
-              judgeCategory === "fi-senior"
-            ) {
-              return (
-                <Pressable
-                  disabled={isComplete}
-                  onPress={() => openScoreModal(item)}
-                  style={({ pressed }) => [
-                    styles.teamCard,
-                    {
-                      backgroundColor: getCardColor(status),
-                      opacity: isComplete ? 1 : 1,
-                    },
-                    pressed && styles.buttonPressed,
-                  ]}
-                >
-                  
-                  <Text style={styles.teamCardTeamNumber}>
-                    Team no. {item.teamNumber}
-                  </Text>
-                  <Text style={styles.teamCardTitle}>{item.teamName}</Text>
-                  <View style={{ marginVertical: 10 }}>
-                    <Text style={styles.teamData}>
-                      Project & Innovation:{" "}
-                      <Text style={{ fontWeight: "bold", color: "#432344" }}>
-                        {item.projectInnovation ?? "—"}
+                  // For open, show openScore/time; for obstacle, show obstacleScore/time
+                  const score1 = fePill === "open" ? item.openScore1 : item.obstacleScore1;
+                  const score2 = fePill === "open" ? item.openScore2 : item.obstacleScore2;
+                  const time1 = fePill === "open" ? item.openTime1 : item.obstacleTime1;
+                  const time2 = fePill === "open" ? item.openTime2 : item.obstacleTime2;
+
+                  // For open rounds
+                  const openScores = [
+                    { score: item.openScore1, time: item.openTime1 },
+                    { score: item.openScore2, time: item.openTime2 }
+                  ].filter(v => v.score != null);
+
+                  let maxOpenScore: any | null = null;
+                  let minOpenTime = null;
+                  if (openScores.length) {
+                    maxOpenScore = Math.max(...openScores.map(v => v.score));
+                    // Find all rounds with max score, pick the one with the lowest time
+                    const tied = openScores.filter(v => v.score === maxOpenScore);
+                    minOpenTime = tied.length > 1
+                      ? tied.reduce((min, curr) =>
+                          parseTimeStringToMs(curr.time) < parseTimeStringToMs(min.time) ? curr : min, tied[0]
+                        ).time
+                      : tied[0].time;
+                  }
+
+                  // For obstacle rounds
+                  const obsScores = [
+                    { score: item.obstacleScore1, time: item.obstacleTime1 },
+                    { score: item.obstacleScore2, time: item.obstacleTime2 }
+                  ].filter(v => v.score != null);
+
+                  let maxObsScore: any | null = null;
+                  let minObsTime = null;
+                  if (obsScores.length) {
+                    maxObsScore = Math.max(...obsScores.map(v => v.score));
+                    const tied = obsScores.filter(v => v.score === maxObsScore);
+                    minObsTime = tied.length > 1
+                      ? tied.reduce((min, curr) =>
+                          parseTimeStringToMs(curr.time) < parseTimeStringToMs(min.time) ? curr : min, tied[0]
+                        ).time
+                      : tied[0].time;
+                  }
+
+                  return (
+                    <Pressable
+                      disabled={isCardDisabled}
+                      onPress={() => {
+                        setFeRoundType(fePill);
+                        openScoreModal(item);
+                      }}
+                      style={({ pressed }) => [
+                        styles.teamCard,
+                        {
+                          backgroundColor: getCardColor(status),
+                          opacity: isCardDisabled ? 0.7 : 1,
+                        },
+                        pressed && styles.buttonPressed,
+                      ]}
+                    >
+                      <Text style={styles.teamCardTeamNumber}>
+                        Team no. {item.teamNumber}
                       </Text>
-                    </Text>
-                    <Text style={styles.teamData}>
-                      Robotic Solution:{" "}
-                      <Text style={{ fontWeight: "bold", color: "#432344" }}>
-                        {item.roboticSolution ?? "—"}
+                      <Text style={styles.teamCardTitle}>{item.teamName}</Text>
+                      <View
+                        style={{
+                          borderBottomWidth: 1,
+                          borderColor: "#bcbcbcff",
+                          paddingVertical: 10,
+                          marginBottom: 10,
+                        }}
+                      >
+                        <View style={{ flexDirection: "row" }}>
+                          {/* Round column in fe */}
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.teamData}>
+                              Round 1:{" "}
+                              <Text
+                                style={
+                                  score1 != null &&
+                                  (
+                                    (fePill === "open" && score1 === maxOpenScore && time1 === minOpenTime) ||
+                                    (fePill === "obstacle" && score1 === maxObsScore && time1 === minObsTime)
+                                  )
+                                    ? { color: "#388e3c", fontWeight: "bold", textDecorationLine: "underline" }
+                                    : {}
+                                }
+                              >
+                                {score1 ? score1 : "—"}
+                              </Text>
+                            </Text>
+                            <Text style={styles.teamData}>
+                              Round 2:{" "}
+                              <Text
+                                style={
+                                  score2 != null &&
+                                  (
+                                    (fePill === "open" && score2 === maxOpenScore && time2 === minOpenTime) ||
+                                    (fePill === "obstacle" && score2 === maxObsScore && time2 === minObsTime)
+                                  )
+                                    ? { color: "#388e3c", fontWeight: "bold", textDecorationLine: "underline" }
+                                    : {}
+                                }
+                              >
+                                {score2 ? score2 : "—"}
+                              </Text>
+                            </Text>
+                          </View>
+                          {/* Time column in fe*/}
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.teamData}>
+                              Time 1:{" "}
+                              <Text
+                                style={
+                                  time1 != null
+                                    ? { color: "#1976d2", fontWeight: "bold" }
+                                    : {}
+                                }
+                              >
+                                {time1 ? time1 : "—"}
+                              </Text>
+                            </Text>
+                            <Text style={styles.teamData}>
+                              Time 2:{" "}
+                              <Text
+                                style={
+                                  time2 != null
+                                    ? { color: "#1976d2", fontWeight: "bold" }
+                                    : {}
+                                }
+                              > 
+                                {time2 ? time2 : "—"}
+                              </Text>
+                            </Text>
+                          </View>
+                        </View>
+                        {/* Documentation only for obstacle */}
+                        {fePill === "obstacle" && (
+                          <Text style={styles.teamData}>
+                            Documentation:{" "}
+                            <Text style={{ fontWeight: "bold", color: "#432344" }}>
+                              {item.docScore ?? "—"}
+                            </Text>
+                          </Text>
+                        )}
+                      </View>
+                      <Text
+                        style={{
+                          fontFamily: "inter_400Regular",
+                          fontStyle: "italic",
+                          color: "#6B7280",
+                        }}
+                      >
+                        Status: {cardStatusText}
                       </Text>
-                    </Text>
-                    <Text style={styles.teamData}>
-                      Presentation & Team Spirit:{" "}
-                      <Text style={{ fontWeight: "bold", color: "#432344" }}>
-                        {item.presentationSpirit ?? "—"}
-                      </Text>
-                    </Text>
-                    <Text style={[styles.teamData, { marginTop: 6, fontStyle: "italic" }]}>
-                      Total Score:{" "}
-                      <Text style={{ fontWeight: "bold", color: "#388e3c" }}>
-                        {item.totalScore ?? "—"}
-                      </Text>
+                    </Pressable>
+                  );
+                }
+
+                // Default fallback
+                return (
+                  <View style={styles.teamCard}>
+                    <Text style={styles.teamCardTitle}>{item.teamName}</Text>
+                    <Text style={{ fontStyle: "italic", color: "#888" }}>
+                      No Teams in this category.
                     </Text>
                   </View>
-                  <Text
-                    style={{
-                      fontFamily: "inter_400Regular",
-                      fontStyle: "italic",
-                      color: "#6B7280",
-                    }}
-                  >
-                    Status:{" "}
-                    {item.totalScore ? "Scored" : "No Score yet"}
-                  </Text>
-                </Pressable>
-              );
-            }
-
-            // Future Engineers
-            if (judgeCategory === "future-eng") {
-              const status = getCardStatus(item);
-              const isComplete = status === "complete";
-              const isNotQualified = status === "not-qualified";
-              let cardStatusText = "";
-              if (fePill === "open") {
-                cardStatusText =
-                  status === "no-score"
-                    ? "No Score yet"
-                    : status === "round1-only"
-                    ? "Round 1 Done"
-                    : "Complete";
-              } else {
-                cardStatusText = isNotQualified
-                  ? "Not qualified yet"
-                  : status === "no-score"
-                  ? "No Score yet"
-                  : status === "round1-only"
-                  ? "Round 1 Done"
-                  : "Complete";
-              }
-
-              // For obstacle, disable if not qualified or complete
-              const isCardDisabled =
-                (fePill === "obstacle" && (isNotQualified || isComplete)) ||
-                (fePill === "open" && isComplete);
-
-              // For open, show openScore/time; for obstacle, show obstacleScore/time
-              const score1 = fePill === "open" ? item.openScore1 : item.obstacleScore1;
-              const score2 = fePill === "open" ? item.openScore2 : item.obstacleScore2;
-              const time1 = fePill === "open" ? item.openTime1 : item.obstacleTime1;
-              const time2 = fePill === "open" ? item.openTime2 : item.obstacleTime2;
-
-              // For open rounds
-              const openScores = [
-                { score: item.openScore1, time: item.openTime1 },
-                { score: item.openScore2, time: item.openTime2 }
-              ].filter(v => v.score != null);
-
-              let maxOpenScore: any | null = null;
-              let minOpenTime = null;
-              if (openScores.length) {
-                maxOpenScore = Math.max(...openScores.map(v => v.score));
-                // Find all rounds with max score, pick the one with the lowest time
-                const tied = openScores.filter(v => v.score === maxOpenScore);
-                minOpenTime = tied.length > 1
-                  ? tied.reduce((min, curr) =>
-                      parseTimeStringToMs(curr.time) < parseTimeStringToMs(min.time) ? curr : min, tied[0]
-                    ).time
-                  : tied[0].time;
-              }
-
-              // For obstacle rounds
-              const obsScores = [
-                { score: item.obstacleScore1, time: item.obstacleTime1 },
-                { score: item.obstacleScore2, time: item.obstacleTime2 }
-              ].filter(v => v.score != null);
-
-              let maxObsScore: any | null = null;
-              let minObsTime = null;
-              if (obsScores.length) {
-                maxObsScore = Math.max(...obsScores.map(v => v.score));
-                const tied = obsScores.filter(v => v.score === maxObsScore);
-                minObsTime = tied.length > 1
-                  ? tied.reduce((min, curr) =>
-                      parseTimeStringToMs(curr.time) < parseTimeStringToMs(min.time) ? curr : min, tied[0]
-                    ).time
-                  : tied[0].time;
-              }
-
-              return (
-                <Pressable
-                  disabled={isCardDisabled}
-                  onPress={() => {
-                    setFeRoundType(fePill);
-                    openScoreModal(item);
-                  }}
-                  style={({ pressed }) => [
-                    styles.teamCard,
-                    {
-                      backgroundColor: getCardColor(status),
-                      opacity: isCardDisabled ? 0.7 : 1,
-                    },
-                    pressed && styles.buttonPressed,
-                  ]}
-                >
-                  <Text style={styles.teamCardTeamNumber}>
-                    Team no. {item.teamNumber}
-                  </Text>
-                  <Text style={styles.teamCardTitle}>{item.teamName}</Text>
-                  <View
-                    style={{
-                      borderBottomWidth: 1,
-                      borderColor: "#bcbcbcff",
-                      paddingVertical: 10,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <View style={{ flexDirection: "row" }}>
-                      {/* Round column in fe */}
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.teamData}>
-                          Round 1:{" "}
-                          <Text
-                            style={
-                              score1 != null &&
-                              (
-                                (fePill === "open" && score1 === maxOpenScore && time1 === minOpenTime) ||
-                                (fePill === "obstacle" && score1 === maxObsScore && time1 === minObsTime)
-                              )
-                                ? { color: "#388e3c", fontWeight: "bold", textDecorationLine: "underline" }
-                                : {}
-                            }
-                          >
-                            {score1 ? score1 : "—"}
-                          </Text>
-                        </Text>
-                        <Text style={styles.teamData}>
-                          Round 2:{" "}
-                          <Text
-                            style={
-                              score2 != null &&
-                              (
-                                (fePill === "open" && score2 === maxOpenScore && time2 === minOpenTime) ||
-                                (fePill === "obstacle" && score2 === maxObsScore && time2 === minObsTime)
-                              )
-                                ? { color: "#388e3c", fontWeight: "bold", textDecorationLine: "underline" }
-                                : {}
-                            }
-                          >
-                            {score2 ? score2 : "—"}
-                          </Text>
-                        </Text>
-                      </View>
-                      {/* Time column in fe*/}
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.teamData}>
-                          Time 1:{" "}
-                          <Text
-                            style={
-                              time1 != null
-                                ? { color: "#1976d2", fontWeight: "bold" }
-                                : {}
-                            }
-                          >
-                            {time1 ? time1 : "—"}
-                          </Text>
-                        </Text>
-                        <Text style={styles.teamData}>
-                          Time 2:{" "}
-                          <Text
-                            style={
-                              time2 != null
-                                ? { color: "#1976d2", fontWeight: "bold" }
-                                : {}
-                            }
-                          > 
-                            {time2 ? time2 : "—"}
-                          </Text>
-                        </Text>
-                      </View>
-                    </View>
-                    {/* Documentation only for obstacle */}
-                    {fePill === "obstacle" && (
-                      <Text style={styles.teamData}>
-                        Documentation:{" "}
-                        <Text style={{ fontWeight: "bold", color: "#432344" }}>
-                          {item.docScore ?? "—"}
-                        </Text>
-                      </Text>
-                    )}
-                  </View>
-                  <Text
-                    style={{
-                      fontFamily: "inter_400Regular",
-                      fontStyle: "italic",
-                      color: "#6B7280",
-                    }}
-                  >
-                    Status: {cardStatusText}
-                  </Text>
-                </Pressable>
-              );
-            }
-
-            // Default fallback
-            return (
-              <View style={styles.teamCard}>
-                <Text style={styles.teamCardTitle}>{item.teamName}</Text>
-                <Text style={{ fontStyle: "italic", color: "#888" }}>
-                  No Teams in this category.
-                </Text>
-              </View>
-            );
-          }}
-        />
+                );
+              }}
+            />
+          </>
+        )}
 
         {/* Scorer Modal */}
         <Modal

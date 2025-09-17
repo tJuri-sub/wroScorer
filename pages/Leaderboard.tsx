@@ -439,18 +439,6 @@ export default function Leaderboard({ navigation }: any) {
           </View>
         </View>
       )}
-
-      {/* Help text for ranking logic */}
-      <Text
-        style={{
-          color: "#888",
-          fontFamily: "Inter_400Regular",
-          fontSize: 14,
-          marginBottom: 8,
-        }}
-      >
-        Ranking is based on the best score; if tied, the best time wins!
-      </Text>
       
       {/* Header */}
       <TouchableOpacity
