@@ -106,7 +106,7 @@ export default StyleSheet.create({
   },
 
   eventList: {
-    backgroundColor: "#cacacaff",
+    backgroundColor: "#e7e7e7ff",
     paddingHorizontal: 5,
     paddingVertical: 5,
     flex: 1,
