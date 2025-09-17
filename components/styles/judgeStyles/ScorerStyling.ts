@@ -200,4 +200,13 @@ export default StyleSheet.create({
   fePillTextActive: {
     color: "#fff",
   },
+
+  // Robosports
+  createGameButton: {
+    backgroundColor: '#432344',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
 });
