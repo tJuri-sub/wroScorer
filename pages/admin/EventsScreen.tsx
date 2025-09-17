@@ -388,8 +388,8 @@ const EventsScreen = () => {
                 style={{
                   backgroundColor: "#fff",
                   padding: 20,
-                  borderRadius: 10,
-                  width: "75%",
+                  borderRadius: 7,
+                  width: "80%",
                 }}
               >
                 <Text
@@ -413,6 +413,9 @@ const EventsScreen = () => {
                     value: j.id,
                   }))}
                   placeholder="Select Judges"
+                  searchable={true}
+                  min={0}
+                  max={100}
                   style={{
                     marginBottom: 20,
                     borderWidth: 1,
@@ -420,50 +423,89 @@ const EventsScreen = () => {
                     borderRadius: 6,
                     padding: 8,
                   }}
-                  searchable={true}
-                  min={0}
-                  max={100}
+                  dropDownContainerStyle={{
+                    borderWidth: 1,
+                    borderColor: "#aaa",
+                    borderRadius: 8,
+                    backgroundColor: "#fafafa",
+                    elevation: 2, // Android shadow
+                    shadowColor: "#000", // iOS shadow
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                  }}
+                  // List item styling
+                  listItemContainerStyle={{
+                    paddingVertical: 10,
+                    paddingHorizontal: 12,
+                  }}
+                  listItemLabelStyle={{
+                    fontSize: 16,
+                    color: "#333",
+                  }}
+                  selectedItemContainerStyle={{
+                    backgroundColor: "#e6f7ff",
+                  }}
+                  selectedItemLabelStyle={{
+                    fontWeight: "600",
+                    color: "#007acc",
+                  }}
+                  searchTextInputStyle={{
+                    borderRadius: 3,
+                    borderColor: "#ccc",
+                  }}
                 />
+
                 <View style={{ marginBottom: 10 }}>
-                  <Text style={{ fontWeight: "bold" }}>Selected Judges:</Text>
+                  <Text style={{ fontWeight: "bold", marginBottom: 10 }}>
+                    Selected Judges:
+                  </Text>
                   {selectedJudges.length === 0 ? (
                     <Text>No judges selected.</Text>
                   ) : (
-                    selectedJudges.map((judgeId) => {
-                      const judge = judges.find((j) => j.id === judgeId);
-                      return (
-                        <View
-                          key={judgeId}
-                          style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            marginBottom: 2,
-                          }}
-                        >
-                          <Text>{judge ? judge.username : judgeId}</Text>
-                          <TouchableOpacity
-                            onPress={() =>
-                              setSelectedJudges(
-                                selectedJudges.filter((id) => id !== judgeId)
-                              )
-                            }
+                    <ScrollView style={{ height: 100 }}>
+                      {selectedJudges.map((judgeId) => {
+                        const judge = judges.find((j) => j.id === judgeId);
+                        return (
+                          <View
+                            key={judgeId}
                             style={{
-                              marginLeft: 8,
-                              paddingHorizontal: 6,
-                              paddingVertical: 2,
-                              backgroundColor: "#eee",
-                              borderRadius: 4,
+                              flexDirection: "row",
+                              alignItems: "center",
+                              display: "flex",
+                              marginVertical: 3,
                             }}
                           >
-                            <Text style={{ color: "red" }}>Remove</Text>
-                          </TouchableOpacity>
-                        </View>
-                      );
-                    })
+                            <Text>{judge ? judge.username : judgeId}</Text>
+                            <TouchableOpacity
+                              onPress={() =>
+                                setSelectedJudges(
+                                  selectedJudges.filter((id) => id !== judgeId)
+                                )
+                              }
+                              style={{
+                                marginLeft: 8,
+                                paddingHorizontal: 6,
+                                paddingVertical: 2,
+                                backgroundColor: "#eee",
+                                borderRadius: 4,
+                              }}
+                            >
+                              <Text style={{ color: "red" }}>Remove</Text>
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })}
+                    </ScrollView>
                   )}
                 </View>
+
                 <View
-                  style={{ flexDirection: "row", justifyContent: "flex-end" }}
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "flex-end",
+                  }}
                 >
                   <TouchableOpacity
                     onPress={() => setAssignModal(false)}
@@ -621,6 +663,9 @@ const EventsScreen = () => {
                     value: t.id,
                   }))}
                   placeholder="Select Teams"
+                  searchable={true}
+                  min={0}
+                  max={100}
                   style={{
                     marginBottom: 20,
                     borderWidth: 1,
@@ -628,50 +673,79 @@ const EventsScreen = () => {
                     borderRadius: 6,
                     padding: 8,
                   }}
-                  searchable={true}
-                  min={0}
-                  max={100}
+                  dropDownContainerStyle={{
+                    borderWidth: 1,
+                    borderColor: "#aaa",
+                    borderRadius: 8,
+                    backgroundColor: "#fafafa",
+                    elevation: 2, // Android shadow
+                    shadowColor: "#000", // iOS shadow
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                  }}
+                  // List item styling
+                  listItemContainerStyle={{
+                    paddingVertical: 10,
+                    paddingHorizontal: 12,
+                  }}
+                  listItemLabelStyle={{
+                    fontSize: 16,
+                    color: "#333",
+                  }}
+                  selectedItemContainerStyle={{
+                    backgroundColor: "#e6f7ff",
+                  }}
+                  selectedItemLabelStyle={{
+                    fontWeight: "600",
+                    color: "#007acc",
+                  }}
+                  searchTextInputStyle={{
+                    borderRadius: 3,
+                    borderColor: "#ccc",
+                  }}
                 />
                 <View style={{ marginBottom: 10 }}>
                   <Text style={{ fontWeight: "bold" }}>Selected Teams:</Text>
                   {selectedTeams.length === 0 ? (
                     <Text>No teams selected.</Text>
                   ) : (
-                    selectedTeams.map((teamId) => {
-                      const team = teams.find((t) => t.id === teamId);
-                      return (
-                        <View
-                          key={teamId}
-                          style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            marginBottom: 2,
-                          }}
-                        >
-                          <Text>
-                            {team
-                              ? team.teamName || team.name || teamId
-                              : teamId}
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() =>
-                              setSelectedTeams(
-                                selectedTeams.filter((id) => id !== teamId)
-                              )
-                            }
+                    <ScrollView style={{ height: 100 }}>
+                      {selectedTeams.map((teamId) => {
+                        const team = teams.find((t) => t.id === teamId);
+                        return (
+                          <View
+                            key={teamId}
                             style={{
-                              marginLeft: 8,
-                              paddingHorizontal: 6,
-                              paddingVertical: 2,
-                              backgroundColor: "#eee",
-                              borderRadius: 4,
+                              flexDirection: "row",
+                              alignItems: "center",
+                              marginBottom: 2,
                             }}
                           >
-                            <Text style={{ color: "red" }}>Remove</Text>
-                          </TouchableOpacity>
-                        </View>
-                      );
-                    })
+                            <Text>
+                              {team
+                                ? team.teamName || team.name || teamId
+                                : teamId}
+                            </Text>
+                            <TouchableOpacity
+                              onPress={() =>
+                                setSelectedTeams(
+                                  selectedTeams.filter((id) => id !== teamId)
+                                )
+                              }
+                              style={{
+                                marginLeft: 8,
+                                paddingHorizontal: 6,
+                                paddingVertical: 2,
+                                backgroundColor: "#eee",
+                                borderRadius: 4,
+                              }}
+                            >
+                              <Text style={{ color: "red" }}>Remove</Text>
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })}
+                    </ScrollView>
                   )}
                 </View>
                 <View
