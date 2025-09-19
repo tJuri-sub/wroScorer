@@ -88,7 +88,7 @@ export default function ScorerScreen({ navigation }: any) {
   // Modal state
   const [scoreModalVisible, setScoreModalVisible] = useState(false);
   const [scoringTeam, setScoringTeam] = useState<any>(null);
-  const [scoringStep, setScoringStep] = useState<1 | 2>(1);
+  const [scoringStep, setScoringStep] = useState<1 | 2 | 3>(1);
   const [inputScore, setInputScore] = useState("");
   const [inputMinute, setInputMinute] = useState("");
   const [inputSecond, setInputSecond] = useState("");
@@ -103,6 +103,9 @@ export default function ScorerScreen({ navigation }: any) {
   // Inline error message
   const [submitError, setSubmitError] = useState("");
 
+  // Robomission states
+  const [selectedDay, setSelectedDay] = useState<1 | 2>(1);
+
   // RoboSports states
   const [games, setGames] = useState<GameData[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -113,6 +116,7 @@ export default function ScorerScreen({ navigation }: any) {
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [activeGame, setActiveGame] = useState<GameData | null>(null);
   const [showScorerModal, setScorerModal] = useState(false);
+
   // Robosports Tournament states
   const [tournamentMode, setTournamentMode] = useState<'regular' | 'tournament'>('regular');
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -529,12 +533,32 @@ export default function ScorerScreen({ navigation }: any) {
       judgeCategory === "robo-junior" ||
       judgeCategory === "robo-senior"
     ) {
-      const hasR1 = team.round1Score !== null && team.round1Score !== undefined;
-      const hasR2 = team.round2Score !== null && team.round2Score !== undefined;
-      if (!hasR1 && !hasR2) return "no-score";
-      if (hasR1 && !hasR2) return "round1-only";
-      if (hasR1 && hasR2) return "complete";
-      return "no-score";
+      if (selectedDay === 1) {
+        const hasR1 = team.day1Round1Score !== null && team.day1Round1Score !== undefined;
+        const hasR2 = team.day1Round2Score !== null && team.day1Round2Score !== undefined;
+        const hasR3 = team.day1Round3Score !== null && team.day1Round3Score !== undefined;
+        if (!hasR1 && !hasR2 && !hasR3) return "no-score";
+        if ((hasR1 && !hasR2 && !hasR3) || (!hasR1 && hasR2 && !hasR3) || (!hasR1 && !hasR2 && hasR3)) return "partial";
+        if ((hasR1 && hasR2 && !hasR3) || (hasR1 && !hasR2 && hasR3) || (!hasR1 && hasR2 && hasR3)) return "partial";
+        if (hasR1 && hasR2 && hasR3) return "complete";
+        return "no-score";
+      } else {
+        // Day 2 - check if Day 1 is complete first
+        const day1Complete = team.day1Round1Score !== null && team.day1Round1Score !== undefined &&
+                            team.day1Round2Score !== null && team.day1Round2Score !== undefined &&
+                            team.day1Round3Score !== null && team.day1Round3Score !== undefined;
+        
+        if (!day1Complete) return "day1-incomplete";
+        
+        const hasR1 = team.day2Round1Score !== null && team.day2Round1Score !== undefined;
+        const hasR2 = team.day2Round2Score !== null && team.day2Round2Score !== undefined;
+        const hasR3 = team.day2Round3Score !== null && team.day2Round3Score !== undefined;
+        if (!hasR1 && !hasR2 && !hasR3) return "no-score";
+        if ((hasR1 && !hasR2 && !hasR3) || (!hasR1 && hasR2 && !hasR3) || (!hasR1 && !hasR2 && hasR3)) return "partial";
+        if ((hasR1 && hasR2 && !hasR3) || (hasR1 && !hasR2 && hasR3) || (!hasR1 && hasR2 && hasR3)) return "partial";
+        if (hasR1 && hasR2 && hasR3) return "complete";
+        return "no-score";
+      }
     }
 
     // Robosports: placeholder logic (update when implemented)
@@ -580,10 +604,13 @@ export default function ScorerScreen({ navigation }: any) {
     switch (status) {
       case "no-score":
         return "#faf9f6";
+      case "partial":
       case "round1-only":
         return "#fff9c4";
       case "complete":
         return "#c8e6c9";
+      case "day1-incomplete":
+        return "#ffcccb"; // Light red for day 1 incomplete
       default:
         return "#faf9f6";
     }
@@ -599,6 +626,26 @@ export default function ScorerScreen({ navigation }: any) {
 
     if (!isRoboMissionOrFE) {
       return [{ label: "All Teams", value: "all" }];
+    }
+
+    // For robo categories, different options based on selected day
+    if (judgeCategory === "robo-elem" || judgeCategory === "robo-junior" || judgeCategory === "robo-senior") {
+      if (selectedDay === 1) {
+        return [
+          { label: "All Teams", value: "all" },
+          { label: "No Scores Yet", value: "no-score" },
+          { label: "Partially Scored", value: "partial" },
+          { label: "Day 1 Complete", value: "complete" },
+        ];
+      } else {
+        return [
+          { label: "All Teams", value: "all" },
+          { label: "Day 1 Incomplete", value: "day1-incomplete" },
+          { label: "No Day 2 Scores", value: "no-score" },
+          { label: "Partially Scored", value: "partial" },
+          { label: "Day 2 Complete", value: "complete" },
+        ];
+      }
     }
 
     return [
@@ -645,9 +692,12 @@ export default function ScorerScreen({ navigation }: any) {
       case "robo-senior": {
         return (
           <>
+            <Text style={styles.scoreinputTitle}>
+              Day {selectedDay} - Round {scoringStep}
+            </Text>
             <TextInput
               style={styles.scoreinput}
-              placeholder={`Enter Round ${scoringStep} Score`}
+              placeholder={`Enter Day ${selectedDay} Round ${scoringStep} Score`}
               keyboardType="numeric"
               value={inputScore}
               onChangeText={(text) =>
@@ -844,25 +894,78 @@ export default function ScorerScreen({ navigation }: any) {
 
   // Best score/time
   function getBestScoreAndTime(team: any) {
-    const r1 = team.round1Score ?? null;
-    const r2 = team.round2Score ?? null;
-    if (r1 == null && r2 == null)
-      return { bestScore: null, bestTime: null, bestRound: null };
-
-    if (r2 == null || (r1 != null && r1 >= r2)) {
-      return { bestScore: r1, bestTime: team.time1, bestRound: 1 };
+    if (selectedDay === 1) {
+      const scores = [
+        { score: team.day1Round1Score, time: team.day1Round1Time },
+        { score: team.day1Round2Score, time: team.day1Round2Time },
+        { score: team.day1Round3Score, time: team.day1Round3Time }
+      ].filter(r => r.score != null);
+      
+      if (scores.length === 0) return { bestScore: null, bestTime: null, bestRound: null };
+      
+      const best = scores.reduce((best, current) => {
+        if (current.score > best.score) return current;
+        if (current.score === best.score && parseTimeString(current.time) < parseTimeString(best.time)) return current;
+        return best;
+      });
+      
+      const bestRound = scores.findIndex(s => s.score === best.score && s.time === best.time) + 1;
+      return { bestScore: best.score, bestTime: best.time, bestRound };
     } else {
-      return { bestScore: r2, bestTime: team.time2, bestRound: 2 };
+      const scores = [
+        { score: team.day2Round1Score, time: team.day2Round1Time },
+        { score: team.day2Round2Score, time: team.day2Round2Time },
+        { score: team.day2Round3Score, time: team.day2Round3Time }
+      ].filter(r => r.score != null);
+      
+      if (scores.length === 0) return { bestScore: null, bestTime: null, bestRound: null };
+      
+      const best = scores.reduce((best, current) => {
+        if (current.score > best.score) return current;
+        if (current.score === best.score && parseTimeString(current.time) < parseTimeString(best.time)) return current;
+        return best;
+      });
+      
+      const bestRound = scores.findIndex(s => s.score === best.score && s.time === best.time) + 1;
+      return { bestScore: best.score, bestTime: best.time, bestRound };
     }
+  }
+
+  // Helper function to parse time string
+  function parseTimeString(timeStr: string) {
+    if (!timeStr) return Infinity;
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return Infinity;
+    const [mm, rest] = parts;
+    const [ss, ms] = rest.split('.');
+    return (Number(mm) || 0) * 60000 + (Number(ss) || 0) * 1000 + (Number(ms) || 0) * 10;
   }
 
   // Modal open for scoring
   const openScoreModal = (team: any) => {
-    if (getCardStatus(team) === "complete") return;
+    if (getCardStatus(team) === "complete" || getCardStatus(team) === "day1-incomplete") return;
+    
     setScoringTeam(team);
-    setScoringStep(
-      team.round1Score === null || team.round1Score === undefined ? 1 : 2
-    );
+    
+    // Determine which round to score next
+    if (selectedDay === 1) {
+      if (team.day1Round1Score === null || team.day1Round1Score === undefined) {
+        setScoringStep(1);
+      } else if (team.day1Round2Score === null || team.day1Round2Score === undefined) {
+        setScoringStep(2);
+      } else {
+        setScoringStep(3);
+      }
+    } else {
+      if (team.day2Round1Score === null || team.day2Round1Score === undefined) {
+        setScoringStep(1);
+      } else if (team.day2Round2Score === null || team.day2Round2Score === undefined) {
+        setScoringStep(2);
+      } else {
+        setScoringStep(3);
+      }
+    }
+    
     setInputScore("");
     setInputMinute("");
     setInputSecond("");
@@ -902,27 +1005,35 @@ export default function ScorerScreen({ navigation }: any) {
       }
 
       try {
-        const update: any = {
+         const update: any = {
           teamName: scoringTeam.teamName,
           teamId: scoringTeam.id,
           eventId: selectedEvent,
-          round1Score: scoringTeam.round1Score ?? null,
-          time1: scoringTeam.time1 ?? null,
-          round2Score: scoringTeam.round2Score ?? null,
-          time2: scoringTeam.time2 ?? null,
           category: judgeCategory,
+          // Preserve existing scores
+          day1Round1Score: scoringTeam.day1Round1Score ?? null,
+          day1Round1Time: scoringTeam.day1Round1Time ?? null,
+          day1Round2Score: scoringTeam.day1Round2Score ?? null,
+          day1Round2Time: scoringTeam.day1Round2Time ?? null,
+          day1Round3Score: scoringTeam.day1Round3Score ?? null,
+          day1Round3Time: scoringTeam.day1Round3Time ?? null,
+          day2Round1Score: scoringTeam.day2Round1Score ?? null,
+          day2Round1Time: scoringTeam.day2Round1Time ?? null,
+          day2Round2Score: scoringTeam.day2Round2Score ?? null,
+          day2Round2Time: scoringTeam.day2Round2Time ?? null,
+          day2Round3Score: scoringTeam.day2Round3Score ?? null,
+          day2Round3Time: scoringTeam.day2Round3Time ?? null,
         };
 
         const now = new Date();
-        if (scoringStep === 1) {
-          update.round1Score = Number(inputScore);
-          update.time1 = inputTime;
-          update.round1ScoredAt = now.toISOString();
-        } else {
-          update.round2Score = Number(inputScore);
-          update.time2 = inputTime;
-          update.round2ScoredAt = now.toISOString();
-        }
+        const dayPrefix = `day${selectedDay}`;
+        const roundField = `${dayPrefix}Round${scoringStep}Score`;
+        const timeField = `${dayPrefix}Round${scoringStep}Time`;
+        const timestampField = `${dayPrefix}Round${scoringStep}ScoredAt`;
+        
+        update[roundField] = Number(inputScore);
+        update[timeField] = inputTime;
+        update[timestampField] = now.toISOString();
 
         setScoreModalVisible(false);
         setScoringTeam(null);
@@ -1578,6 +1689,61 @@ export default function ScorerScreen({ navigation }: any) {
               </View>
             )}
 
+            {/* Day Tabs for Robo Categories */}
+            {(judgeCategory === "robo-elem" || judgeCategory === "robo-junior" || judgeCategory === "robo-senior") && (
+              <View style={{ flexDirection: "row", marginBottom: 15 }}>
+                <TouchableOpacity
+                  style={[
+                    styles.fePill,
+                    selectedDay === 1 && styles.fePillActive,
+                  ]}
+                  onPress={() => {
+                    setSelectedDay(1);
+                    setCurrentPage(1);
+                    setStatusFilter("all");
+                  }}
+                >
+                  <Text style={[
+                    styles.fePillText,
+                    selectedDay === 1 && styles.fePillTextActive,
+                  ]}>Day 1</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.fePill,
+                    selectedDay === 2 && styles.fePillActive,
+                    // Disable day 2 if no teams have completed day 1
+                    !teams.some(team => 
+                      team.day1Round1Score != null && 
+                      team.day1Round2Score != null && 
+                      team.day1Round3Score != null
+                    ) && { opacity: 0.5 }
+                  ]}
+                  onPress={() => {
+                    // Check if any team has completed day 1
+                    const hasDay1Complete = teams.some(team => 
+                      team.day1Round1Score != null && 
+                      team.day1Round2Score != null && 
+                      team.day1Round3Score != null
+                    );
+                    
+                    if (hasDay1Complete) {
+                      setSelectedDay(2);
+                      setCurrentPage(1);
+                      setStatusFilter("all");
+                    } else {
+                      Alert.alert("Day 2 Locked", "Complete Day 1 scoring for at least one team to unlock Day 2.");
+                    }
+                  }}
+                >
+                  <Text style={[
+                    styles.fePillText,
+                    selectedDay === 2 && styles.fePillTextActive,
+                  ]}>Day 2</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Search Bar */}
             <TextInput
               style={styles.searchbar}
@@ -1666,15 +1832,24 @@ export default function ScorerScreen({ navigation }: any) {
                   judgeCategory === "robo-junior" ||
                   judgeCategory === "robo-senior"
                 ) {
+                  const currentDayScores = selectedDay === 1 ? [
+                    { score: item.day1Round1Score, time: item.day1Round1Time },
+                    { score: item.day1Round2Score, time: item.day1Round2Time },
+                    { score: item.day1Round3Score, time: item.day1Round3Time }
+                  ] : [
+                    { score: item.day2Round1Score, time: item.day2Round1Time },
+                    { score: item.day2Round2Score, time: item.day2Round2Time },
+                    { score: item.day2Round3Score, time: item.day2Round3Time }
+                  ];
                   return (
                     <Pressable
-                      disabled={isComplete}
+                      disabled={isComplete || status === "day1-incomplete"}
                       onPress={() => openScoreModal(item)}
                       style={({ pressed }) => [
                         styles.teamCard,
                         {
                           backgroundColor: getCardColor(status),
-                          opacity: isComplete ? 1 : 1,
+                          opacity: (isComplete || status === "day1-incomplete") ? 0.7 : 1,
                         },
                         pressed && styles.buttonPressed,
                       ]}
@@ -1694,57 +1869,37 @@ export default function ScorerScreen({ navigation }: any) {
                         <View style={{ flexDirection: "row" }}>
                           {/* Round column */}
                           <View style={{ flex: 1 }}>
-                            <Text style={styles.teamData}>
-                              Round 1:{" "}
-                              <Text
-                                style={
-                                  bestRound === 1
-                                    ? { color: "#388e3c", fontWeight: "bold" }
-                                    : {}
-                                }
-                              >
-                                {item.round1Score ?? "—"}
+                            {currentDayScores.map((round, index) => (
+                              <Text key={index} style={styles.teamData}>
+                                Round {index + 1}:{" "}
+                                <Text
+                                  style={
+                                    bestRound === index + 1
+                                      ? { color: "#388e3c", fontWeight: "bold" }
+                                      : {}
+                                  }
+                                >
+                                  {round.score ?? "—"}
+                                </Text>
                               </Text>
-                            </Text>
-                            <Text style={styles.teamData}>
-                              Round 2:{" "}
-                              <Text
-                                style={
-                                  bestRound === 2
-                                    ? { color: "#388e3c", fontWeight: "bold" }
-                                    : {}
-                                }
-                              >
-                                {item.round2Score ?? "—"}
-                              </Text>
-                            </Text>
+                            ))}
                           </View>
                           {/* Time column */}
                           <View style={{ flex: 1 }}>
-                            <Text style={styles.teamData}>
-                              Time 1:{" "}
-                              <Text
-                                style={
-                                  bestRound === 1
-                                    ? { color: "#1976d2", fontWeight: "bold" }
-                                    : {}
-                                }
-                              >
-                                {item.time1 ?? "—"}
+                            {currentDayScores.map((round, index) => (
+                              <Text key={index} style={styles.teamData}>
+                                Time {index + 1}:{" "}
+                                <Text
+                                  style={
+                                    bestRound === index + 1
+                                      ? { color: "#1976d2", fontWeight: "bold" }
+                                      : {}
+                                  }
+                                >
+                                  {round.time ?? "—"}
+                                </Text>
                               </Text>
-                            </Text>
-                            <Text style={styles.teamData}>
-                              Time 2:{" "}
-                              <Text
-                                style={
-                                  bestRound === 2
-                                    ? { color: "#1976d2", fontWeight: "bold" }
-                                    : {}
-                                }
-                              >
-                                {item.time2 ?? "—"}
-                              </Text>
-                            </Text>
+                            ))}
                           </View>
                         </View>
                       </View>
@@ -1758,8 +1913,12 @@ export default function ScorerScreen({ navigation }: any) {
                         Status:{" "}
                         {status === "no-score"
                           ? "No Score yet"
-                          : status === "round1-only"
-                          ? "Round 1 Done"
+                          : status === "partial"
+                          ? "Partially Scored"
+                          : status === "complete"
+                          ? `Day ${selectedDay} Complete`
+                          : status === "day1-incomplete"
+                          ? "Complete Day 1 First"
                           : "Complete"}
                       </Text>
                     </Pressable>
