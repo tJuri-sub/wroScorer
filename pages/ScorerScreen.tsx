@@ -93,7 +93,136 @@ export default function ScorerScreen({ navigation }: any) {
   const [inputMinute, setInputMinute] = useState("");
   const [inputSecond, setInputSecond] = useState("");
   const [inputMs, setInputMs] = useState("");
+  const [fiElemModalStep, setFiElemModalStep] = useState<1 | 2>(1);
+  const [projectIdeaScore, setProjectIdeaScore] = useState("");
+  const [projectResearchScore, setProjectResearchScore] = useState("");
+  const [projectUsageScore, setProjectUsageScore] = useState("");
+  const [projectInnovationScore, setProjectInnovationScore] = useState("");
+  const [roboticSolutionScore, setRoboticSolutionScore] = useState("");
+  const [engineeringConceptsScore, setEngineeringConceptsScore] = useState("");
+  const [codeEfficiencyScore, setCodeEfficiencyScore] = useState("");
+  const [roboticDemoScore, setRoboticDemoScore] = useState("");
+  const [presentationBoothScore, setPresentationBoothScore] = useState("");
+  const [technicalUnderstandingScore, setTechnicalUnderstandingScore] = useState("");
+  const [teamSpiritScore, setTeamSpiritScore] = useState("");
   const [search, setSearch] = useState("");
+
+  const [extraEntrepreneurshipScore, setExtraEntrepreneurshipScore] = useState("");
+  const [nextStepsScore, setNextStepsScore] = useState(""); // senior only
+
+  const [scoresheetNumber, setScoresheetNumber] = useState<number | null>(null);
+
+  const fiScoreFields: Record<string, [string, (v: string) => void]> = {
+  projectIdeaScore: [projectIdeaScore, setProjectIdeaScore],
+  projectResearchScore: [projectResearchScore, setProjectResearchScore],
+  projectUsageScore: [projectUsageScore, setProjectUsageScore],
+  projectInnovationScore: [projectInnovationScore, setProjectInnovationScore],
+  extraEntrepreneurshipScore: [extraEntrepreneurshipScore, setExtraEntrepreneurshipScore],
+  nextStepsScore: [nextStepsScore, setNextStepsScore],
+  roboticSolutionScore: [roboticSolutionScore, setRoboticSolutionScore],
+  engineeringConceptsScore: [engineeringConceptsScore, setEngineeringConceptsScore],
+  codeEfficiencyScore: [codeEfficiencyScore, setCodeEfficiencyScore],
+  roboticDemoScore: [roboticDemoScore, setRoboticDemoScore],
+  presentationBoothScore: [presentationBoothScore, setPresentationBoothScore],
+  technicalUnderstandingScore: [technicalUnderstandingScore, setTechnicalUnderstandingScore],
+  teamSpiritScore: [teamSpiritScore, setTeamSpiritScore],
+};
+
+const scaleFiGroup = (
+  group: { key: string; max: number }[],
+  rawScores: Record<string, any>
+) =>
+  group.reduce(
+    (sum, { key, max }) => sum + parseFloat(((Number(rawScores[key] || 0) / 10) * max).toFixed(2)),
+    0
+  );
+
+// Works for fi-elem, fi-junior, fi-senior — replaces scaleFiElemScores
+const scaleFiScores = (category: string, rawScores: Record<string, any>) => {
+  const config = getFiConfig(category);
+  const projectTotal = parseFloat(scaleFiGroup(config.project, rawScores).toFixed(2));
+  const roboticTotal = parseFloat(scaleFiGroup(config.robotic, rawScores).toFixed(2));
+  const presentationTotal = parseFloat(scaleFiGroup(config.presentation, rawScores).toFixed(2));
+  const total = parseFloat((projectTotal + roboticTotal + presentationTotal).toFixed(2));
+  return { projectTotal, roboticTotal, presentationTotal, total };
+};
+
+const renderFiScoreGroup = (group: { key: string; label: string; max: number; description?: string }[]) =>
+  group.map(({ key, label, max, description }) => {
+    const [value, onChange] = fiScoreFields[key];
+    return (
+      <View key={key}>
+        <FiElemDropdownRow label={`${label} (max ${max})`} value={value} onChange={onChange} />
+        {description ? (
+          <Text style={{ fontSize: 11, color: "#888", marginTop: -6, marginBottom: 10 }}>
+            {description}
+          </Text>
+        ) : null}
+      </View>
+    );
+  });
+
+  const resetFiElemForm = () => {
+    setProjectIdeaScore("");
+    setProjectResearchScore("");
+    setProjectUsageScore("");
+    setProjectInnovationScore("");
+    setExtraEntrepreneurshipScore("");
+    setNextStepsScore("");
+    setRoboticSolutionScore("");
+    setEngineeringConceptsScore("");
+    setCodeEfficiencyScore("");
+    setRoboticDemoScore("");
+    setPresentationBoothScore("");
+    setTechnicalUnderstandingScore("");
+    setTeamSpiritScore("");
+  };
+
+  const fiElemScoreItems = Array.from({ length: 10 }, (_, index) => ({
+    label: String(index + 1),
+    value: String(index + 1),
+  }));
+
+ const FiElemDropdownRow = ({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+      <Text style={{ flex: 1, marginRight: 12, fontSize: 13 }}>{label}</Text>
+      <DropDownPicker
+        open={open}
+        value={value || null}
+        items={fiElemScoreItems}
+        setOpen={setOpen}
+        setValue={(callback) => {
+          const newValue = typeof callback === 'function' ? callback(value || null) : callback;
+          onChange(String(newValue ?? ""));
+        }}
+        placeholder="0"
+        style={{
+          width: 90,
+          minHeight: 40,
+          borderWidth: 1,
+          borderColor: "#d1d5db",
+          borderRadius: 8,
+        }}
+        containerStyle={{ width: 90 }}
+        textStyle={{ fontSize: 13 }}
+        listMode="MODAL"
+        modalTitle={label}
+        modalContentContainerStyle={{ backgroundColor: "#fff" }}
+        modalAnimationType="slide"
+      />
+    </View>
+  );
+};
 
   // Error states for Future Innovators
   const [projectError, setProjectError] = useState(false);
@@ -148,6 +277,8 @@ export default function ScorerScreen({ navigation }: any) {
       ),
     });
   }, [navigation]);
+
+  
 
   // Fetch judge's assigned category and events
   useEffect(() => {
@@ -548,13 +679,22 @@ export default function ScorerScreen({ navigation }: any) {
       return team.robosportsScore ? "complete" : "no-score";
     }
 
-    // Future Innovators: one score set
+    // Future Innovators: one score sheet per judge, up to 3 judges per team
     if (
       judgeCategory === "fi-elem" ||
       judgeCategory === "fi-junior" ||
       judgeCategory === "fi-senior"
     ) {
-      return team.totalScore ? "complete" : "no-score";
+      const judgeScores = team?.judgeScores || {};
+      const currentJudgeId = FIREBASE_AUTH.currentUser?.uid || "";
+      const hasCurrentJudgeScore = !!judgeScores[currentJudgeId];
+      const judgeCount = Object.keys(judgeScores).length;
+
+      if (hasCurrentJudgeScore || judgeCount >= 3) {
+        return "complete";
+      }
+
+      return "no-score";
     }
 
     // Future Engineers: two rounds with open/obstacle
@@ -655,6 +795,183 @@ export default function ScorerScreen({ navigation }: any) {
     return counts;
   };
 
+  const FI_ELEM_CONFIG = {
+  project: [
+    { key: "projectIdeaScore", label: "Idea, Quality & Creativity", max: 30 },
+    { key: "projectResearchScore", label: "Research & Report", max: 15 },
+    { key: "projectUsageScore", label: "Usage of the Idea", max: 15 },
+    { key: "projectInnovationScore", label: "Key Innovation & Slogan", max: 10 },
+  ],
+  robotic: [
+    { key: "roboticSolutionScore", label: "Robotic Solution", max: 30 },
+    { key: "engineeringConceptsScore", label: "Meaningful Use of Engineering Concepts", max: 10 },
+    { key: "codeEfficiencyScore", label: "Code Efficiency & Software Automation", max: 10 },
+    { key: "roboticDemoScore", label: "Demonstration of Robotic Solution", max: 15 },
+  ],
+  presentation: [
+    { key: "presentationBoothScore", label: "Presentation & Project Booth", max: 30 },
+    { key: "technicalUnderstandingScore", label: "Technical Understanding & Quick Thinking", max: 15 },
+    { key: "teamSpiritScore", label: "Team Spirit", max: 20 },
+  ],
+};
+
+const FI_JUNIOR_ROBOTIC = [
+  { key: "roboticSolutionScore", label: "Robotic Solution", max: 30 },
+  { key: "engineeringConceptsScore", label: "Meaningful Use of Engineering Concepts", max: 15 },
+  { key: "codeEfficiencyScore", label: "Code Efficiency & Software Automation", max: 10 },
+  { key: "roboticDemoScore", label: "Demonstration of Robotic Solution", max: 15 },
+];
+
+const FI_JUNIOR_PRESENTATION = [
+  { key: "presentationBoothScore", label: "Presentation & Project Booth", max: 25 },
+  { key: "technicalUnderstandingScore", label: "Technical Understanding & Quick Thinking", max: 15 },
+  { key: "teamSpiritScore", label: "Team Spirit", max: 15 },
+];
+
+const FI_JUNIOR_CONFIG = {
+  project: [
+    { key: "projectIdeaScore", label: "Idea, Quality & Creativity", max: 30 },
+    { key: "projectResearchScore", label: "Research & Report", max: 15 },
+    { key: "projectUsageScore", label: "Social Impact & Need", max: 10 },
+    { key: "projectInnovationScore", label: "Key Innovation & Slogan", max: 10 },
+    {
+      key: "extraEntrepreneurshipScore",
+      label: "Extra Element of Entrepreneurship",
+      max: 10,
+      description: "Consider: cost structure, revenue stream, key resources, and partners.",
+    },
+  ],
+  robotic: FI_JUNIOR_ROBOTIC,
+  presentation: FI_JUNIOR_PRESENTATION,
+};
+
+const FI_SENIOR_CONFIG = {
+  project: [
+    { key: "projectIdeaScore", label: "Idea, Quality & Creativity", max: 20 },
+    { key: "projectResearchScore", label: "Research & Report", max: 15 },
+    { key: "projectUsageScore", label: "Social Impact & Need", max: 10 },
+    { key: "projectInnovationScore", label: "Key Innovation & Slogan", max: 10 },
+    {
+      key: "extraEntrepreneurshipScore",
+      label: "Extra Element of Entrepreneurship",
+      max: 10,
+      description: "Consider: cost structure, revenue stream, key resources, and partners.",
+    },
+    { key: "nextStepsScore", label: "Next Steps & Prototype Development", max: 10 },
+  ],
+  robotic: FI_JUNIOR_ROBOTIC,
+  presentation: FI_JUNIOR_PRESENTATION,
+};
+
+const getFiConfig = (category: string) => {
+  if (category === "fi-junior") return FI_JUNIOR_CONFIG;
+  if (category === "fi-senior") return FI_SENIOR_CONFIG;
+  return FI_ELEM_CONFIG;
+};
+
+  const getFutureInnovatorsScoreConfig = () => ({
+    projectMax: 70,
+    roboticMax: 65,
+    boothMax: 30,
+    technicalMax: 15,
+    teamSpiritMax: 20,
+  });
+
+  const scaleFiElemScores = (scores: any) => {
+    const projectTotal = parseFloat(
+      (
+        (scores.projectIdeaScore / 10) * 30 +
+        (scores.projectResearchScore / 10) * 15 +
+        (scores.projectUsageScore / 10) * 15 +
+        (scores.projectInnovationScore / 10) * 10
+      ).toFixed(2)
+    );
+
+    const roboticTotal = parseFloat(
+      (
+        (scores.roboticSolutionScore / 10) * 30 +
+        (scores.engineeringConceptsScore / 10) * 10 +
+        (scores.codeEfficiencyScore / 10) * 10 +
+        (scores.roboticDemoScore / 10) * 15
+      ).toFixed(2)
+    );
+
+    const presentationTotal = parseFloat(
+      (
+        (scores.presentationBoothScore / 10) * 30 +
+        (scores.technicalUnderstandingScore / 10) * 15 +
+        (scores.teamSpiritScore / 10) * 20
+      ).toFixed(2)
+    );
+
+    return {
+      projectTotal,
+      roboticTotal,
+      presentationTotal,
+      total: parseFloat((projectTotal + roboticTotal + presentationTotal).toFixed(2)),
+    };
+  };
+
+  const computeFiElemAggregate = (judgeScores: Record<string, any>) => {
+    const judgeEntries = Object.values(judgeScores);
+    const judgeCount = judgeEntries.length;
+    if (judgeCount === 0) {
+      return {
+        projectInnovation: 0,
+        roboticSolution: 0,
+        presentationSpirit: 0,
+        totalScore: 0,
+        judgeCount,
+      };
+    }
+
+    const totals = judgeEntries.reduce(
+      (acc, scores: any) => {
+        const scaled = scaleFiElemScores(scores);
+        return {
+          project: acc.project + scaled.projectTotal,
+          robotic: acc.robotic + scaled.roboticTotal,
+          presentation: acc.presentation + scaled.presentationTotal,
+          total: acc.total + scaled.total,
+        };
+      },
+      { project: 0, robotic: 0, presentation: 0, total: 0 }
+    );
+
+    const averagePoints = Number((totals.total / judgeCount).toFixed(2));
+    return {
+      projectInnovation: Number((totals.project / judgeCount).toFixed(2)),
+      roboticSolution: Number((totals.robotic / judgeCount).toFixed(2)),
+      presentationSpirit: Number((totals.presentation / judgeCount).toFixed(2)),
+      totalScore: averagePoints,
+      averagePoints,
+      judgeCount,
+    };
+  };
+
+  const renderFiElemScoreRow = (
+    label: string,
+    value: string,
+    onChange: (value: string) => void
+  ) => (
+    <FiElemDropdownRow
+      key={`${scoringTeam?.id ?? 'new'}-${fiElemModalStep}-${label}`}
+      label={label}
+      value={value}
+      onChange={onChange}
+    />
+  );
+
+
+
+  useEffect(() => {
+    if (!scoreModalVisible) {
+      resetFiElemForm();
+      setFiElemModalStep(1);
+      setSubmitError("");
+    }
+  }, [scoreModalVisible]);
+
   // Scoring Modal content based on category
   function renderScorerModalContent() {
     if (!scoringTeam) return null;
@@ -716,75 +1033,182 @@ export default function ScorerScreen({ navigation }: any) {
       }
       case "robosports":
         return null; // Handled in separate component
-      case "fi-elem":
-      case "fi-junior":
-      case "fi-senior": {
-        let maxProject = 75, maxRobotic = 70, maxPresentation = 55;
-        if (judgeCategory === "fi-elem") {
-          maxProject = 70;
-          maxRobotic = 65;
-          maxPresentation = 65;
+      case "fi-elem": {
+        if (fiElemModalStep === 2) {
+          const projectIdea = parseFloat(((Number(projectIdeaScore || 0) / 10) * 30).toFixed(2));
+          const projectResearch = parseFloat(((Number(projectResearchScore || 0) / 10) * 15).toFixed(2));
+          const projectUsage = parseFloat(((Number(projectUsageScore || 0) / 10) * 15).toFixed(2));
+          const projectInnovation = parseFloat(((Number(projectInnovationScore || 0) / 10) * 10).toFixed(2));
+          const projectTotal = parseFloat((projectIdea + projectResearch + projectUsage + projectInnovation).toFixed(2));
+
+          const roboticSolution = parseFloat(((Number(roboticSolutionScore || 0) / 10) * 30).toFixed(2));
+          const engineeringConcepts = parseFloat(((Number(engineeringConceptsScore || 0) / 10) * 10).toFixed(2));
+          const codeEfficiency = parseFloat(((Number(codeEfficiencyScore || 0) / 10) * 10).toFixed(2));
+          const roboticDemo = parseFloat(((Number(roboticDemoScore || 0) / 10) * 15).toFixed(2));
+          const roboticTotal = parseFloat((roboticSolution + engineeringConcepts + codeEfficiency + roboticDemo).toFixed(2));
+
+          const presentationBooth = parseFloat(((Number(presentationBoothScore || 0) / 10) * 30).toFixed(2));
+          const technicalUnderstanding = parseFloat(((Number(technicalUnderstandingScore || 0) / 10) * 15).toFixed(2));
+          const teamSpirit = parseFloat(((Number(teamSpiritScore || 0) / 10) * 20).toFixed(2));
+          const presentationTotal = parseFloat((presentationBooth + technicalUnderstanding + teamSpirit).toFixed(2));
+
+          const overallTotal = parseFloat((projectTotal + roboticTotal + presentationTotal).toFixed(2));
+
+          return (
+            <ScrollView style={{ maxHeight: 420 }}>
+              <Text style={styles.scoreinputTitle}>Review Scores</Text>
+              <Text style={{ fontSize: 12, color: "#555", marginTop: 4 }}>
+                Raw judge score shown as 1–10. Scaled points are shown after the arrow.
+              </Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>Project & Innovation</Text>
+              <Text style={{ marginTop: 4 }}>
+                Idea, Quality & Creativity: {projectIdeaScore || "0"}/10 → {projectIdea.toFixed(2)}/30
+              </Text>
+              <Text>
+                Research & Report: {projectResearchScore || "0"}/10 → {projectResearch.toFixed(2)}/15
+              </Text>
+              <Text>
+                Usage of the Idea: {projectUsageScore || "0"}/10 → {projectUsage.toFixed(2)}/15
+              </Text>
+              <Text>
+                Key Innovation & Slogan: {projectInnovationScore || "0"}/10 → {projectInnovation.toFixed(2)}/10
+              </Text>
+              <Text style={{ fontWeight: "bold", marginTop: 4 }}>
+                Subtotal: {projectTotal.toFixed(2)}/70
+              </Text>
+
+              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>Robotic Solution</Text>
+              <Text style={{ marginTop: 4 }}>
+                Robotic Solution: {roboticSolutionScore || "0"}/10 → {roboticSolution.toFixed(2)}/30
+              </Text>
+              <Text>
+                Meaningful Use of Engineering Concepts: {engineeringConceptsScore || "0"}/10 → {engineeringConcepts.toFixed(2)}/10
+              </Text>
+              <Text>
+                Code Efficiency & Software Automation: {codeEfficiencyScore || "0"}/10 → {codeEfficiency.toFixed(2)}/10
+              </Text>
+              <Text>
+                Demonstration of Robotic Solution: {roboticDemoScore || "0"}/10 → {roboticDemo.toFixed(2)}/15
+              </Text>
+              <Text style={{ fontWeight: "bold", marginTop: 4 }}>
+                Subtotal: {roboticTotal.toFixed(2)}/65
+              </Text>
+
+              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>Presentation & Team Spirit</Text>
+              <Text style={{ marginTop: 4 }}>
+                Presentation & Project Booth: {presentationBoothScore || "0"}/10 → {presentationBooth.toFixed(2)}/30
+              </Text>
+              <Text>
+                Technical Understanding & Quick Thinking: {technicalUnderstandingScore || "0"}/10 → {technicalUnderstanding.toFixed(2)}/15
+              </Text>
+              <Text>
+                Team Spirit: {teamSpiritScore || "0"}/10 → {teamSpirit.toFixed(2)}/20
+              </Text>
+              <Text style={{ fontWeight: "bold", marginTop: 4 }}>
+                Subtotal: {presentationTotal.toFixed(2)}/65
+              </Text>
+
+              <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 12 }}>
+                Overall Points: {overallTotal.toFixed(2)}/200
+              </Text>
+            </ScrollView>
+          );
         }
 
         return (
-          <>
-            <Text style={styles.scoreinputTitle}>Project & Innovation</Text>
-            <TextInput
-              style={[
-                styles.scoreinput,
-                projectError && { borderColor: "red", borderWidth: 2 }
-              ]}
-              placeholder={`${maxProject}pts max`}
-              placeholderTextColor={projectError ? "red" : "#999"}
-              keyboardType="numeric"
-              value={inputScore}
-              onChangeText={(text) => {
-                const val = text.replace(/[^0-9]/g, "");
-                setInputScore(val);
-                setProjectError(Number(val) > maxProject);
-              }}
-              maxLength={2}
-            />
-            <Text style={styles.scoreinputTitle}>Robotic Solution</Text>
-            <TextInput
-              style={[
-                styles.scoreinput,
-                roboticError && { borderColor: "red", borderWidth: 2 }
-              ]}
-              placeholder={`${maxRobotic}pts max`}
-              placeholderTextColor={roboticError ? "red" : "#999"}
-              keyboardType="numeric"
-              value={inputMinute}
-              onChangeText={(text) => {
-                const val = text.replace(/[^0-9]/g, "");
-                setInputMinute(val);
-                setRoboticError(Number(val) > maxRobotic);
-              }}
-              maxLength={2}
-            />
-            <Text style={styles.scoreinputTitle}>Presentation & Team Spirit</Text>
-            <TextInput
-              style={[
-                styles.scoreinput,
-                presentationError && { borderColor: "red", borderWidth: 2 }
-              ]}
-              placeholder={`${maxPresentation}pts max`}
-              placeholderTextColor={presentationError ? "red" : "#999"}
-              keyboardType="numeric"
-              value={inputSecond}
-              onChangeText={(text) => {
-                const val = text.replace(/[^0-9]/g, "");
-                setInputSecond(val);
-                setPresentationError(Number(val) > maxPresentation);
-              }}
-              maxLength={2}
-            />
-            <Text style={{ marginTop: 10, fontStyle: "italic" }}>
-              Total Score: {Number(inputScore) + Number(inputMinute) + Number(inputSecond)}
-            </Text>
-          </>
+          <ScrollView style={{ maxHeight: 420 }}>
+            <Text style={styles.scoreinputTitle}>First Criteria: Project & Innovation</Text>
+            {renderFiElemScoreRow("Idea, Quality & Creativity (max 30)", projectIdeaScore, setProjectIdeaScore)}
+            {renderFiElemScoreRow("Research & Report (max 15)", projectResearchScore, setProjectResearchScore)}
+            {renderFiElemScoreRow("Usage of the Idea (max 15)", projectUsageScore, setProjectUsageScore)}
+            {renderFiElemScoreRow("Key Innovation & Slogan (max 10)", projectInnovationScore, setProjectInnovationScore)}
+
+            <Text style={{ marginTop: 16, fontWeight: "600" }}>Second Criteria: Robotic Solution</Text>
+            {renderFiElemScoreRow("Robotic Solution (max 30)", roboticSolutionScore, setRoboticSolutionScore)}
+            {renderFiElemScoreRow("Meaningful Use of Engineering Concepts (max 10)", engineeringConceptsScore, setEngineeringConceptsScore)}
+            {renderFiElemScoreRow("Code Efficiency & Software Automation (max 10)", codeEfficiencyScore, setCodeEfficiencyScore)}
+            {renderFiElemScoreRow("Demonstration of Robotic Solution (max 15)", roboticDemoScore, setRoboticDemoScore)}
+
+            <Text style={{ marginTop: 16, fontWeight: "600" }}>Third Criteria: Presentation & Team Spirit</Text>
+            {renderFiElemScoreRow("Presentation & Project Booth (max 30)", presentationBoothScore, setPresentationBoothScore)}
+            {renderFiElemScoreRow("Technical Understanding & Quick Thinking (max 15)", technicalUnderstandingScore, setTechnicalUnderstandingScore)}
+            {renderFiElemScoreRow("Team Spirit (max 20)", teamSpiritScore, setTeamSpiritScore)}
+
+            {/* <Text style={{ marginTop: 10, fontStyle: "italic" }}>Overall Points: {Number(projectIdeaScore) + Number(projectResearchScore) + Number(projectUsageScore) + Number(projectInnovationScore) + Number(roboticSolutionScore) + Number(engineeringConceptsScore) + Number(codeEfficiencyScore) + Number(roboticDemoScore) + Number(presentationBoothScore) + Number(technicalUnderstandingScore) + Number(teamSpiritScore)}/200</Text> */}
+          </ScrollView>
         );
       }
+      case "fi-junior":
+      case "fi-senior": {
+        const config = getFiConfig(judgeCategory);
+
+        if (fiElemModalStep === 2) {
+          const raw = Object.fromEntries(
+            Object.entries(fiScoreFields).map(([key, [value]]) => [key, value])
+          );
+          const { projectTotal, roboticTotal, presentationTotal, total } = scaleFiScores(judgeCategory, raw);
+
+          const renderReviewGroup = (group: { key: string; label: string; max: number }[]) =>
+            group.map(({ key, label, max }) => {
+              const [value] = fiScoreFields[key];
+              const scaled = parseFloat(((Number(value || 0) / 10) * max).toFixed(2));
+              return (
+                <Text key={key} style={{ marginTop: 4 }}>
+                  {label}: {value || "0"}/10 → {scaled.toFixed(2)}/{max}
+                </Text>
+              );
+            });
+
+          const projectMax = config.project.reduce((s, c) => s + c.max, 0);
+          const roboticMax = config.robotic.reduce((s, c) => s + c.max, 0);
+          const presentationMax = config.presentation.reduce((s, c) => s + c.max, 0);
+
+          return (
+            <ScrollView style={{ maxHeight: 420 }}>
+              <Text style={styles.scoreinputTitle}>Review Scores</Text>
+              <Text style={{ fontSize: 12, color: "#555", marginTop: 4 }}>
+                Raw judge score shown as 1–10. Scaled points are shown after the arrow.
+              </Text>
+
+              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>Project & Innovation</Text>
+              {renderReviewGroup(config.project)}
+              <Text style={{ fontWeight: "bold", marginTop: 4 }}>
+                Subtotal: {projectTotal.toFixed(2)}/{projectMax}
+              </Text>
+
+              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>Robotic Solution</Text>
+              {renderReviewGroup(config.robotic)}
+              <Text style={{ fontWeight: "bold", marginTop: 4 }}>
+                Subtotal: {roboticTotal.toFixed(2)}/{roboticMax}
+              </Text>
+
+              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>Presentation & Team Spirit</Text>
+              {renderReviewGroup(config.presentation)}
+              <Text style={{ fontWeight: "bold", marginTop: 4 }}>
+                Subtotal: {presentationTotal.toFixed(2)}/{presentationMax}
+              </Text>
+
+              <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 12 }}>
+                Overall Points: {total.toFixed(2)}/200
+              </Text>
+            </ScrollView>
+          );
+        }
+
+        return (
+          <ScrollView style={{ maxHeight: 420 }}>
+            <Text style={styles.scoreinputTitle}>First Criteria: Project & Innovation</Text>
+          {renderFiScoreGroup(config.project)}
+
+          <Text style={{ marginTop: 16, fontWeight: "600" }}>Second Criteria: Robotic Solution</Text>
+          {renderFiScoreGroup(config.robotic)}
+
+          <Text style={{ marginTop: 16, fontWeight: "600" }}>Third Criteria: Presentation & Team Spirit</Text>
+          {renderFiScoreGroup(config.presentation)}
+          </ScrollView>
+        );
+      }
+
       case "future-eng": {
         const isObstacleRound2 =
           feRoundType === "obstacle" &&
@@ -901,7 +1325,7 @@ export default function ScorerScreen({ navigation }: any) {
   }
 
   // Modal open for scoring
-  const openScoreModal = (team: any) => {
+  const openScoreModal = async (team: any) => {
     if (getCardStatus(team) === "complete") return;
     
     setScoringTeam(team);
@@ -920,7 +1344,32 @@ export default function ScorerScreen({ navigation }: any) {
     setInputMinute("");
     setInputSecond("");
     setInputMs("");
+    setFiElemModalStep(1);
+    resetFiElemForm();
+    setSubmitError("");
     setScoreModalVisible(true);
+
+    const isFiCategory = judgeCategory === "fi-elem" || judgeCategory === "fi-junior" || judgeCategory === "fi-senior";
+    if (isFiCategory) {
+      try {
+        const scoresRef = doc(FIREBASE_DB, "events", selectedEvent, "scores", team.id);
+        const scoreDoc = await getDoc(scoresRef);
+        const existing = scoreDoc.exists() ? scoreDoc.data()?.scoresheets || {} : {};
+        const existingCount = Object.keys(existing).length;
+
+        if (existingCount >= 3) {
+          Alert.alert("Complete", "This team already has 3 scoresheets submitted.");
+          return;
+        }
+
+        setScoresheetNumber(existingCount + 1);
+      } catch (e) {
+        console.error("Failed to check existing scoresheets:", e);
+        setScoresheetNumber(1);
+      }
+    }
+
+  setScoreModalVisible(true);
   };
 
   const handleScoreSubmit = async () => {
@@ -1006,62 +1455,89 @@ export default function ScorerScreen({ navigation }: any) {
       }
     }
 
-    // Future Innovators (updated structure)
+    // Future Innovators
     if (
       judgeCategory === "fi-elem" ||
       judgeCategory === "fi-junior" ||
       judgeCategory === "fi-senior"
     ) {
-      if (
-        inputScore.trim() === "" ||
-        inputMinute.trim() === "" ||
-        inputSecond.trim() === ""
-      ) {
-        setSubmitError("Please input all scores.");
+      const config = getFiConfig(judgeCategory);
+      const allFields = [...config.project, ...config.robotic, ...config.presentation];
+
+      const hasMissing = allFields.some(({ key }) => fiScoreFields[key][0].trim() === "");
+      if (hasMissing) {
+        setSubmitError("Please input all sub-criteria scores.");
         setIsSubmitting(false);
         return;
       }
-      if (projectError || roboticError || presentationError) {
+
+      const exceedsMax = allFields.some(({ key }) => Number(fiScoreFields[key][0]) > 10);
+      if (exceedsMax) {
         setSubmitError("One or more scores exceed the maximum allowed.");
         setIsSubmitting(false);
         return;
       }
 
       try {
+        const scoresRef = doc(FIREBASE_DB, "events", selectedEvent, "scores", scoringTeam.id);
+        const scoreDoc = await getDoc(scoresRef);
+        const existingData = scoreDoc.exists() ? scoreDoc.data() : {};
+        const existingScoresheets = existingData?.scoresheets || {};
+        const existingCount = Object.keys(existingScoresheets).length;
+
+        if (existingCount >= 3) {
+          setSubmitError("This team already has 3 scoresheets submitted.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        const nextSlot = String(existingCount + 1);
+
+        const rawScores = Object.fromEntries(
+          allFields.map(({ key }) => [key, Number(fiScoreFields[key][0])])
+        );
+
+        const totalPoints = scaleFiScores(judgeCategory, rawScores).total;
+        const judgeId = FIREBASE_AUTH.currentUser?.uid || null;
+
+        const scoresheetEntry = {
+          ...rawScores,
+          totalPoints,
+          submittedBy: judgeId, // kept for reference only, not used for limiting anymore
+          submittedAt: new Date().toISOString(),
+        };
+
+        const updatedScoresheets = { ...existingScoresheets, [nextSlot]: scoresheetEntry };
+
+        const totals = Object.values(updatedScoresheets).map((s: any) => s.totalPoints);
+        const averagePoints =
+          updatedScoresheets && Object.keys(updatedScoresheets).length === 3
+            ? parseFloat((totals.reduce((a, b) => a + b, 0) / totals.length).toFixed(2))
+            : null;
+
         const update: any = {
           teamName: scoringTeam.teamName,
           teamId: scoringTeam.id,
           eventId: selectedEvent,
           category: judgeCategory,
-          projectInnovation: Number(inputScore),
-          roboticSolution: Number(inputMinute),
-          presentationSpirit: Number(inputSecond),
-          totalScore:
-            Number(inputScore) +
-            Number(inputMinute) +
-            Number(inputSecond),
+          scoresheets: updatedScoresheets,
+          scoresheetCount: Object.keys(updatedScoresheets).length,
+          averagePoints,
           scoredAt: new Date().toISOString(),
         };
 
         setScoreModalVisible(false);
         setScoringTeam(null);
+        setFiElemModalStep(1);
+        setScoresheetNumber(null);
 
-        const scoresRef = doc(
-          FIREBASE_DB,
-          "events",
-          selectedEvent,
-          "scores",
-          scoringTeam.id
-        );
         await setDoc(scoresRef, update, { merge: true });
 
         setTeams((teams) =>
           teams.map((t) => (t.id === scoringTeam.id ? { ...t, ...update } : t))
         );
 
-        setInputScore("");
-        setInputMinute("");
-        setInputSecond("");
+        resetFiElemForm();
       } catch (e) {
         console.error("Score submission error:", e);
         Alert.alert("Error", "Failed to submit score. Please try again.");
@@ -1807,69 +2283,55 @@ export default function ScorerScreen({ navigation }: any) {
                   );
                 }
 
-                // Future Innovators: show individual scores
-                if (
-                  judgeCategory === "fi-elem" ||
-                  judgeCategory === "fi-junior" ||
-                  judgeCategory === "fi-senior"
-                ) {
-                  return (
-                    <Pressable
-                      disabled={isComplete}
-                      onPress={() => openScoreModal(item)}
-                      style={({ pressed }) => [
-                        styles.teamCard,
-                        {
-                          backgroundColor: getCardColor(status),
-                          opacity: isComplete ? 1 : 1,
-                        },
-                        pressed && styles.buttonPressed,
-                      ]}
-                    >
-                      
-                      <Text style={styles.teamCardTeamNumber}>
-                        Team no. {item.teamNumber}
-                      </Text>
-                      <Text style={styles.teamCardTitle}>{item.teamName}</Text>
-                      <View style={{ marginVertical: 10 }}>
-                        <Text style={styles.teamData}>
-                          Project & Innovation:{" "}
-                          <Text style={{ fontWeight: "bold", color: "#432344" }}>
-                            {item.projectInnovation ?? "—"}
-                          </Text>
-                        </Text>
-                        <Text style={styles.teamData}>
-                          Robotic Solution:{" "}
-                          <Text style={{ fontWeight: "bold", color: "#432344" }}>
-                            {item.roboticSolution ?? "—"}
-                          </Text>
-                        </Text>
-                        <Text style={styles.teamData}>
-                          Presentation & Team Spirit:{" "}
-                          <Text style={{ fontWeight: "bold", color: "#432344" }}>
-                            {item.presentationSpirit ?? "—"}
-                          </Text>
-                        </Text>
-                        <Text style={[styles.teamData, { marginTop: 6, fontStyle: "italic" }]}>
-                          Total Score:{" "}
-                          <Text style={{ fontWeight: "bold", color: "#388e3c" }}>
-                            {item.totalScore ?? "—"}
-                          </Text>
-                        </Text>
-                      </View>
-                      <Text
-                        style={{
-                          fontFamily: "inter_400Regular",
-                          fontStyle: "italic",
-                          color: "#6B7280",
-                        }}
+// Future Innovators: show current judge's own score sheet only
+               if (
+                    judgeCategory === "fi-elem" ||
+                    judgeCategory === "fi-junior" ||
+                    judgeCategory === "fi-senior"
+                  ) {
+                    const scoresheets = item?.scoresheets || {};
+                    const count = Object.keys(scoresheets).length;
+                    const isFullyComplete = count >= 3;
+
+                    const totals = [1, 2, 3].map((slot) => scoresheets[String(slot)]?.totalPoints ?? null);
+                    const averageTotal = isFullyComplete
+                      ? parseFloat((totals.reduce((a: number, b: number) => a + b, 0) / 3).toFixed(2))
+                      : null;
+
+                    return (
+                      <Pressable
+                        disabled={isFullyComplete}
+                        onPress={() => openScoreModal(item)}
+                        style={({ pressed }) => [
+                          styles.teamCard,
+                          { backgroundColor: isFullyComplete ? "#c8e6c9" : getCardColor(status) },
+                          pressed && styles.buttonPressed,
+                        ]}
                       >
-                        Status:{" "}
-                        {item.totalScore ? "Scored" : "No Score yet"}
-                      </Text>
-                    </Pressable>
-                  );
-                }
+                        <Text style={styles.teamCardTeamNumber}>Team no. {item.teamNumber}</Text>
+                        <Text style={styles.teamCardTitle}>{item.teamName}</Text>
+                        <View style={{ marginVertical: 10 }}>
+                          {totals.map((total, i) => (
+                            <Text key={i} style={styles.teamData}>
+                              Scoresheet {i + 1}:{" "}
+                              <Text style={{ fontWeight: "bold", color: "#432344" }}>
+                                {total !== null ? total.toFixed(2) : "pending"}
+                              </Text>
+                            </Text>
+                          ))}
+                          <Text style={[styles.teamData, { marginTop: 6, fontStyle: "italic" }]}>
+                            Average Total:{" "}
+                            <Text style={{ fontWeight: "bold", color: "#388e3c" }}>
+                              {averageTotal !== null ? averageTotal.toFixed(2) : "—"}
+                            </Text>
+                          </Text>
+                        </View>
+                        <Text style={{ fontFamily: "inter_400Regular", fontStyle: "italic", color: isFullyComplete ? "#2e7d32" : "#6B7280" }}>
+                          Status: {isFullyComplete ? "Complete" : `${count}/3 complete`}
+                        </Text>
+                      </Pressable>
+                    );
+                  }
 
                 // Future Engineers
                 if (judgeCategory === "future-eng") {
@@ -2081,6 +2543,11 @@ export default function ScorerScreen({ navigation }: any) {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>{scoringTeam?.teamName}</Text>
+              {(judgeCategory === "fi-elem" || judgeCategory === "fi-junior" || judgeCategory === "fi-senior") && scoresheetNumber ? (
+                <Text style={{ fontSize: 13, color: "#6B7280", fontStyle: "italic", marginBottom: 8 }}>
+                  Scoresheet no. {scoresheetNumber}
+                </Text>
+              ) : null}
               {renderScorerModalContent()}
               {submitError ? (
                 <Text style={{ color: "red", marginVertical: 8 }}>
@@ -2091,30 +2558,62 @@ export default function ScorerScreen({ navigation }: any) {
                 <TouchableOpacity
                   style={[styles.cancelButton, isSubmitting && { opacity: 0.5 }]}
                   onPress={() => {
+                    const isFiCategory = judgeCategory === "fi-elem" || judgeCategory === "fi-junior" || judgeCategory === "fi-senior";
+                    if (isFiCategory && fiElemModalStep === 2) {
+                      setFiElemModalStep(1);
+                      setSubmitError("");
+                      return;
+                    }
+
                     setScoreModalVisible(false);
-                    setSubmitError(""); 
+                    setFiElemModalStep(1);
+                    resetFiElemForm();
+                    setSubmitError("");
                   }}
                   disabled={isSubmitting}
                 >
                   <Text style={[styles.buttonText, { color: "#432344" }]}>
-                    Cancel
+                    {(judgeCategory === "fi-elem" || judgeCategory === "fi-junior" || judgeCategory === "fi-senior") && fiElemModalStep === 2 ? "Back" : "Cancel"}
                   </Text>
                 </TouchableOpacity>
-               
-                <TouchableOpacity
-                  style={[styles.submitButton, isSubmitting && { opacity: 0.7 }]}
-                  onPress={handleScoreSubmit}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <ActivityIndicator size="small" color="white" style={{ marginRight: 8 }} />
-                      <Text style={styles.buttonText}>Submitting...</Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.buttonText}>Submit</Text>
-                  )}
-                </TouchableOpacity>
+
+                {(judgeCategory === "fi-elem" || judgeCategory === "fi-junior" || judgeCategory === "fi-senior") && fiElemModalStep === 1 ? (
+                  <TouchableOpacity
+                    style={[styles.submitButton, isSubmitting && { opacity: 0.7 }]}
+                    onPress={() => {
+                      const config = getFiConfig(judgeCategory);
+                      const allFields = [...config.project, ...config.robotic, ...config.presentation];
+
+                      if (allFields.some(({ key }) => fiScoreFields[key][0].trim() === "")) {
+                        setSubmitError("Please fill in all sub-criteria scores.");
+                        return;
+                      }
+
+                      setSubmitError("");
+                      setFiElemModalStep(2);
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    <Text style={styles.buttonText}>Next</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.submitButton, isSubmitting && { opacity: 0.7 }]}
+                    onPress={handleScoreSubmit}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <ActivityIndicator size="small" color="white" style={{ marginRight: 8 }} />
+                        <Text style={styles.buttonText}>Submitting...</Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.buttonText}>Submit</Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+
+
               </View>
             </View>
           </View>

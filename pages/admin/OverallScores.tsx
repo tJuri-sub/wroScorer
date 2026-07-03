@@ -45,11 +45,24 @@ const getCategoryFields = (category: string) => {
           const obstacleBest = Math.max(data.obstacleScore1 || 0, data.obstacleScore2 || 0);
           const docs = data.docScore || 0;
           
-          // Calculate total time (sum of best round times)
-          const openBestTime = (data.openScore1 || 0) >= (data.openScore2 || 0) ? 
-            parseTimeToSeconds(data.openTime1) : parseTimeToSeconds(data.openTime2);
-          const obstacleBestTime = (data.obstacleScore1 || 0) >= (data.obstacleScore2 || 0) ? 
-            parseTimeToSeconds(data.obstacleTime1) : parseTimeToSeconds(data.obstacleTime2);
+          // Correct: on tie, pick the round with the smaller time
+          const openScore1 = data.openScore1 || 0;
+          const openScore2 = data.openScore2 || 0;
+          const openTime1 = parseTimeToSeconds(data.openTime1);
+          const openTime2 = parseTimeToSeconds(data.openTime2);
+
+          const openBestTime = openScore1 > openScore2 ? openTime1
+            : openScore2 > openScore1 ? openTime2
+            : Math.min(openTime1, openTime2); // tie → smallest time
+
+          const obstacleScore1 = data.obstacleScore1 || 0;
+          const obstacleScore2 = data.obstacleScore2 || 0;
+          const obstacleTime1 = parseTimeToSeconds(data.obstacleTime1);
+          const obstacleTime2 = parseTimeToSeconds(data.obstacleTime2);
+
+          const obstacleBestTime = obstacleScore1 > obstacleScore2 ? obstacleTime1
+            : obstacleScore2 > obstacleScore1 ? obstacleTime2
+            : Math.min(obstacleTime1, obstacleTime2); // tie → smallest time
           
           let totalTime = openBestTime + obstacleBestTime;
           if (totalTime > 180) totalTime = 180; // Cap at 180 seconds
@@ -59,47 +72,50 @@ const getCategoryFields = (category: string) => {
             bestScore: openBest + obstacleBest + docs,
             totalTime,
             breakdown: {
-              openBest,
-              obstacleBest,
-              docs,
-              totalScore: openBest + obstacleBest + docs
-            }
+            openBest,
+            openBestTime,
+            openSecondScore: openScore1 >= openScore2 ? openScore2 : openScore1,
+            openSecondTime: openScore1 >= openScore2 ? openTime2 : openTime1,
+            obstacleBest,
+            obstacleBestTime,
+            obstacleSecondScore: obstacleScore1 >= obstacleScore2 ? obstacleScore2 : obstacleScore1,
+            obstacleSecondTime: obstacleScore1 >= obstacleScore2 ? obstacleTime2 : obstacleTime1,
+            docs,
+            totalScore: openBest + obstacleBest + docs
+          }
           };
         }
       };
       
-    case 'fi-elem':
-      return {
-        fields: ['projectInnovation', 'roboticSolution', 'presentationSpirit'],
-        headers: ['Project (70)', 'Robotic (65)', 'Presentation (65)', 'Total'],
-        calculator: (data: any) => ({
+   case 'fi-elem':
+  case 'fi-junior':
+  case 'fi-senior':
+    return {
+      fields: ['scoresheets', 'averagePoints'],
+      headers: ['Scoresheet 1', 'Scoresheet 2', 'Scoresheet 3', 'Average'],
+      calculator: (data: any) => {
+        const scoresheets = data.scoresheets || {};
+        const s1 = scoresheets['1']?.totalPoints ?? null;
+        const s2 = scoresheets['2']?.totalPoints ?? null;
+        const s3 = scoresheets['3']?.totalPoints ?? null;
+
+        const submittedTotals = [s1, s2, s3].filter((v) => v !== null) as number[];
+        const fallbackAverage = submittedTotals.length > 0
+          ? parseFloat((submittedTotals.reduce((sum, v) => sum + v, 0) / submittedTotals.length).toFixed(2))
+          : 0;
+
+        return {
           ...data,
-          bestScore: (data.projectInnovation || 0) + (data.roboticSolution || 0) + (data.presentationSpirit || 0),
+          bestScore: data.averagePoints ?? fallbackAverage,
           breakdown: {
-            projectInnovation: data.projectInnovation || 0,
-            roboticSolution: data.roboticSolution || 0,
-            presentationSpirit: data.presentationSpirit || 0,
-            totalScore: (data.projectInnovation || 0) + (data.roboticSolution || 0) + (data.presentationSpirit || 0)
+            scoresheet1: s1,
+            scoresheet2: s2,
+            scoresheet3: s3,
+            averagePoints: data.averagePoints ?? null,
           }
-        })
-      };
-      
-    case 'fi-junior':
-    case 'fi-senior':
-      return {
-        fields: ['projectInnovation', 'roboticSolution', 'presentationSpirit'],
-        headers: ['Project (75)', 'Robotic (70)', 'Presentation (55)', 'Total'],
-        calculator: (data: any) => ({
-          ...data,
-          bestScore: (data.projectInnovation || 0) + (data.roboticSolution || 0) + (data.presentationSpirit || 0),
-          breakdown: {
-            projectInnovation: data.projectInnovation || 0,
-            roboticSolution: data.roboticSolution || 0,
-            presentationSpirit: data.presentationSpirit || 0,
-            totalScore: (data.projectInnovation || 0) + (data.roboticSolution || 0) + (data.presentationSpirit || 0)
-          }
-        })
-      };
+        };
+      }
+    };
       
     case 'robosports':
       // Placeholder for future implementation
@@ -113,26 +129,45 @@ const getCategoryFields = (category: string) => {
       };
 
     case 'robo-elem':
-    case 'robo-junior':  
-    case 'robo-senior':
+case 'robo-junior':
+case 'robo-senior':
+  return {
+    fields: ['day1Round1Score', 'day1Round1Time', 'day1Round2Score', 'day1Round2Time'],
+    headers: ['Round 1', 'Round 2'],
+    calculator: (data: any) => {
+      const s1 = data.day1Round1Score ?? 0;
+      const s2 = data.day1Round2Score ?? 0;
+      const t1 = parseTimeToSeconds(data.day1Round1Time);
+      const t2 = parseTimeToSeconds(data.day1Round2Time);
+
+      let bestScore: number;
+      let bestRound: 1 | 2;
+      let bestTimeSeconds: number;
+      let bestTimeDisplay: string | null;
+
+      if (s1 > s2) {
+        bestScore = s1; bestRound = 1; bestTimeSeconds = t1; bestTimeDisplay = data.day1Round1Time;
+      } else if (s2 > s1) {
+        bestScore = s2; bestRound = 2; bestTimeSeconds = t2; bestTimeDisplay = data.day1Round2Time;
+      } else {
+        // Tie on score → least time wins
+        bestScore = s1;
+        if (t1 <= t2) {
+          bestRound = 1; bestTimeSeconds = t1; bestTimeDisplay = data.day1Round1Time;
+        } else {
+          bestRound = 2; bestTimeSeconds = t2; bestTimeDisplay = data.day1Round2Time;
+        }
+      }
+
       return {
-        fields: ['day1Round1Score', 'day1Round1Time', 'day1Round2Score', 'day1Round2Time'],
-        headers: ['Round 1 Score', 'Round 1 Time', 'Round 2 Score', 'Round 2 Time'],
-        calculator: (data: any) => ({
-            ...data,
-
-            bestScore: Math.max(
-                data.day1Round1Score || 0,
-                data.day1Round2Score || 0
-            ),
-
-            bestTime:
-                parseTimeToSeconds(data.day1Round1Time) <
-                parseTimeToSeconds(data.day1Round2Time)
-                    ? data.day1Round1Time
-                    : data.day1Round2Time,
-        })
+        ...data,
+        bestScore,
+        bestRound,          // 1 or 2 — which round wins the highlight/rank
+        bestTime: bestTimeDisplay,
+        combinedTime: bestTimeSeconds, // used by the sort tiebreaker
       };
+    }
+  };
       
     default: // fallback to legacy data
       return {
@@ -180,6 +215,7 @@ export default function AdminOverallScores({ navigation }: any) {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [sortMode, setSortMode] = useState<'rank' | 'alpha'>('rank');
   const [userRole, setUserRole] = useState<string>("");
 
   // Event filter states
@@ -338,12 +374,32 @@ export default function AdminOverallScores({ navigation }: any) {
                   return (a.combinedTime || Infinity) - (b.combinedTime || Infinity);
                 }
 
+                // Full tiebreaker sort (10.8.1 → 10.8.10):
                 if (selectedCategory === 'future-eng') {
-                  if (b.bestScore !== a.bestScore) {
-                    return b.bestScore - a.bestScore;
+                  const ab = a.breakdown, bb = b.breakdown;
+
+                  // 10.8.1 — total score
+                  if (bb.totalScore !== ab.totalScore) return bb.totalScore - ab.totalScore;
+                  // 10.8.2 — best obstacle score
+                  if (bb.obstacleBest !== ab.obstacleBest) return bb.obstacleBest - ab.obstacleBest;
+                  // 10.8.3 — best obstacle time (lower is better)
+                  if (ab.obstacleBestTime !== bb.obstacleBestTime) return ab.obstacleBestTime - bb.obstacleBestTime;
+                  // 10.8.4 — second obstacle score
+                  if (bb.obstacleSecondScore !== ab.obstacleSecondScore) return bb.obstacleSecondScore - ab.obstacleSecondScore;
+                  // 10.8.5 — second obstacle time
+                  if (ab.obstacleSecondTime !== bb.obstacleSecondTime) return ab.obstacleSecondTime - bb.obstacleSecondTime;
+                  // 10.8.6 — doc score
+                  if (bb.docs !== ab.docs) return bb.docs - ab.docs;
+                  // 10.8.7 — best open score
+                  if (bb.openBest !== ab.openBest) return bb.openBest - ab.openBest;
+                  // 10.8.8 — second open score
+                  if (bb.openSecondScore !== ab.openSecondScore) return bb.openSecondScore - ab.openSecondScore;
+                  // 10.8.9 — best open time
+                  if (ab.openBestTime !== bb.openBestTime) return ab.openBestTime - bb.openBestTime;
+                    // 10.8.10 — second open time
+                    return ab.openSecondTime - bb.openSecondTime;
                   }
-                  return (a.totalTime || Infinity) - (b.totalTime || Infinity);
-                }
+
                 return b.bestScore - a.bestScore;
               });
 
@@ -449,23 +505,17 @@ export default function AdminOverallScores({ navigation }: any) {
         "Total Score": team.bestScore,
       }));
       } else if (selectedCategory === 'robo-elem' || selectedCategory === 'robo-junior' || selectedCategory === 'robo-senior') {
-        data = leaderboard.map((team, index) => ({
-        Rank: index + 1,
-        Team: team.teamName,
-        "Day 1 Round 1": team.day1Round1Score ?? "-",
-        "Day 1 Round 2": team.day1Round2Score ?? "-",
-        "Day 1 Round 3": team.day1Round3Score ?? "-",
-        "Day 1 Best": team.breakdown?.day1BestScore ?? "-",
-        "Day 1 Best Time": team.breakdown?.day1BestTime ?? "-",
-        "Day 2 Round 1": team.day2Round1Score ?? "-",
-        "Day 2 Round 2": team.day2Round2Score ?? "-",
-        "Day 2 Round 3": team.day2Round3Score ?? "-",
-        "Day 2 Best": team.breakdown?.day2BestScore ?? "-",
-        "Day 2 Best Time": team.breakdown?.day2BestTime ?? "-",
-        "Total Score": team.bestScore,
-        "Combined Time": team.combinedTime ? `${team.combinedTime}s` : "-",
-      }));
-    } else {
+  data = leaderboard.map((team, index) => ({
+    Rank: index + 1,
+    Team: team.teamName,
+    "Round 1 Score": team.day1Round1Score ?? "-",
+    "Round 1 Time": team.day1Round1Time ?? "-",
+    "Round 2 Score": team.day1Round2Score ?? "-",
+    "Round 2 Time": team.day1Round2Time ?? "-",
+    "Best Score": team.bestScore,
+    "Best Time": team.bestTime ?? "-",
+  }));
+} else {
       // Default robomissions format
       data = leaderboard.map((team, index) => ({
         Rank: index + 1,
@@ -504,11 +554,17 @@ export default function AdminOverallScores({ navigation }: any) {
       team.teamName.toLowerCase().includes(search.trim().toLowerCase())
   );
 
-  const totalRecords = filteredLeaderboard.length;
+  const sortedLeaderboard = sortMode === 'alpha'
+    ? [...filteredLeaderboard].sort((a, b) =>
+        (a.teamName || "").localeCompare(b.teamName || "")
+      )
+    : filteredLeaderboard;
+
+  const totalRecords = sortedLeaderboard.length;
   const totalPages = Math.max(1, Math.ceil(totalRecords / RECORDS_PER_PAGE));
   const startIndex = (currentPage - 1) * RECORDS_PER_PAGE;
   const endIndex = startIndex + RECORDS_PER_PAGE;
-  const currentRecords = filteredLeaderboard.slice(startIndex, endIndex);
+  const currentRecords = sortedLeaderboard.slice(startIndex, endIndex);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
@@ -564,134 +620,78 @@ export default function AdminOverallScores({ navigation }: any) {
         </View>
       );
     } else if (selectedCategory?.startsWith('fi-')) {
+      const scoresheets = item.scoresheets || {};
+      const sheet1 = scoresheets['1']?.totalPoints;
+      const sheet2 = scoresheets['2']?.totalPoints;
+      const sheet3 = scoresheets['3']?.totalPoints;
+
+      const submittedTotals = [sheet1, sheet2, sheet3].filter((v) => Number.isFinite(v)) as number[];
+      const average = Number.isFinite(item.averagePoints)
+        ? item.averagePoints
+        : submittedTotals.length
+        ? Number((submittedTotals.reduce((sum, v) => sum + v, 0) / submittedTotals.length).toFixed(2))
+        : 0;
+
       return (
         <View style={stickyStyles.row}>
           <Text style={stickyStyles.cell}>
             {rankDisplay} {item.teamName}
           </Text>
           <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 14 }]}>
-            {item.projectInnovation ?? "N/A"}
+            {Number.isFinite(sheet1) ? sheet1 : "N/A"}
           </Text>
           <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 14 }]}>
-            {item.roboticSolution ?? "N/A"}
+            {Number.isFinite(sheet2) ? sheet2 : "N/A"}
           </Text>
           <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 14 }]}>
-            {item.presentationSpirit ?? "N/A"}
+            {Number.isFinite(sheet3) ? sheet3 : "N/A"}
           </Text>
           <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 16, fontWeight: "bold" }]}>
-            {item.bestScore}
+            {average}
           </Text>
         </View>
       );
       } else if (selectedCategory === 'robo-elem' || selectedCategory === 'robo-junior' || selectedCategory === 'robo-senior') {
-            return (
-              <View style={stickyStyles.row}>
-                <Text style={stickyStyles.cell}>
-                    {rankDisplay} {item.teamName}
-                </Text>
+        const round1Display = item.day1Round1Score != null
+          ? `${item.day1Round1Score}${item.day1Round1Time ? ` (${item.day1Round1Time})` : ''}`
+          : "N/A";
+        const round2Display = item.day1Round2Score != null
+          ? `${item.day1Round2Score}${item.day1Round2Time ? ` (${item.day1Round2Time})` : ''}`
+          : "N/A";
 
-                {/* Round 1 Score */}
-                <Text
-                    style={[
-                        stickyStyles.cell,
-                        {
-                            textAlign: "center",
-                            fontWeight:
-                                item.day1Round1Score >= item.day1Round2Score
-                                    ? "bold"
-                                    : "normal",
-                            color:
-                                item.day1Round1Score >= item.day1Round2Score
-                                    ? "#2d5a3d"
-                                    : "#000",
-                        },
-                    ]}
-                >
-                    {item.day1Round1Score ?? "N/A"}
-                </Text>
-
-                {/* Round 1 Time */}
-                <Text
-                    style={[
-                        stickyStyles.cell,
-                        {
-                            textAlign: "center",
-                            fontWeight:
-                                parseTimeToSeconds(item.day1Round1Time) <
-                                parseTimeToSeconds(item.day1Round2Time)
-                                    ? "bold"
-                                    : "normal",
-                            color:
-                                parseTimeToSeconds(item.day1Round1Time) <
-                                parseTimeToSeconds(item.day1Round2Time)
-                                    ? "#1976d2"
-                                    : "#000",
-                        },
-                    ]}
-                >
-                    {item.day1Round1Time ?? "N/A"}
-                </Text>
-
-                {/* Round 2 Score */}
-                <Text
-                    style={[
-                        stickyStyles.cell,
-                        {
-                            textAlign: "center",
-                            fontWeight:
-                                item.day1Round2Score > item.day1Round1Score
-                                    ? "bold"
-                                    : "normal",
-                            color:
-                                item.day1Round2Score > item.day1Round1Score
-                                    ? "#2d5a3d"
-                                    : "#000",
-                        },
-                    ]}
-                >
-                    {item.day1Round2Score ?? "N/A"}
-                </Text>
-
-                {/* Round 2 Time */}
-                <Text
-                    style={[
-                        stickyStyles.cell,
-                        {
-                            textAlign: "center",
-                            fontWeight:
-                                parseTimeToSeconds(item.day1Round2Time) <
-                                parseTimeToSeconds(item.day1Round1Time)
-                                    ? "bold"
-                                    : "normal",
-                            color:
-                                parseTimeToSeconds(item.day1Round2Time) <
-                                parseTimeToSeconds(item.day1Round1Time)
-                                    ? "#1976d2"
-                                    : "#000",
-                        },
-                    ]}
-                >
-                    {item.day1Round2Time ?? "N/A"}
-                </Text>
-            </View>
-            );
-    } else {
-      // Default robomissions format
-      return (
-        <View style={stickyStyles.row}>
-          <Text style={stickyStyles.cell}>
-            {rankDisplay} {item.teamName}
-          </Text>
-          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 18 }]}>
-            {item.round1Score ?? "N/A"}
-          </Text>
-          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 18 }]}>
-            {item.round2Score ?? "N/A"}
-          </Text>
-        </View>
-      );
-    }
-  };
+        return (
+          <View style={stickyStyles.row}>
+            <Text style={stickyStyles.cell}>
+              {rankDisplay} {item.teamName}
+            </Text>
+            <Text
+              style={[
+                stickyStyles.cell,
+                {
+                  textAlign: "center",
+                  fontWeight: item.bestRound === 1 ? "bold" : "normal",
+                  color: item.bestRound === 1 ? "#2d5a3d" : "#000",
+                },
+              ]}
+            >
+              {round1Display}
+            </Text>
+            <Text
+              style={[
+                stickyStyles.cell,
+                {
+                  textAlign: "center",
+                  fontWeight: item.bestRound === 2 ? "bold" : "normal",
+                  color: item.bestRound === 2 ? "#2d5a3d" : "#000",
+                },
+              ]}
+            >
+              {round2Display}
+            </Text>
+          </View>
+        );
+      }
+        };
 
   return (
     <View style={{ flex: 1 }}>
@@ -703,6 +703,33 @@ export default function AdminOverallScores({ navigation }: any) {
           onChangeText={setSearch}
           style={[stickyStyles.searchInput, { maxWidth: 340, width: "100%" }]}
         />
+      </View>
+
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+        <Text style={{ marginRight: 10, fontSize: 14, color: "#333" }}>Sort:</Text>
+        <TouchableOpacity
+          onPress={() => setSortMode('rank')}
+          style={{
+            paddingVertical: 6,
+            paddingHorizontal: 12,
+            borderRadius: 6,
+            backgroundColor: sortMode === 'rank' ? '#1976d2' : '#eee',
+            marginRight: 8,
+          }}
+        >
+          <Text style={{ color: sortMode === 'rank' ? '#fff' : '#333' }}>Ranking</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setSortMode('alpha')}
+          style={{
+            paddingVertical: 6,
+            paddingHorizontal: 12,
+            borderRadius: 6,
+            backgroundColor: sortMode === 'alpha' ? '#1976d2' : '#eee',
+          }}
+        >
+          <Text style={{ color: sortMode === 'alpha' ? '#fff' : '#333' }}>Alphabetical</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Event Filter Dropdown */}

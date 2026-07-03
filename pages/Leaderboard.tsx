@@ -57,11 +57,11 @@ function isScoringComplete(teamData: any, category: string): boolean {
   }
 
   // FI categories (elem, jr, sr)
+  // FI categories (elem, jr, sr)
   if (categoryLower.includes('fi-elem') || categoryLower.includes('fi-junior') || categoryLower.includes('fi-senior')) {
-    // All three components must be present
-    return teamData.presentationSpirit != null && 
-           teamData.projectInnovation != null && 
-           teamData.roboticSolution != null;
+    const scoresheets = teamData.scoresheets || {};
+    const scoresheetCount = Object.keys(scoresheets).length;
+    return scoresheetCount >= 3;
   }
 
   // Future Engineering
@@ -113,15 +113,13 @@ function getTeamCompletionData(teamData: any, category: string) {
   }
 
   if (categoryLower.includes('fi-elem') || categoryLower.includes('fi-junior') || categoryLower.includes('fi-senior')) {
-    return {
-      hasPresentationSpirit: teamData.presentationSpirit != null,
-      hasProjectInnovation: teamData.projectInnovation != null,
-      hasRoboticSolution: teamData.roboticSolution != null,
-      isComplete: teamData.presentationSpirit != null && 
-                  teamData.projectInnovation != null && 
-                  teamData.roboticSolution != null
-    };
-  }
+  const scoresheets = teamData.scoresheets || {};
+  const scoresheetCount = Object.keys(scoresheets).length;
+  return {
+    scoresheetCount,
+    isComplete: scoresheetCount >= 3,
+  };
+}
 
   if (categoryLower.includes('future eng') || categoryLower.includes('future-eng')) {
     return {
@@ -375,11 +373,16 @@ export default function Leaderboard({ navigation }: any) {
             team.bestTimeMs = parseTimeString(t2);
           }
         } else if (categoryLower.includes('fi-')) {
-          // Handle FI categories - sum all components
-          const presentation = team.presentationSpirit ?? 0;
-          const innovation = team.projectInnovation ?? 0;
-          const solution = team.roboticSolution ?? 0;
-          team.bestScore = presentation + innovation + solution;
+          // Handle FI categories - ranking by stored average points when available
+          const averagePoints = team.averagePoints ?? null;
+          if (averagePoints != null) {
+            team.bestScore = averagePoints;
+          } else {
+            const presentation = team.presentationSpirit ?? 0;
+            const innovation = team.projectInnovation ?? 0;
+            const solution = team.roboticSolution ?? 0;
+            team.bestScore = presentation + innovation + solution;
+          }
           team.bestTime = ""; // No time component for FI
           team.bestTimeMs = 0;
         } else if (categoryLower.includes('future-eng') || categoryLower.includes('future-eng')) {
@@ -595,14 +598,36 @@ export default function Leaderboard({ navigation }: any) {
                     marginVertical: "auto",
                   }}
                 >
-                  {item.bestScore} pts
+                  {judgeCategory && judgeCategory.toLowerCase().includes('fi-')
+                    ? `Avg: ${item.averagePoints ?? item.bestScore} pts`
+                    : `${item.bestScore} pts`}
                 </Text>
 
-                {/* For robo categories, show the breakdown instead of time */}
-                {judgeCategory && 
-                 (judgeCategory.toLowerCase().includes('robo-elem') || 
-                  judgeCategory.toLowerCase().includes('robo-junior') || 
-                  judgeCategory.toLowerCase().includes('robo-senior')) ? (
+                {judgeCategory && judgeCategory.toLowerCase().includes('fi-') && item.judgeTotalPoints ? (
+                  <Text
+                    style={{
+                      color: textColor,
+                      fontFamily: "Inter_400Regular",
+                      marginLeft: 5,
+                      marginVertical: "auto",
+                      fontSize: 12,
+                    }}
+                  >
+                    {(() => {
+                      const judgeScores = Object.values(item.judgeTotalPoints).map((score: any) => Number(score));
+                      const labelled = [0, 1, 2].map((idx) => {
+                        const scoreValue = judgeScores[idx];
+                        return `judge ${idx + 1}: ${Number.isFinite(scoreValue) ? scoreValue : 'N/A'}`;
+                      });
+                      const total = judgeScores.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
+                      const average = item.averagePoints ?? (judgeScores.filter(Number.isFinite).length ? Number((total / judgeScores.filter(Number.isFinite).length).toFixed(2)) : 0);
+                      return `${labelled.join(' | ')} | Average Total: ${average} / Total: ${total}`;
+                    })()}
+                  </Text>
+                ) : judgeCategory && 
+                  (judgeCategory.toLowerCase().includes('robo-elem') || 
+                   judgeCategory.toLowerCase().includes('robo-junior') || 
+                   judgeCategory.toLowerCase().includes('robo-senior')) ? (
                   <Text
                     style={{
                       color: textColor,
