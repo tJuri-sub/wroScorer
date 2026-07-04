@@ -87,35 +87,37 @@ const getCategoryFields = (category: string) => {
         }
       };
       
-   case 'fi-elem':
-  case 'fi-junior':
-  case 'fi-senior':
-    return {
-      fields: ['scoresheets', 'averagePoints'],
-      headers: ['Scoresheet 1', 'Scoresheet 2', 'Scoresheet 3', 'Average'],
-      calculator: (data: any) => {
-        const scoresheets = data.scoresheets || {};
-        const s1 = scoresheets['1']?.totalPoints ?? null;
-        const s2 = scoresheets['2']?.totalPoints ?? null;
-        const s3 = scoresheets['3']?.totalPoints ?? null;
+    case 'fi-elem':
+case 'fi-junior':
+case 'fi-senior':
+  return {
+    fields: ['scoresheets', 'totalPoints', 'averagePoints'],
+    headers: ['Scoresheet 1', 'Scoresheet 2', 'Scoresheet 3', 'Total', 'Average'],
+    calculator: (data: any) => {
+      const scoresheets = data.scoresheets || {};
+      const s1 = scoresheets['1']?.totalPoints ?? null;
+      const s2 = scoresheets['2']?.totalPoints ?? null;
+      const s3 = scoresheets['3']?.totalPoints ?? null;
 
-        const submittedTotals = [s1, s2, s3].filter((v) => v !== null) as number[];
-        const fallbackAverage = submittedTotals.length > 0
-          ? parseFloat((submittedTotals.reduce((sum, v) => sum + v, 0) / submittedTotals.length).toFixed(2))
-          : 0;
+      const submittedTotals = [s1, s2, s3].filter((v) => v !== null) as number[];
+      const totalPoints = submittedTotals.reduce((sum, v) => sum + v, 0);
+      const fallbackAverage = submittedTotals.length > 0
+        ? parseFloat((totalPoints / submittedTotals.length).toFixed(2))
+        : 0;
 
-        return {
-          ...data,
-          bestScore: data.averagePoints ?? fallbackAverage,
-          breakdown: {
-            scoresheet1: s1,
-            scoresheet2: s2,
-            scoresheet3: s3,
-            averagePoints: data.averagePoints ?? null,
-          }
-        };
-      }
-    };
+      return {
+        ...data,
+        bestScore: data.averagePoints ?? fallbackAverage,
+        breakdown: {
+          scoresheet1: s1,
+          scoresheet2: s2,
+          scoresheet3: s3,
+          totalPoints,
+          averagePoints: data.averagePoints ?? null,
+        }
+      };
+    }
+  };
       
     case 'robosports':
       // Placeholder for future implementation
@@ -620,37 +622,41 @@ export default function AdminOverallScores({ navigation }: any) {
         </View>
       );
     } else if (selectedCategory?.startsWith('fi-')) {
-      const scoresheets = item.scoresheets || {};
-      const sheet1 = scoresheets['1']?.totalPoints;
-      const sheet2 = scoresheets['2']?.totalPoints;
-      const sheet3 = scoresheets['3']?.totalPoints;
+        const scoresheets = item.scoresheets || {};
+        const sheet1 = scoresheets['1']?.totalPoints;
+        const sheet2 = scoresheets['2']?.totalPoints;
+        const sheet3 = scoresheets['3']?.totalPoints;
 
-      const submittedTotals = [sheet1, sheet2, sheet3].filter((v) => Number.isFinite(v)) as number[];
-      const average = Number.isFinite(item.averagePoints)
-        ? item.averagePoints
-        : submittedTotals.length
-        ? Number((submittedTotals.reduce((sum, v) => sum + v, 0) / submittedTotals.length).toFixed(2))
-        : 0;
+        const submittedTotals = [sheet1, sheet2, sheet3].filter((v) => Number.isFinite(v)) as number[];
+        const totalPoints = submittedTotals.reduce((sum, v) => sum + v, 0);
+        const average = Number.isFinite(item.averagePoints)
+          ? item.averagePoints
+          : submittedTotals.length
+          ? Number((totalPoints / submittedTotals.length).toFixed(2))
+          : 0;
 
-      return (
-        <View style={stickyStyles.row}>
-          <Text style={stickyStyles.cell}>
-            {rankDisplay} {item.teamName}
-          </Text>
-          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 14 }]}>
-            {Number.isFinite(sheet1) ? sheet1 : "N/A"}
-          </Text>
-          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 14 }]}>
-            {Number.isFinite(sheet2) ? sheet2 : "N/A"}
-          </Text>
-          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 14 }]}>
-            {Number.isFinite(sheet3) ? sheet3 : "N/A"}
-          </Text>
-          <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 16, fontWeight: "bold" }]}>
-            {average}
-          </Text>
-        </View>
-      );
+        return (
+          <View style={stickyStyles.row}>
+            <Text style={stickyStyles.cell}>
+              {rankDisplay} {item.teamName}
+            </Text>
+            <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 14 }]}>
+              {Number.isFinite(sheet1) ? sheet1 : "N/A"}
+            </Text>
+            <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 14 }]}>
+              {Number.isFinite(sheet2) ? sheet2 : "N/A"}
+            </Text>
+            <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 14 }]}>
+              {Number.isFinite(sheet3) ? sheet3 : "N/A"}
+            </Text>
+            <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 16, fontWeight: "600" }]}>
+              {totalPoints}
+            </Text>
+            <Text style={[stickyStyles.cell, { textAlign: "center", fontSize: 16, fontWeight: "bold" }]}>
+              {average}
+            </Text>
+          </View>
+        );
       } else if (selectedCategory === 'robo-elem' || selectedCategory === 'robo-junior' || selectedCategory === 'robo-senior') {
         const round1Display = item.day1Round1Score != null
           ? `${item.day1Round1Score}${item.day1Round1Time ? ` (${item.day1Round1Time})` : ''}`
