@@ -33,7 +33,10 @@ import { Feather } from "@expo/vector-icons";
 import DropDownPicker from "react-native-dropdown-picker";
 import RoboSportsMatchScorer from "../components/component/judgeDrawer/robosports/RoboSportsScorer";
 // Add these imports
-import { Tournament, TournamentBracket } from "../components/component/judgeDrawer/robosports/TournamentTypes";
+import {
+  Tournament,
+  TournamentBracket,
+} from "../components/component/judgeDrawer/robosports/TournamentTypes";
 import { TournamentManager } from "../components/component/judgeDrawer/robosports/TournamentManager";
 import TournamentSetup from "../components/component/judgeDrawer/robosports/TournamentSetup";
 
@@ -45,7 +48,7 @@ interface GameData {
   team2Id: string;
   team1Name: string;
   team2Name: string;
-  status: 'created' | 'in-progress' | 'finished';
+  status: "created" | "in-progress" | "finished";
   currentMatch: number;
   matchResults: any[];
   gameWinner: string | null;
@@ -103,64 +106,97 @@ export default function ScorerScreen({ navigation }: any) {
   const [codeEfficiencyScore, setCodeEfficiencyScore] = useState("");
   const [roboticDemoScore, setRoboticDemoScore] = useState("");
   const [presentationBoothScore, setPresentationBoothScore] = useState("");
-  const [technicalUnderstandingScore, setTechnicalUnderstandingScore] = useState("");
+  const [technicalUnderstandingScore, setTechnicalUnderstandingScore] =
+    useState("");
   const [teamSpiritScore, setTeamSpiritScore] = useState("");
   const [search, setSearch] = useState("");
 
-  const [extraEntrepreneurshipScore, setExtraEntrepreneurshipScore] = useState("");
+  const [extraEntrepreneurshipScore, setExtraEntrepreneurshipScore] =
+    useState("");
   const [nextStepsScore, setNextStepsScore] = useState(""); // senior only
 
   const [scoresheetNumber, setScoresheetNumber] = useState<number | null>(null);
 
   const fiScoreFields: Record<string, [string, (v: string) => void]> = {
-  projectIdeaScore: [projectIdeaScore, setProjectIdeaScore],
-  projectResearchScore: [projectResearchScore, setProjectResearchScore],
-  projectUsageScore: [projectUsageScore, setProjectUsageScore],
-  projectInnovationScore: [projectInnovationScore, setProjectInnovationScore],
-  extraEntrepreneurshipScore: [extraEntrepreneurshipScore, setExtraEntrepreneurshipScore],
-  nextStepsScore: [nextStepsScore, setNextStepsScore],
-  roboticSolutionScore: [roboticSolutionScore, setRoboticSolutionScore],
-  engineeringConceptsScore: [engineeringConceptsScore, setEngineeringConceptsScore],
-  codeEfficiencyScore: [codeEfficiencyScore, setCodeEfficiencyScore],
-  roboticDemoScore: [roboticDemoScore, setRoboticDemoScore],
-  presentationBoothScore: [presentationBoothScore, setPresentationBoothScore],
-  technicalUnderstandingScore: [technicalUnderstandingScore, setTechnicalUnderstandingScore],
-  teamSpiritScore: [teamSpiritScore, setTeamSpiritScore],
-};
+    projectIdeaScore: [projectIdeaScore, setProjectIdeaScore],
+    projectResearchScore: [projectResearchScore, setProjectResearchScore],
+    projectUsageScore: [projectUsageScore, setProjectUsageScore],
+    projectInnovationScore: [projectInnovationScore, setProjectInnovationScore],
+    extraEntrepreneurshipScore: [
+      extraEntrepreneurshipScore,
+      setExtraEntrepreneurshipScore,
+    ],
+    nextStepsScore: [nextStepsScore, setNextStepsScore],
+    roboticSolutionScore: [roboticSolutionScore, setRoboticSolutionScore],
+    engineeringConceptsScore: [
+      engineeringConceptsScore,
+      setEngineeringConceptsScore,
+    ],
+    codeEfficiencyScore: [codeEfficiencyScore, setCodeEfficiencyScore],
+    roboticDemoScore: [roboticDemoScore, setRoboticDemoScore],
+    presentationBoothScore: [presentationBoothScore, setPresentationBoothScore],
+    technicalUnderstandingScore: [
+      technicalUnderstandingScore,
+      setTechnicalUnderstandingScore,
+    ],
+    teamSpiritScore: [teamSpiritScore, setTeamSpiritScore],
+  };
 
-const scaleFiGroup = (
-  group: { key: string; max: number }[],
-  rawScores: Record<string, any>
-) =>
-  group.reduce(
-    (sum, { key, max }) => sum + parseFloat(((Number(rawScores[key] || 0) / 10) * max).toFixed(2)),
-    0
-  );
-
-// Works for fi-elem, fi-junior, fi-senior — replaces scaleFiElemScores
-const scaleFiScores = (category: string, rawScores: Record<string, any>) => {
-  const config = getFiConfig(category);
-  const projectTotal = parseFloat(scaleFiGroup(config.project, rawScores).toFixed(2));
-  const roboticTotal = parseFloat(scaleFiGroup(config.robotic, rawScores).toFixed(2));
-  const presentationTotal = parseFloat(scaleFiGroup(config.presentation, rawScores).toFixed(2));
-  const total = parseFloat((projectTotal + roboticTotal + presentationTotal).toFixed(2));
-  return { projectTotal, roboticTotal, presentationTotal, total };
-};
-
-const renderFiScoreGroup = (group: { key: string; label: string; max: number; description?: string }[]) =>
-  group.map(({ key, label, max, description }) => {
-    const [value, onChange] = fiScoreFields[key];
-    return (
-      <View key={key}>
-        <FiElemDropdownRow label={`${label} (max ${max})`} value={value} onChange={onChange} />
-        {description ? (
-          <Text style={{ fontSize: 11, color: "#888", marginTop: -6, marginBottom: 10 }}>
-            {description}
-          </Text>
-        ) : null}
-      </View>
+  const scaleFiGroup = (
+    group: { key: string; max: number }[],
+    rawScores: Record<string, any>,
+  ) =>
+    group.reduce(
+      (sum, { key, max }) =>
+        sum + parseFloat(((Number(rawScores[key] || 0) / 10) * max).toFixed(2)),
+      0,
     );
-  });
+
+  // Works for fi-elem, fi-junior, fi-senior — replaces scaleFiElemScores
+  const scaleFiScores = (category: string, rawScores: Record<string, any>) => {
+    const config = getFiConfig(category);
+    const projectTotal = parseFloat(
+      scaleFiGroup(config.project, rawScores).toFixed(2),
+    );
+    const roboticTotal = parseFloat(
+      scaleFiGroup(config.robotic, rawScores).toFixed(2),
+    );
+    const presentationTotal = parseFloat(
+      scaleFiGroup(config.presentation, rawScores).toFixed(2),
+    );
+    const total = parseFloat(
+      (projectTotal + roboticTotal + presentationTotal).toFixed(2),
+    );
+    return { projectTotal, roboticTotal, presentationTotal, total };
+  };
+
+  const renderFiScoreGroup = (
+    group: { key: string; label: string; max: number; description?: string }[],
+  ) =>
+    group.map(({ key, label, max, description }) => {
+      const [value, onChange] = fiScoreFields[key];
+      return (
+        <View key={key}>
+          <FiElemDropdownRow
+            label={`${label} (max ${max})`}
+            value={value}
+            onChange={onChange}
+          />
+          {description ? (
+            <Text
+              style={{
+                fontSize: 11,
+                color: "#888",
+                marginTop: -6,
+                marginBottom: 10,
+              }}
+            >
+              {description}
+            </Text>
+          ) : null}
+        </View>
+      );
+    });
 
   const resetFiElemForm = () => {
     setProjectIdeaScore("");
@@ -183,51 +219,61 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
     value: String(index + 1),
   }));
 
- const FiElemDropdownRow = ({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-      <Text style={{ flex: 1, marginRight: 12, fontSize: 13 }}>{label}</Text>
-      <DropDownPicker
-        open={open}
-        value={value || null}
-        items={fiElemScoreItems}
-        setOpen={setOpen}
-        setValue={(callback) => {
-          const newValue = typeof callback === 'function' ? callback(value || null) : callback;
-          onChange(String(newValue ?? ""));
-        }}
-        placeholder="0"
+  const FiElemDropdownRow = ({
+    label,
+    value,
+    onChange,
+  }: {
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+  }) => {
+    const [open, setOpen] = useState(false);
+    return (
+      <View
         style={{
-          width: 90,
-          minHeight: 40,
-          borderWidth: 1,
-          borderColor: "#d1d5db",
-          borderRadius: 8,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 10,
         }}
-        containerStyle={{ width: 90 }}
-        textStyle={{ fontSize: 13 }}
-        listMode="MODAL"
-        modalTitle={label}
-        modalContentContainerStyle={{ backgroundColor: "#fff" }}
-        modalAnimationType="slide"
-      />
-    </View>
-  );
-};
+      >
+        <Text style={{ flex: 1, marginRight: 12, fontSize: 13 }}>{label}</Text>
+        <DropDownPicker
+          open={open}
+          value={value || null}
+          items={fiElemScoreItems}
+          setOpen={setOpen}
+          setValue={(callback) => {
+            const newValue =
+              typeof callback === "function"
+                ? callback(value || null)
+                : callback;
+            onChange(String(newValue ?? ""));
+          }}
+          placeholder="0"
+          style={{
+            width: 90,
+            minHeight: 40,
+            borderWidth: 1,
+            borderColor: "#d1d5db",
+            borderRadius: 8,
+          }}
+          containerStyle={{ width: 90 }}
+          textStyle={{ fontSize: 13 }}
+          listMode="MODAL"
+          modalTitle={label}
+          modalContentContainerStyle={{ backgroundColor: "#fff" }}
+          modalAnimationType="slide"
+        />
+      </View>
+    );
+  };
 
   // Error states for Future Innovators
   const [projectError, setProjectError] = useState(false);
   const [roboticError, setRoboticError] = useState(false);
-  const [presentationError, setPresentationError] = useState(false);  
+  const [presentationError, setPresentationError] = useState(false);
 
   // Inline error message
   const [submitError, setSubmitError] = useState("");
@@ -238,8 +284,8 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
   // RoboSports states
   const [games, setGames] = useState<GameData[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedTeam1, setSelectedTeam1] = useState<string>('');
-  const [selectedTeam2, setSelectedTeam2] = useState<string>('');
+  const [selectedTeam1, setSelectedTeam1] = useState<string>("");
+  const [selectedTeam2, setSelectedTeam2] = useState<string>("");
   const [team1DropdownOpen, setTeam1DropdownOpen] = useState(false);
   const [team2DropdownOpen, setTeam2DropdownOpen] = useState(false);
   const [isCreatingGame, setIsCreatingGame] = useState(false);
@@ -247,11 +293,13 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
   const [showScorerModal, setScorerModal] = useState(false);
 
   // Robosports Tournament states
-  const [tournamentMode, setTournamentMode] = useState<'regular' | 'tournament'>('regular');
+  const [tournamentMode, setTournamentMode] = useState<
+    "regular" | "tournament"
+  >("regular");
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
+  const [selectedTournament, setSelectedTournament] =
+    useState<Tournament | null>(null);
   const [showTournamentSetup, setShowTournamentSetup] = useState(false);
-
 
   // Future Engineers states
   const [feRoundType, setFeRoundType] = useState<"open" | "obstacle">("open");
@@ -262,7 +310,11 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
     if (!timeStr) return Infinity;
     const [mm, rest] = timeStr.split(":");
     const [ss, ms] = rest.split(".");
-    return (Number(mm) || 0) * 60000 + (Number(ss) || 0) * 1000 + (Number(ms) || 0) * 10;
+    return (
+      (Number(mm) || 0) * 60000 +
+      (Number(ss) || 0) * 1000 +
+      (Number(ms) || 0) * 10
+    );
   }
 
   useLayoutEffect(() => {
@@ -278,8 +330,6 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
     });
   }, [navigation]);
 
-  
-
   // Fetch judge's assigned category and events
   useEffect(() => {
     const fetchJudgeData = async () => {
@@ -287,7 +337,9 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
       if (user) {
         try {
           // Get judge info
-          const userDoc = await getDoc(doc(FIREBASE_DB, "judge-users", user.uid));
+          const userDoc = await getDoc(
+            doc(FIREBASE_DB, "judge-users", user.uid),
+          );
           if (userDoc.exists()) {
             const data = userDoc.data();
             const category = data.category || null;
@@ -296,30 +348,36 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
             // Fetch events where this judge is assigned to this category
             const eventsRef = collection(FIREBASE_DB, "events");
             const eventsSnapshot = await getDocs(eventsRef);
-            
+
             const judgeEvents: any[] = [];
             eventsSnapshot.forEach((eventDoc) => {
               const eventData = eventDoc.data();
               const categoryData = eventData.categoryData;
-              
+
               // Check if judge is assigned to this event's category
-              if (categoryData && categoryData[category] && categoryData[category].judges) {
+              if (
+                categoryData &&
+                categoryData[category] &&
+                categoryData[category].judges
+              ) {
                 const assignedJudges = categoryData[category].judges || [];
                 if (assignedJudges.includes(user.uid)) {
                   judgeEvents.push({
                     id: eventDoc.id,
                     title: eventData.title || "Untitled Event",
                     date: eventData.date || "",
-                    ...eventData
+                    ...eventData,
                   });
                 }
               }
             });
 
             // Sort by date (newest first)
-            judgeEvents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            judgeEvents.sort(
+              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+            );
             setAssignedEvents(judgeEvents);
-            
+
             // Auto-select first event if available
             if (judgeEvents.length > 0) {
               setSelectedEvent(judgeEvents[0].id);
@@ -341,8 +399,13 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
   useEffect(() => {
     if (judgeCategory !== "robosports" || !selectedEvent) return;
 
-    const gamesRef = collection(FIREBASE_DB, 'events', selectedEvent, 'robosports-games');
-    const gamesQuery = query(gamesRef, orderBy('gameNumber', 'asc'));
+    const gamesRef = collection(
+      FIREBASE_DB,
+      "events",
+      selectedEvent,
+      "robosports-games",
+    );
+    const gamesQuery = query(gamesRef, orderBy("gameNumber", "asc"));
 
     const unsubscribe = onSnapshot(gamesQuery, (snapshot) => {
       const loadedGames: GameData[] = [];
@@ -370,26 +433,38 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
 
       try {
         // Get event document
-        const eventDoc = await getDoc(doc(FIREBASE_DB, "events", selectedEvent));
+        const eventDoc = await getDoc(
+          doc(FIREBASE_DB, "events", selectedEvent),
+        );
         if (!eventDoc.exists()) {
           setTeams([]);
           setLoading(false);
           return;
         }
         const eventData = eventDoc.data();
-        const categoryTeams = eventData?.categoryData?.[judgeCategory]?.teams || [];
+        const categoryTeams =
+          eventData?.categoryData?.[judgeCategory]?.teams || [];
 
         // Fetch team data from categories/{category}/teams
         const teamDocs = await Promise.all(
           categoryTeams.map(async (teamId: string) => {
-            const teamDoc = await getDoc(doc(FIREBASE_DB, "categories", judgeCategory, "teams", teamId));
-            return teamDoc.exists() ? { id: teamDoc.id, ...teamDoc.data() } : null;
-          })
+            const teamDoc = await getDoc(
+              doc(FIREBASE_DB, "categories", judgeCategory, "teams", teamId),
+            );
+            return teamDoc.exists()
+              ? { id: teamDoc.id, ...teamDoc.data() }
+              : null;
+          }),
         );
         const teamList = teamDocs.filter(Boolean);
 
         // Fetch scores for this event and category
-        const scoresRef = collection(FIREBASE_DB, "events", selectedEvent, "scores");
+        const scoresRef = collection(
+          FIREBASE_DB,
+          "events",
+          selectedEvent,
+          "scores",
+        );
         const scoresSnap = await getDocs(scoresRef);
         const scoresMap: Record<string, any> = {};
         scoresSnap.forEach((doc) => {
@@ -422,29 +497,30 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
   // RoboSports functions
   const getNextGameNumber = () => {
     if (games.length === 0) return 1;
-    return Math.max(...games.map(g => g.gameNumber)) + 1;
+    return Math.max(...games.map((g) => g.gameNumber)) + 1;
   };
 
   const createNewGame = async () => {
     if (!selectedTeam1 || !selectedTeam2) {
-      Alert.alert('Error', 'Please select both teams');
+      Alert.alert("Error", "Please select both teams");
       return;
     }
 
     if (selectedTeam1 === selectedTeam2) {
-      Alert.alert('Error', 'Please select different teams');
+      Alert.alert("Error", "Please select different teams");
       return;
     }
 
     // Check if these teams already have an ongoing game
     const existingGame = games.find(
-      g => g.status !== 'finished' && 
-      ((g.team1Id === selectedTeam1 && g.team2Id === selectedTeam2) ||
-       (g.team1Id === selectedTeam2 && g.team2Id === selectedTeam1))
+      (g) =>
+        g.status !== "finished" &&
+        ((g.team1Id === selectedTeam1 && g.team2Id === selectedTeam2) ||
+          (g.team1Id === selectedTeam2 && g.team2Id === selectedTeam1)),
     );
 
     if (existingGame) {
-      Alert.alert('Error', 'These teams already have an ongoing game');
+      Alert.alert("Error", "These teams already have an ongoing game");
       return;
     }
 
@@ -452,14 +528,14 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
 
     try {
       const gameNumber = getNextGameNumber();
-      const gameData: Omit<GameData, 'id'> = {
+      const gameData: Omit<GameData, "id"> = {
         gameNumber,
         eventId: selectedEvent,
         team1Id: selectedTeam1,
         team2Id: selectedTeam2,
-        team1Name: teams.find(t => t.id === selectedTeam1)?.teamName || '',
-        team2Name: teams.find(t => t.id === selectedTeam2)?.teamName || '',
-        status: 'created',
+        team1Name: teams.find((t) => t.id === selectedTeam1)?.teamName || "",
+        team2Name: teams.find((t) => t.id === selectedTeam2)?.teamName || "",
+        status: "created",
         currentMatch: 1,
         matchResults: [],
         gameWinner: null,
@@ -472,47 +548,59 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
         },
       };
 
-      const gameRef = doc(collection(FIREBASE_DB, 'events', selectedEvent, 'robosports-games'));
+      const gameRef = doc(
+        collection(FIREBASE_DB, "events", selectedEvent, "robosports-games"),
+      );
       await setDoc(gameRef, gameData);
 
-      setSelectedTeam1('');
-      setSelectedTeam2('');
+      setSelectedTeam1("");
+      setSelectedTeam2("");
       setShowCreateModal(false);
-      
     } catch (error) {
-      console.error('Error creating game:', error);
-      Alert.alert('Error', 'Failed to create game');
+      console.error("Error creating game:", error);
+      Alert.alert("Error", "Failed to create game");
     } finally {
       setIsCreatingGame(false);
     }
   };
 
   const openGameScorer = (game: GameData) => {
-    if (game.status === 'finished') return;
+    if (game.status === "finished") return;
 
     setActiveGame(game);
     setScorerModal(true);
 
     // Mark game as in-progress if it was just created
-    if (game.status === 'created') {
-      const gameRef = doc(FIREBASE_DB, 'events', selectedEvent, 'robosports-games', game.id);
-      updateDoc(gameRef, { status: 'in-progress' });
+    if (game.status === "created") {
+      const gameRef = doc(
+        FIREBASE_DB,
+        "events",
+        selectedEvent,
+        "robosports-games",
+        game.id,
+      );
+      updateDoc(gameRef, { status: "in-progress" });
     }
   };
 
   const updateRoboSportsStandings = async () => {
     if (!selectedEvent || judgeCategory !== "robosports") return;
-    
+
     try {
       // Fetch all completed games
-      const gamesRef = collection(FIREBASE_DB, "events", selectedEvent, "robosports-games");
+      const gamesRef = collection(
+        FIREBASE_DB,
+        "events",
+        selectedEvent,
+        "robosports-games",
+      );
       const gamesSnapshot = await getDocs(gamesRef);
-      
+
       // Calculate standings
       const standings: Record<string, any> = {};
-      
+
       // Initialize all teams
-      teams.forEach(team => {
+      teams.forEach((team) => {
         standings[team.id] = {
           teamId: team.id,
           teamName: team.teamName,
@@ -522,54 +610,53 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
           gamesPlayed: 0,
         };
       });
-      
+
       // Process each game
       gamesSnapshot.forEach((doc) => {
         const game = doc.data();
-        
+
         // Update team 1
         if (standings[game.team1Id]) {
           standings[game.team1Id].totalPoints += game.team1Points;
           standings[game.team1Id].gamesPlayed += 1;
-          
+
           // Count violations for team 1
           const team1Violations = game.matchResults.filter(
-            (match: any) => match.violation && match.winner !== game.team1Id
+            (match: any) => match.violation && match.winner !== game.team1Id,
           ).length;
           standings[game.team1Id].violations += team1Violations;
-          
+
           // Calculate opponent ball scores for tie-breaking
           game.matchResults.forEach((match: any) => {
             standings[game.team1Id].opponentBallScore += match.team2Score;
           });
         }
-        
+
         // Update team 2
         if (standings[game.team2Id]) {
           standings[game.team2Id].totalPoints += game.team2Points;
           standings[game.team2Id].gamesPlayed += 1;
-          
+
           // Count violations for team 2
           const team2Violations = game.matchResults.filter(
-            (match: any) => match.violation && match.winner !== game.team2Id
+            (match: any) => match.violation && match.winner !== game.team2Id,
           ).length;
           standings[game.team2Id].violations += team2Violations;
-          
+
           // Calculate opponent ball scores for tie-breaking
           game.matchResults.forEach((match: any) => {
             standings[game.team2Id].opponentBallScore += match.team1Score;
           });
         }
       });
-      
+
       // Update teams state with standings data
-      setTeams(prevTeams => 
-        prevTeams.map(team => ({
+      setTeams((prevTeams) =>
+        prevTeams.map((team) => ({
           ...team,
-          ...standings[team.id]
-        }))
+          ...standings[team.id],
+        })),
       );
-      
     } catch (error) {
       console.error("Error updating RoboSports standings:", error);
     }
@@ -581,14 +668,14 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
 
     try {
       const gameNumber = getNextGameNumber();
-      const gameData: Omit<GameData, 'id'> = {
+      const gameData: Omit<GameData, "id"> = {
         gameNumber,
         eventId: selectedEvent,
         team1Id: bracket.team1Id,
         team2Id: bracket.team2Id,
         team1Name: bracket.team1Name,
         team2Name: bracket.team2Name,
-        status: 'created',
+        status: "created",
         currentMatch: 1,
         matchResults: [],
         gameWinner: null,
@@ -603,31 +690,38 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
         },
       };
 
-      const gameRef = doc(collection(FIREBASE_DB, 'events', selectedEvent, 'robosports-games'));
+      const gameRef = doc(
+        collection(FIREBASE_DB, "events", selectedEvent, "robosports-games"),
+      );
       await setDoc(gameRef, gameData);
 
       // Update bracket status to in-progress
-      const tournamentRef = doc(FIREBASE_DB, 'events', selectedEvent, 'tournaments', bracket.tournamentId);
+      const tournamentRef = doc(
+        FIREBASE_DB,
+        "events",
+        selectedEvent,
+        "tournaments",
+        bracket.tournamentId,
+      );
       const tournamentDoc = await getDoc(tournamentRef);
-      
+
       if (tournamentDoc.exists()) {
         const tournament = tournamentDoc.data() as Tournament;
-        const updatedBrackets = tournament.brackets.map(b => 
-          b.id === bracket.id 
-            ? { ...b, status: 'in-progress' as const, gameId: gameRef.id }
-            : b
+        const updatedBrackets = tournament.brackets.map((b) =>
+          b.id === bracket.id
+            ? { ...b, status: "in-progress" as const, gameId: gameRef.id }
+            : b,
         );
-        
+
         await updateDoc(tournamentRef, { brackets: updatedBrackets });
       }
 
       // Open the game scorer
       setActiveGame({ id: gameRef.id, ...gameData });
       setScorerModal(true);
-      
     } catch (error) {
-      console.error('Error creating tournament game:', error);
-      Alert.alert('Error', 'Failed to create tournament game');
+      console.error("Error creating tournament game:", error);
+      Alert.alert("Error", "Failed to create tournament game");
     }
   };
 
@@ -635,8 +729,16 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
   useEffect(() => {
     if (judgeCategory !== "robosports" || !selectedEvent) return;
 
-    const tournamentsRef = collection(FIREBASE_DB, 'events', selectedEvent, 'tournaments');
-    const tournamentsQuery = query(tournamentsRef, orderBy('createdAt', 'desc'));
+    const tournamentsRef = collection(
+      FIREBASE_DB,
+      "events",
+      selectedEvent,
+      "tournaments",
+    );
+    const tournamentsQuery = query(
+      tournamentsRef,
+      orderBy("createdAt", "desc"),
+    );
 
     const unsubscribe = onSnapshot(tournamentsQuery, (snapshot) => {
       const loadedTournaments: Tournament[] = [];
@@ -665,9 +767,11 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
       judgeCategory === "robo-senior"
     ) {
       // Only check day1Round1 and day1Round2 (no day selector, no round 3)
-      const hasR1 = team.day1Round1Score !== null && team.day1Round1Score !== undefined;
-      const hasR2 = team.day1Round2Score !== null && team.day1Round2Score !== undefined;
-      
+      const hasR1 =
+        team.day1Round1Score !== null && team.day1Round1Score !== undefined;
+      const hasR2 =
+        team.day1Round2Score !== null && team.day1Round2Score !== undefined;
+
       if (!hasR1 && !hasR2) return "no-score";
       if ((hasR1 && !hasR2) || (!hasR1 && hasR2)) return "partial";
       if (hasR1 && hasR2) return "complete";
@@ -707,11 +811,15 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
         if (hasR1 && hasR2) return "complete";
         return "no-score";
       } else if (fePill === "obstacle") {
-        const hasOpen1 = team.openScore1 !== null && team.openScore1 !== undefined;
-        const hasOpen2 = team.openScore2 !== null && team.openScore2 !== undefined;
+        const hasOpen1 =
+          team.openScore1 !== null && team.openScore1 !== undefined;
+        const hasOpen2 =
+          team.openScore2 !== null && team.openScore2 !== undefined;
         if (!hasOpen1 || !hasOpen2) return "not-qualified";
-        const hasR1 = team.obstacleScore1 !== null && team.obstacleScore1 !== undefined;
-        const hasR2 = team.obstacleScore2 !== null && team.obstacleScore2 !== undefined;
+        const hasR1 =
+          team.obstacleScore1 !== null && team.obstacleScore1 !== undefined;
+        const hasR2 =
+          team.obstacleScore2 !== null && team.obstacleScore2 !== undefined;
         if (!hasR1 && !hasR2) return "no-score";
         if (hasR1 && !hasR2) return "round1-only";
         if (hasR1 && hasR2) return "complete";
@@ -740,7 +848,7 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
 
   // Get status filter options based on category
   const getStatusFilterOptions = () => {
-    const isRoboMissionOrFE = 
+    const isRoboMissionOrFE =
       judgeCategory === "robo-elem" ||
       judgeCategory === "robo-junior" ||
       judgeCategory === "robo-senior" ||
@@ -751,7 +859,11 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
     }
 
     // For robo categories (no day selector, just 2 rounds)
-    if (judgeCategory === "robo-elem" || judgeCategory === "robo-junior" || judgeCategory === "robo-senior") {
+    if (
+      judgeCategory === "robo-elem" ||
+      judgeCategory === "robo-junior" ||
+      judgeCategory === "robo-senior"
+    ) {
       return [
         { label: "All Teams", value: "all" },
         { label: "No Scores Yet", value: "no-score" },
@@ -772,7 +884,7 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
   // Filter teams by status
   const filterTeamsByStatus = (teams: any[]) => {
     if (statusFilter === "all") return teams;
-    return teams.filter(team => getCardStatus(team) === statusFilter);
+    return teams.filter((team) => getCardStatus(team) === statusFilter);
   };
 
   // Get status counts for display
@@ -785,7 +897,7 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
       complete: 0,
     };
 
-    filteredTeams.forEach(team => {
+    filteredTeams.forEach((team) => {
       const status = getCardStatus(team);
       if (counts.hasOwnProperty(status)) {
         counts[status as keyof typeof counts]++;
@@ -796,78 +908,136 @@ const renderFiScoreGroup = (group: { key: string; label: string; max: number; de
   };
 
   const FI_ELEM_CONFIG = {
-  project: [
-    { key: "projectIdeaScore", label: "Idea, Quality & Creativity", max: 30 },
-    { key: "projectResearchScore", label: "Research & Report", max: 15 },
-    { key: "projectUsageScore", label: "Usage of the Idea", max: 15 },
-    { key: "projectInnovationScore", label: "Key Innovation & Slogan", max: 10 },
-  ],
-  robotic: [
+    project: [
+      { key: "projectIdeaScore", label: "Idea, Quality & Creativity", max: 30 },
+      { key: "projectResearchScore", label: "Research & Report", max: 15 },
+      { key: "projectUsageScore", label: "Usage of the Idea", max: 15 },
+      {
+        key: "projectInnovationScore",
+        label: "Key Innovation & Slogan",
+        max: 10,
+      },
+    ],
+    robotic: [
+      { key: "roboticSolutionScore", label: "Robotic Solution", max: 30 },
+      {
+        key: "engineeringConceptsScore",
+        label: "Meaningful Use of Engineering Concepts",
+        max: 10,
+      },
+      {
+        key: "codeEfficiencyScore",
+        label: "Code Efficiency & Software Automation",
+        max: 10,
+      },
+      {
+        key: "roboticDemoScore",
+        label: "Demonstration of Robotic Solution",
+        max: 15,
+      },
+    ],
+    presentation: [
+      {
+        key: "presentationBoothScore",
+        label: "Presentation & Project Booth",
+        max: 30,
+      },
+      {
+        key: "technicalUnderstandingScore",
+        label: "Technical Understanding & Quick Thinking",
+        max: 15,
+      },
+      { key: "teamSpiritScore", label: "Team Spirit", max: 20 },
+    ],
+  };
+
+  const FI_JUNIOR_ROBOTIC = [
     { key: "roboticSolutionScore", label: "Robotic Solution", max: 30 },
-    { key: "engineeringConceptsScore", label: "Meaningful Use of Engineering Concepts", max: 10 },
-    { key: "codeEfficiencyScore", label: "Code Efficiency & Software Automation", max: 10 },
-    { key: "roboticDemoScore", label: "Demonstration of Robotic Solution", max: 15 },
-  ],
-  presentation: [
-    { key: "presentationBoothScore", label: "Presentation & Project Booth", max: 30 },
-    { key: "technicalUnderstandingScore", label: "Technical Understanding & Quick Thinking", max: 15 },
-    { key: "teamSpiritScore", label: "Team Spirit", max: 20 },
-  ],
-};
-
-const FI_JUNIOR_ROBOTIC = [
-  { key: "roboticSolutionScore", label: "Robotic Solution", max: 30 },
-  { key: "engineeringConceptsScore", label: "Meaningful Use of Engineering Concepts", max: 15 },
-  { key: "codeEfficiencyScore", label: "Code Efficiency & Software Automation", max: 10 },
-  { key: "roboticDemoScore", label: "Demonstration of Robotic Solution", max: 15 },
-];
-
-const FI_JUNIOR_PRESENTATION = [
-  { key: "presentationBoothScore", label: "Presentation & Project Booth", max: 25 },
-  { key: "technicalUnderstandingScore", label: "Technical Understanding & Quick Thinking", max: 15 },
-  { key: "teamSpiritScore", label: "Team Spirit", max: 15 },
-];
-
-const FI_JUNIOR_CONFIG = {
-  project: [
-    { key: "projectIdeaScore", label: "Idea, Quality & Creativity", max: 30 },
-    { key: "projectResearchScore", label: "Research & Report", max: 15 },
-    { key: "projectUsageScore", label: "Social Impact & Need", max: 10 },
-    { key: "projectInnovationScore", label: "Key Innovation & Slogan", max: 10 },
     {
-      key: "extraEntrepreneurshipScore",
-      label: "Extra Element of Entrepreneurship",
-      max: 10,
-      description: "Consider: cost structure, revenue stream, key resources, and partners.",
+      key: "engineeringConceptsScore",
+      label: "Meaningful Use of Engineering Concepts",
+      max: 15,
     },
-  ],
-  robotic: FI_JUNIOR_ROBOTIC,
-  presentation: FI_JUNIOR_PRESENTATION,
-};
-
-const FI_SENIOR_CONFIG = {
-  project: [
-    { key: "projectIdeaScore", label: "Idea, Quality & Creativity", max: 20 },
-    { key: "projectResearchScore", label: "Research & Report", max: 15 },
-    { key: "projectUsageScore", label: "Social Impact & Need", max: 10 },
-    { key: "projectInnovationScore", label: "Key Innovation & Slogan", max: 10 },
     {
-      key: "extraEntrepreneurshipScore",
-      label: "Extra Element of Entrepreneurship",
+      key: "codeEfficiencyScore",
+      label: "Code Efficiency & Software Automation",
       max: 10,
-      description: "Consider: cost structure, revenue stream, key resources, and partners.",
     },
-    { key: "nextStepsScore", label: "Next Steps & Prototype Development", max: 10 },
-  ],
-  robotic: FI_JUNIOR_ROBOTIC,
-  presentation: FI_JUNIOR_PRESENTATION,
-};
+    {
+      key: "roboticDemoScore",
+      label: "Demonstration of Robotic Solution",
+      max: 15,
+    },
+  ];
 
-const getFiConfig = (category: string) => {
-  if (category === "fi-junior") return FI_JUNIOR_CONFIG;
-  if (category === "fi-senior") return FI_SENIOR_CONFIG;
-  return FI_ELEM_CONFIG;
-};
+  const FI_JUNIOR_PRESENTATION = [
+    {
+      key: "presentationBoothScore",
+      label: "Presentation & Project Booth",
+      max: 25,
+    },
+    {
+      key: "technicalUnderstandingScore",
+      label: "Technical Understanding & Quick Thinking",
+      max: 15,
+    },
+    { key: "teamSpiritScore", label: "Team Spirit", max: 15 },
+  ];
+
+  const FI_JUNIOR_CONFIG = {
+    project: [
+      { key: "projectIdeaScore", label: "Idea, Quality & Creativity", max: 30 },
+      { key: "projectResearchScore", label: "Research & Report", max: 15 },
+      { key: "projectUsageScore", label: "Social Impact & Need", max: 10 },
+      {
+        key: "projectInnovationScore",
+        label: "Key Innovation & Slogan",
+        max: 10,
+      },
+      {
+        key: "extraEntrepreneurshipScore",
+        label: "Extra Element of Entrepreneurship",
+        max: 10,
+        description:
+          "Consider: cost structure, revenue stream, key resources, and partners.",
+      },
+    ],
+    robotic: FI_JUNIOR_ROBOTIC,
+    presentation: FI_JUNIOR_PRESENTATION,
+  };
+
+  const FI_SENIOR_CONFIG = {
+    project: [
+      { key: "projectIdeaScore", label: "Idea, Quality & Creativity", max: 20 },
+      { key: "projectResearchScore", label: "Research & Report", max: 15 },
+      { key: "projectUsageScore", label: "Social Impact & Need", max: 10 },
+      {
+        key: "projectInnovationScore",
+        label: "Key Innovation & Slogan",
+        max: 10,
+      },
+      {
+        key: "extraEntrepreneurshipScore",
+        label: "Extra Element of Entrepreneurship",
+        max: 10,
+        description:
+          "Consider: cost structure, revenue stream, key resources, and partners.",
+      },
+      {
+        key: "nextStepsScore",
+        label: "Next Steps & Prototype Development",
+        max: 10,
+      },
+    ],
+    robotic: FI_JUNIOR_ROBOTIC,
+    presentation: FI_JUNIOR_PRESENTATION,
+  };
+
+  const getFiConfig = (category: string) => {
+    if (category === "fi-junior") return FI_JUNIOR_CONFIG;
+    if (category === "fi-senior") return FI_SENIOR_CONFIG;
+    return FI_ELEM_CONFIG;
+  };
 
   const getFutureInnovatorsScoreConfig = () => ({
     projectMax: 70,
@@ -884,7 +1054,7 @@ const getFiConfig = (category: string) => {
         (scores.projectResearchScore / 10) * 15 +
         (scores.projectUsageScore / 10) * 15 +
         (scores.projectInnovationScore / 10) * 10
-      ).toFixed(2)
+      ).toFixed(2),
     );
 
     const roboticTotal = parseFloat(
@@ -893,7 +1063,7 @@ const getFiConfig = (category: string) => {
         (scores.engineeringConceptsScore / 10) * 10 +
         (scores.codeEfficiencyScore / 10) * 10 +
         (scores.roboticDemoScore / 10) * 15
-      ).toFixed(2)
+      ).toFixed(2),
     );
 
     const presentationTotal = parseFloat(
@@ -901,14 +1071,16 @@ const getFiConfig = (category: string) => {
         (scores.presentationBoothScore / 10) * 30 +
         (scores.technicalUnderstandingScore / 10) * 15 +
         (scores.teamSpiritScore / 10) * 20
-      ).toFixed(2)
+      ).toFixed(2),
     );
 
     return {
       projectTotal,
       roboticTotal,
       presentationTotal,
-      total: parseFloat((projectTotal + roboticTotal + presentationTotal).toFixed(2)),
+      total: parseFloat(
+        (projectTotal + roboticTotal + presentationTotal).toFixed(2),
+      ),
     };
   };
 
@@ -935,7 +1107,7 @@ const getFiConfig = (category: string) => {
           total: acc.total + scaled.total,
         };
       },
-      { project: 0, robotic: 0, presentation: 0, total: 0 }
+      { project: 0, robotic: 0, presentation: 0, total: 0 },
     );
 
     const averagePoints = Number((totals.total / judgeCount).toFixed(2));
@@ -952,17 +1124,15 @@ const getFiConfig = (category: string) => {
   const renderFiElemScoreRow = (
     label: string,
     value: string,
-    onChange: (value: string) => void
+    onChange: (value: string) => void,
   ) => (
     <FiElemDropdownRow
-      key={`${scoringTeam?.id ?? 'new'}-${fiElemModalStep}-${label}`}
+      key={`${scoringTeam?.id ?? "new"}-${fiElemModalStep}-${label}`}
       label={label}
       value={value}
       onChange={onChange}
     />
   );
-
-
 
   useEffect(() => {
     if (!scoreModalVisible) {
@@ -982,9 +1152,7 @@ const getFiConfig = (category: string) => {
       case "robo-senior": {
         return (
           <>
-            <Text style={styles.scoreinputTitle}>
-              Round {scoringStep}
-            </Text>
+            <Text style={styles.scoreinputTitle}>Round {scoringStep}</Text>
             <TextInput
               style={styles.scoreinput}
               placeholder={`Enter Round ${scoringStep} Score`}
@@ -1022,87 +1190,147 @@ const getFiConfig = (category: string) => {
                 placeholder="ms"
                 keyboardType="numeric"
                 value={inputMs}
-                onChangeText={(text) =>
-                  setInputMs(text.replace(/[^0-9]/g, ""))
-                }
+                onChangeText={(text) => setInputMs(text.replace(/[^0-9]/g, ""))}
                 maxLength={3}
               />
             </View>
           </>
-        ); 
+        );
       }
       case "robosports":
         return null; // Handled in separate component
       case "fi-elem": {
         if (fiElemModalStep === 2) {
-          const projectIdea = parseFloat(((Number(projectIdeaScore || 0) / 10) * 30).toFixed(2));
-          const projectResearch = parseFloat(((Number(projectResearchScore || 0) / 10) * 15).toFixed(2));
-          const projectUsage = parseFloat(((Number(projectUsageScore || 0) / 10) * 15).toFixed(2));
-          const projectInnovation = parseFloat(((Number(projectInnovationScore || 0) / 10) * 10).toFixed(2));
-          const projectTotal = parseFloat((projectIdea + projectResearch + projectUsage + projectInnovation).toFixed(2));
+          const projectIdea = parseFloat(
+            ((Number(projectIdeaScore || 0) / 10) * 30).toFixed(2),
+          );
+          const projectResearch = parseFloat(
+            ((Number(projectResearchScore || 0) / 10) * 15).toFixed(2),
+          );
+          const projectUsage = parseFloat(
+            ((Number(projectUsageScore || 0) / 10) * 15).toFixed(2),
+          );
+          const projectInnovation = parseFloat(
+            ((Number(projectInnovationScore || 0) / 10) * 10).toFixed(2),
+          );
+          const projectTotal = parseFloat(
+            (
+              projectIdea +
+              projectResearch +
+              projectUsage +
+              projectInnovation
+            ).toFixed(2),
+          );
 
-          const roboticSolution = parseFloat(((Number(roboticSolutionScore || 0) / 10) * 30).toFixed(2));
-          const engineeringConcepts = parseFloat(((Number(engineeringConceptsScore || 0) / 10) * 10).toFixed(2));
-          const codeEfficiency = parseFloat(((Number(codeEfficiencyScore || 0) / 10) * 10).toFixed(2));
-          const roboticDemo = parseFloat(((Number(roboticDemoScore || 0) / 10) * 15).toFixed(2));
-          const roboticTotal = parseFloat((roboticSolution + engineeringConcepts + codeEfficiency + roboticDemo).toFixed(2));
+          const roboticSolution = parseFloat(
+            ((Number(roboticSolutionScore || 0) / 10) * 30).toFixed(2),
+          );
+          const engineeringConcepts = parseFloat(
+            ((Number(engineeringConceptsScore || 0) / 10) * 10).toFixed(2),
+          );
+          const codeEfficiency = parseFloat(
+            ((Number(codeEfficiencyScore || 0) / 10) * 10).toFixed(2),
+          );
+          const roboticDemo = parseFloat(
+            ((Number(roboticDemoScore || 0) / 10) * 15).toFixed(2),
+          );
+          const roboticTotal = parseFloat(
+            (
+              roboticSolution +
+              engineeringConcepts +
+              codeEfficiency +
+              roboticDemo
+            ).toFixed(2),
+          );
 
-          const presentationBooth = parseFloat(((Number(presentationBoothScore || 0) / 10) * 30).toFixed(2));
-          const technicalUnderstanding = parseFloat(((Number(technicalUnderstandingScore || 0) / 10) * 15).toFixed(2));
-          const teamSpirit = parseFloat(((Number(teamSpiritScore || 0) / 10) * 20).toFixed(2));
-          const presentationTotal = parseFloat((presentationBooth + technicalUnderstanding + teamSpirit).toFixed(2));
+          const presentationBooth = parseFloat(
+            ((Number(presentationBoothScore || 0) / 10) * 30).toFixed(2),
+          );
+          const technicalUnderstanding = parseFloat(
+            ((Number(technicalUnderstandingScore || 0) / 10) * 15).toFixed(2),
+          );
+          const teamSpirit = parseFloat(
+            ((Number(teamSpiritScore || 0) / 10) * 20).toFixed(2),
+          );
+          const presentationTotal = parseFloat(
+            (presentationBooth + technicalUnderstanding + teamSpirit).toFixed(
+              2,
+            ),
+          );
 
-          const overallTotal = parseFloat((projectTotal + roboticTotal + presentationTotal).toFixed(2));
+          const overallTotal = parseFloat(
+            (projectTotal + roboticTotal + presentationTotal).toFixed(2),
+          );
 
           return (
             <ScrollView style={{ maxHeight: 420 }}>
               <Text style={styles.scoreinputTitle}>Review Scores</Text>
               <Text style={{ fontSize: 12, color: "#555", marginTop: 4 }}>
-                Raw judge score shown as 1–10. Scaled points are shown after the arrow.
+                Raw judge score shown as 1–10. Scaled points are shown after the
+                arrow.
               </Text>
-              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>Project & Innovation</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>
+                Project & Innovation
+              </Text>
               <Text style={{ marginTop: 4 }}>
-                Idea, Quality & Creativity: {projectIdeaScore || "0"}/10 → {projectIdea.toFixed(2)}/30
+                Idea, Quality & Creativity: {projectIdeaScore || "0"}/10 →{" "}
+                {projectIdea.toFixed(2)}/30
               </Text>
               <Text>
-                Research & Report: {projectResearchScore || "0"}/10 → {projectResearch.toFixed(2)}/15
+                Research & Report: {projectResearchScore || "0"}/10 →{" "}
+                {projectResearch.toFixed(2)}/15
               </Text>
               <Text>
-                Usage of the Idea: {projectUsageScore || "0"}/10 → {projectUsage.toFixed(2)}/15
+                Usage of the Idea: {projectUsageScore || "0"}/10 →{" "}
+                {projectUsage.toFixed(2)}/15
               </Text>
               <Text>
-                Key Innovation & Slogan: {projectInnovationScore || "0"}/10 → {projectInnovation.toFixed(2)}/10
+                Key Innovation & Slogan: {projectInnovationScore || "0"}/10 →{" "}
+                {projectInnovation.toFixed(2)}/10
               </Text>
               <Text style={{ fontWeight: "bold", marginTop: 4 }}>
                 Subtotal: {projectTotal.toFixed(2)}/70
               </Text>
 
-              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>Robotic Solution</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>
+                Robotic Solution
+              </Text>
               <Text style={{ marginTop: 4 }}>
-                Robotic Solution: {roboticSolutionScore || "0"}/10 → {roboticSolution.toFixed(2)}/30
+                Robotic Solution: {roboticSolutionScore || "0"}/10 →{" "}
+                {roboticSolution.toFixed(2)}/30
               </Text>
               <Text>
-                Meaningful Use of Engineering Concepts: {engineeringConceptsScore || "0"}/10 → {engineeringConcepts.toFixed(2)}/10
+                Meaningful Use of Engineering Concepts:{" "}
+                {engineeringConceptsScore || "0"}/10 →{" "}
+                {engineeringConcepts.toFixed(2)}/10
               </Text>
               <Text>
-                Code Efficiency & Software Automation: {codeEfficiencyScore || "0"}/10 → {codeEfficiency.toFixed(2)}/10
+                Code Efficiency & Software Automation:{" "}
+                {codeEfficiencyScore || "0"}/10 → {codeEfficiency.toFixed(2)}/10
               </Text>
               <Text>
-                Demonstration of Robotic Solution: {roboticDemoScore || "0"}/10 → {roboticDemo.toFixed(2)}/15
+                Demonstration of Robotic Solution: {roboticDemoScore || "0"}/10
+                → {roboticDemo.toFixed(2)}/15
               </Text>
               <Text style={{ fontWeight: "bold", marginTop: 4 }}>
                 Subtotal: {roboticTotal.toFixed(2)}/65
               </Text>
 
-              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>Presentation & Team Spirit</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>
+                Presentation & Team Spirit
+              </Text>
               <Text style={{ marginTop: 4 }}>
-                Presentation & Project Booth: {presentationBoothScore || "0"}/10 → {presentationBooth.toFixed(2)}/30
+                Presentation & Project Booth: {presentationBoothScore || "0"}/10
+                → {presentationBooth.toFixed(2)}/30
               </Text>
               <Text>
-                Technical Understanding & Quick Thinking: {technicalUnderstandingScore || "0"}/10 → {technicalUnderstanding.toFixed(2)}/15
+                Technical Understanding & Quick Thinking:{" "}
+                {technicalUnderstandingScore || "0"}/10 →{" "}
+                {technicalUnderstanding.toFixed(2)}/15
               </Text>
               <Text>
-                Team Spirit: {teamSpiritScore || "0"}/10 → {teamSpirit.toFixed(2)}/20
+                Team Spirit: {teamSpiritScore || "0"}/10 →{" "}
+                {teamSpirit.toFixed(2)}/20
               </Text>
               <Text style={{ fontWeight: "bold", marginTop: 4 }}>
                 Subtotal: {presentationTotal.toFixed(2)}/65
@@ -1117,22 +1345,72 @@ const getFiConfig = (category: string) => {
 
         return (
           <ScrollView style={{ maxHeight: 420 }}>
-            <Text style={styles.scoreinputTitle}>First Criteria: Project & Innovation</Text>
-            {renderFiElemScoreRow("Idea, Quality & Creativity (max 30)", projectIdeaScore, setProjectIdeaScore)}
-            {renderFiElemScoreRow("Research & Report (max 15)", projectResearchScore, setProjectResearchScore)}
-            {renderFiElemScoreRow("Usage of the Idea (max 15)", projectUsageScore, setProjectUsageScore)}
-            {renderFiElemScoreRow("Key Innovation & Slogan (max 10)", projectInnovationScore, setProjectInnovationScore)}
+            <Text style={styles.scoreinputTitle}>
+              First Criteria: Project & Innovation
+            </Text>
+            {renderFiElemScoreRow(
+              "Idea, Quality & Creativity (max 30)",
+              projectIdeaScore,
+              setProjectIdeaScore,
+            )}
+            {renderFiElemScoreRow(
+              "Research & Report (max 15)",
+              projectResearchScore,
+              setProjectResearchScore,
+            )}
+            {renderFiElemScoreRow(
+              "Usage of the Idea (max 15)",
+              projectUsageScore,
+              setProjectUsageScore,
+            )}
+            {renderFiElemScoreRow(
+              "Key Innovation & Slogan (max 10)",
+              projectInnovationScore,
+              setProjectInnovationScore,
+            )}
 
-            <Text style={{ marginTop: 16, fontWeight: "600" }}>Second Criteria: Robotic Solution</Text>
-            {renderFiElemScoreRow("Robotic Solution (max 30)", roboticSolutionScore, setRoboticSolutionScore)}
-            {renderFiElemScoreRow("Meaningful Use of Engineering Concepts (max 10)", engineeringConceptsScore, setEngineeringConceptsScore)}
-            {renderFiElemScoreRow("Code Efficiency & Software Automation (max 10)", codeEfficiencyScore, setCodeEfficiencyScore)}
-            {renderFiElemScoreRow("Demonstration of Robotic Solution (max 15)", roboticDemoScore, setRoboticDemoScore)}
+            <Text style={{ marginTop: 16, fontWeight: "600" }}>
+              Second Criteria: Robotic Solution
+            </Text>
+            {renderFiElemScoreRow(
+              "Robotic Solution (max 30)",
+              roboticSolutionScore,
+              setRoboticSolutionScore,
+            )}
+            {renderFiElemScoreRow(
+              "Meaningful Use of Engineering Concepts (max 10)",
+              engineeringConceptsScore,
+              setEngineeringConceptsScore,
+            )}
+            {renderFiElemScoreRow(
+              "Code Efficiency & Software Automation (max 10)",
+              codeEfficiencyScore,
+              setCodeEfficiencyScore,
+            )}
+            {renderFiElemScoreRow(
+              "Demonstration of Robotic Solution (max 15)",
+              roboticDemoScore,
+              setRoboticDemoScore,
+            )}
 
-            <Text style={{ marginTop: 16, fontWeight: "600" }}>Third Criteria: Presentation & Team Spirit</Text>
-            {renderFiElemScoreRow("Presentation & Project Booth (max 30)", presentationBoothScore, setPresentationBoothScore)}
-            {renderFiElemScoreRow("Technical Understanding & Quick Thinking (max 15)", technicalUnderstandingScore, setTechnicalUnderstandingScore)}
-            {renderFiElemScoreRow("Team Spirit (max 20)", teamSpiritScore, setTeamSpiritScore)}
+            <Text style={{ marginTop: 16, fontWeight: "600" }}>
+              Third Criteria: Presentation & Team Spirit
+            </Text>
+            {renderFiElemScoreRow(
+              "Presentation & Project Booth (max 30)",
+              presentationBoothScore,
+              setPresentationBoothScore,
+            )}
+            {renderFiElemScoreRow(
+              "Technical Understanding & Quick Thinking (max 15)",
+              technicalUnderstandingScore,
+              setTechnicalUnderstandingScore,
+            )}
+            {renderFiElemScoreRow(
+              "Team Spirit (max 20)",
+              teamSpiritScore,
+              setTeamSpiritScore,
+            )}
 
             {/* <Text style={{ marginTop: 10, fontStyle: "italic" }}>Overall Points: {Number(projectIdeaScore) + Number(projectResearchScore) + Number(projectUsageScore) + Number(projectInnovationScore) + Number(roboticSolutionScore) + Number(engineeringConceptsScore) + Number(codeEfficiencyScore) + Number(roboticDemoScore) + Number(presentationBoothScore) + Number(technicalUnderstandingScore) + Number(teamSpiritScore)}/200</Text> */}
           </ScrollView>
@@ -1144,14 +1422,19 @@ const getFiConfig = (category: string) => {
 
         if (fiElemModalStep === 2) {
           const raw = Object.fromEntries(
-            Object.entries(fiScoreFields).map(([key, [value]]) => [key, value])
+            Object.entries(fiScoreFields).map(([key, [value]]) => [key, value]),
           );
-          const { projectTotal, roboticTotal, presentationTotal, total } = scaleFiScores(judgeCategory, raw);
+          const { projectTotal, roboticTotal, presentationTotal, total } =
+            scaleFiScores(judgeCategory, raw);
 
-          const renderReviewGroup = (group: { key: string; label: string; max: number }[]) =>
+          const renderReviewGroup = (
+            group: { key: string; label: string; max: number }[],
+          ) =>
             group.map(({ key, label, max }) => {
               const [value] = fiScoreFields[key];
-              const scaled = parseFloat(((Number(value || 0) / 10) * max).toFixed(2));
+              const scaled = parseFloat(
+                ((Number(value || 0) / 10) * max).toFixed(2),
+              );
               return (
                 <Text key={key} style={{ marginTop: 4 }}>
                   {label}: {value || "0"}/10 → {scaled.toFixed(2)}/{max}
@@ -1161,28 +1444,38 @@ const getFiConfig = (category: string) => {
 
           const projectMax = config.project.reduce((s, c) => s + c.max, 0);
           const roboticMax = config.robotic.reduce((s, c) => s + c.max, 0);
-          const presentationMax = config.presentation.reduce((s, c) => s + c.max, 0);
+          const presentationMax = config.presentation.reduce(
+            (s, c) => s + c.max,
+            0,
+          );
 
           return (
             <ScrollView style={{ maxHeight: 420 }}>
               <Text style={styles.scoreinputTitle}>Review Scores</Text>
               <Text style={{ fontSize: 12, color: "#555", marginTop: 4 }}>
-                Raw judge score shown as 1–10. Scaled points are shown after the arrow.
+                Raw judge score shown as 1–10. Scaled points are shown after the
+                arrow.
               </Text>
 
-              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>Project & Innovation</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>
+                Project & Innovation
+              </Text>
               {renderReviewGroup(config.project)}
               <Text style={{ fontWeight: "bold", marginTop: 4 }}>
                 Subtotal: {projectTotal.toFixed(2)}/{projectMax}
               </Text>
 
-              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>Robotic Solution</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>
+                Robotic Solution
+              </Text>
               {renderReviewGroup(config.robotic)}
               <Text style={{ fontWeight: "bold", marginTop: 4 }}>
                 Subtotal: {roboticTotal.toFixed(2)}/{roboticMax}
               </Text>
 
-              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>Presentation & Team Spirit</Text>
+              <Text style={{ fontSize: 14, fontWeight: "600", marginTop: 12 }}>
+                Presentation & Team Spirit
+              </Text>
               {renderReviewGroup(config.presentation)}
               <Text style={{ fontWeight: "bold", marginTop: 4 }}>
                 Subtotal: {presentationTotal.toFixed(2)}/{presentationMax}
@@ -1197,14 +1490,20 @@ const getFiConfig = (category: string) => {
 
         return (
           <ScrollView style={{ maxHeight: 420 }}>
-            <Text style={styles.scoreinputTitle}>First Criteria: Project & Innovation</Text>
-          {renderFiScoreGroup(config.project)}
+            <Text style={styles.scoreinputTitle}>
+              First Criteria: Project & Innovation
+            </Text>
+            {renderFiScoreGroup(config.project)}
 
-          <Text style={{ marginTop: 16, fontWeight: "600" }}>Second Criteria: Robotic Solution</Text>
-          {renderFiScoreGroup(config.robotic)}
+            <Text style={{ marginTop: 16, fontWeight: "600" }}>
+              Second Criteria: Robotic Solution
+            </Text>
+            {renderFiScoreGroup(config.robotic)}
 
-          <Text style={{ marginTop: 16, fontWeight: "600" }}>Third Criteria: Presentation & Team Spirit</Text>
-          {renderFiScoreGroup(config.presentation)}
+            <Text style={{ marginTop: 16, fontWeight: "600" }}>
+              Third Criteria: Presentation & Team Spirit
+            </Text>
+            {renderFiScoreGroup(config.presentation)}
           </ScrollView>
         );
       }
@@ -1218,15 +1517,21 @@ const getFiConfig = (category: string) => {
 
         const roundStep =
           feRoundType === "open"
-            ? (scoringTeam.openScore1 == null ? 1 : 2)
-            : (scoringTeam.obstacleScore1 == null ? 1 : 2);
+            ? scoringTeam.openScore1 == null
+              ? 1
+              : 2
+            : scoringTeam.obstacleScore1 == null
+              ? 1
+              : 2;
 
         return (
           <>
             <Text style={styles.scoreinputTitle}>
-              {feRoundType === "open" ? "Open - Qualifying" : "Obstacles - Final"}
+              {feRoundType === "open"
+                ? "Open - Qualifying"
+                : "Obstacles - Final"}
             </Text>
-            
+
             <TextInput
               style={styles.scoreinput}
               placeholder={`Enter ${feRoundType === "open" ? "Open" : "Obstacle"} Round ${roundStep} Score`}
@@ -1264,21 +1569,23 @@ const getFiConfig = (category: string) => {
                 placeholder="ms"
                 keyboardType="numeric"
                 value={inputMs}
-                onChangeText={(text) =>
-                  setInputMs(text.replace(/[^0-9]/g, ""))
-                }
+                onChangeText={(text) => setInputMs(text.replace(/[^0-9]/g, ""))}
                 maxLength={3}
               />
             </View>
             {isObstacleRound2 && (
               <>
-                <Text style={styles.scoreinputTitle}>Documentation / Github (optional, max 30)</Text>
+                <Text style={styles.scoreinputTitle}>
+                  Documentation / Github (optional, max 30)
+                </Text>
                 <TextInput
                   style={styles.scoreinput}
                   placeholder="Documentation / Github"
                   keyboardType="numeric"
                   value={inputDocScore}
-                  onChangeText={(text) => setInputDocScore(text.replace(/[^0-9]/g, ""))}
+                  onChangeText={(text) =>
+                    setInputDocScore(text.replace(/[^0-9]/g, ""))
+                  }
                   maxLength={2}
                 />
               </>
@@ -1293,53 +1600,73 @@ const getFiConfig = (category: string) => {
   function getBestScoreAndTime(team: any) {
     const scores = [
       { score: team.day1Round1Score, time: team.day1Round1Time, round: 1 },
-      { score: team.day1Round2Score, time: team.day1Round2Time, round: 2 }
-    ].filter(r => r.score != null);
-    
-    if (scores.length === 0) return { bestScore: null, bestTime: null, bestScoreRound: null, bestTimeRound: null };
-    
+      { score: team.day1Round2Score, time: team.day1Round2Time, round: 2 },
+    ].filter((r) => r.score != null);
+
+    if (scores.length === 0)
+      return {
+        bestScore: null,
+        bestTime: null,
+        bestScoreRound: null,
+        bestTimeRound: null,
+      };
+
     // Find best score (highest)
-    const bestScoreRound = scores.reduce((best, current) => 
-      current.score > best.score ? current : best
+    const bestScoreRound = scores.reduce((best, current) =>
+      current.score > best.score ? current : best,
     ).round;
-    
+
     // Find best time (lowest)
-    const bestTimeRound = scores.reduce((best, current) => 
-      parseTimeString(current.time) < parseTimeString(best.time) ? current : best
+    const bestTimeRound = scores.reduce((best, current) =>
+      parseTimeString(current.time) < parseTimeString(best.time)
+        ? current
+        : best,
     ).round;
-    
-    const bestScoreValue = Math.max(...scores.map(s => s.score));
-    const bestTimeValue = scores.find(s => s.round === bestTimeRound)?.time;
-    
-    return { bestScore: bestScoreValue, bestTime: bestTimeValue, bestScoreRound, bestTimeRound };
+
+    const bestScoreValue = Math.max(...scores.map((s) => s.score));
+    const bestTimeValue = scores.find((s) => s.round === bestTimeRound)?.time;
+
+    return {
+      bestScore: bestScoreValue,
+      bestTime: bestTimeValue,
+      bestScoreRound,
+      bestTimeRound,
+    };
   }
 
   // Helper function to parse time string
   function parseTimeString(timeStr: string) {
     if (!timeStr) return Infinity;
-    const parts = timeStr.split(':');
+    const parts = timeStr.split(":");
     if (parts.length < 2) return Infinity;
     const [mm, rest] = parts;
-    const [ss, ms] = rest.split('.');
-    return (Number(mm) || 0) * 60000 + (Number(ss) || 0) * 1000 + (Number(ms) || 0) * 10;
+    const [ss, ms] = rest.split(".");
+    return (
+      (Number(mm) || 0) * 60000 +
+      (Number(ss) || 0) * 1000 +
+      (Number(ms) || 0) * 10
+    );
   }
 
   // Modal open for scoring
   const openScoreModal = async (team: any) => {
     if (getCardStatus(team) === "complete") return;
-    
+
     setScoringTeam(team);
-    
+
     // Determine which round to score next (only 2 rounds for RoboMission)
     if (team.day1Round1Score === null || team.day1Round1Score === undefined) {
       setScoringStep(1);
-    } else if (team.day1Round2Score === null || team.day1Round2Score === undefined) {
+    } else if (
+      team.day1Round2Score === null ||
+      team.day1Round2Score === undefined
+    ) {
       setScoringStep(2);
     } else {
       // All rounds completed
       setScoringStep(1);
     }
-    
+
     setInputScore("");
     setInputMinute("");
     setInputSecond("");
@@ -1349,16 +1676,30 @@ const getFiConfig = (category: string) => {
     setSubmitError("");
     setScoreModalVisible(true);
 
-    const isFiCategory = judgeCategory === "fi-elem" || judgeCategory === "fi-junior" || judgeCategory === "fi-senior";
+    const isFiCategory =
+      judgeCategory === "fi-elem" ||
+      judgeCategory === "fi-junior" ||
+      judgeCategory === "fi-senior";
     if (isFiCategory) {
       try {
-        const scoresRef = doc(FIREBASE_DB, "events", selectedEvent, "scores", team.id);
+        const scoresRef = doc(
+          FIREBASE_DB,
+          "events",
+          selectedEvent,
+          "scores",
+          team.id,
+        );
         const scoreDoc = await getDoc(scoresRef);
-        const existing = scoreDoc.exists() ? scoreDoc.data()?.scoresheets || {} : {};
+        const existing = scoreDoc.exists()
+          ? scoreDoc.data()?.scoresheets || {}
+          : {};
         const existingCount = Object.keys(existing).length;
 
         if (existingCount >= 3) {
-          Alert.alert("Complete", "This team already has 3 scoresheets submitted.");
+          Alert.alert(
+            "Complete",
+            "This team already has 3 scoresheets submitted.",
+          );
           return;
         }
 
@@ -1369,13 +1710,13 @@ const getFiConfig = (category: string) => {
       }
     }
 
-  setScoreModalVisible(true);
+    setScoreModalVisible(true);
   };
 
   const handleScoreSubmit = async () => {
     setSubmitError("");
     setIsSubmitting(true);
-    
+
     if (!scoringTeam || !selectedEvent) {
       setIsSubmitting(false);
       return;
@@ -1404,7 +1745,7 @@ const getFiConfig = (category: string) => {
       }
 
       try {
-         const update: any = {
+        const update: any = {
           teamName: scoringTeam.teamName,
           teamId: scoringTeam.id,
           eventId: selectedEvent,
@@ -1421,7 +1762,7 @@ const getFiConfig = (category: string) => {
         const roundField = `day1Round${scoringStep}Score`;
         const timeField = `day1Round${scoringStep}Time`;
         const timestampField = `day1Round${scoringStep}ScoredAt`;
-        
+
         update[roundField] = Number(inputScore);
         update[timeField] = inputTime;
         update[timestampField] = now.toISOString();
@@ -1435,12 +1776,12 @@ const getFiConfig = (category: string) => {
           "events",
           selectedEvent,
           "scores",
-          scoringTeam.id
+          scoringTeam.id,
         );
         await setDoc(scoresRef, update, { merge: true });
 
         setTeams((teams) =>
-          teams.map((t) => (t.id === scoringTeam.id ? { ...t, ...update } : t))
+          teams.map((t) => (t.id === scoringTeam.id ? { ...t, ...update } : t)),
         );
 
         setInputScore("");
@@ -1462,16 +1803,19 @@ const getFiConfig = (category: string) => {
       judgeCategory === "fi-senior"
     ) {
       const config = getFiConfig(judgeCategory);
-      const allFields = [...config.project, ...config.robotic, ...config.presentation];
+      const allFields = [
+        ...config.project,
+        ...config.robotic,
+        ...config.presentation,
+      ];
 
-      const hasMissing = allFields.some(({ key }) => fiScoreFields[key][0].trim() === "");
-      if (hasMissing) {
-        setSubmitError("Please input all sub-criteria scores.");
-        setIsSubmitting(false);
-        return;
-      }
+      // Treat empty sub-criteria as zero so judges can submit without filling every field.
+      const rawScores = Object.fromEntries(
+        allFields.map(({ key }) => [key, Number(fiScoreFields[key][0]) || 0]),
+      );
 
-      const exceedsMax = allFields.some(({ key }) => Number(fiScoreFields[key][0]) > 10);
+      // Still validate that no score exceeds the max of 10
+      const exceedsMax = Object.values(rawScores).some((v) => Number(v) > 10);
       if (exceedsMax) {
         setSubmitError("One or more scores exceed the maximum allowed.");
         setIsSubmitting(false);
@@ -1479,7 +1823,13 @@ const getFiConfig = (category: string) => {
       }
 
       try {
-        const scoresRef = doc(FIREBASE_DB, "events", selectedEvent, "scores", scoringTeam.id);
+        const scoresRef = doc(
+          FIREBASE_DB,
+          "events",
+          selectedEvent,
+          "scores",
+          scoringTeam.id,
+        );
         const scoreDoc = await getDoc(scoresRef);
         const existingData = scoreDoc.exists() ? scoreDoc.data() : {};
         const existingScoresheets = existingData?.scoresheets || {};
@@ -1493,10 +1843,6 @@ const getFiConfig = (category: string) => {
 
         const nextSlot = String(existingCount + 1);
 
-        const rawScores = Object.fromEntries(
-          allFields.map(({ key }) => [key, Number(fiScoreFields[key][0])])
-        );
-
         const totalPoints = scaleFiScores(judgeCategory, rawScores).total;
         const judgeId = FIREBASE_AUTH.currentUser?.uid || null;
 
@@ -1507,12 +1853,19 @@ const getFiConfig = (category: string) => {
           submittedAt: new Date().toISOString(),
         };
 
-        const updatedScoresheets = { ...existingScoresheets, [nextSlot]: scoresheetEntry };
+        const updatedScoresheets = {
+          ...existingScoresheets,
+          [nextSlot]: scoresheetEntry,
+        };
 
-        const totals = Object.values(updatedScoresheets).map((s: any) => s.totalPoints);
+        const totals = Object.values(updatedScoresheets).map(
+          (s: any) => s.totalPoints,
+        );
         const averagePoints =
           updatedScoresheets && Object.keys(updatedScoresheets).length === 3
-            ? parseFloat((totals.reduce((a, b) => a + b, 0) / totals.length).toFixed(2))
+            ? parseFloat(
+                (totals.reduce((a, b) => a + b, 0) / totals.length).toFixed(2),
+              )
             : null;
 
         const update: any = {
@@ -1534,7 +1887,7 @@ const getFiConfig = (category: string) => {
         await setDoc(scoresRef, update, { merge: true });
 
         setTeams((teams) =>
-          teams.map((t) => (t.id === scoringTeam.id ? { ...t, ...update } : t))
+          teams.map((t) => (t.id === scoringTeam.id ? { ...t, ...update } : t)),
         );
 
         resetFiElemForm();
@@ -1554,7 +1907,11 @@ const getFiConfig = (category: string) => {
         setIsSubmitting(false);
         return;
       }
-      if (inputMinute.trim() === "" && inputSecond.trim() === "" && inputMs.trim() === "") {
+      if (
+        inputMinute.trim() === "" &&
+        inputSecond.trim() === "" &&
+        inputMs.trim() === ""
+      ) {
         setSubmitError("Please input the time.");
         setIsSubmitting(false);
         return;
@@ -1572,7 +1929,8 @@ const getFiConfig = (category: string) => {
       const cappedMs = Math.floor((totalMs % 1000) / 10);
       const inputTime = `${String(cappedMm).padStart(2, "0")}:${String(cappedSs).padStart(2, "0")}.${String(cappedMs).padStart(2, "0")}`;
 
-      const docScoreVal = inputDocScore.trim() === "" ? 0 : Number(inputDocScore);
+      const docScoreVal =
+        inputDocScore.trim() === "" ? 0 : Number(inputDocScore);
 
       try {
         const update: any = {
@@ -1611,7 +1969,7 @@ const getFiConfig = (category: string) => {
           update.openScore1 ?? scoringTeam.openScore1,
           update.openScore2 ?? scoringTeam.openScore2,
         ].filter((v) => v !== undefined && v !== null);
-        
+
         const obstacleScores = [
           update.obstacleScore1 ?? scoringTeam.obstacleScore1,
           update.obstacleScore2 ?? scoringTeam.obstacleScore2,
@@ -1630,12 +1988,12 @@ const getFiConfig = (category: string) => {
           "events",
           selectedEvent,
           "scores",
-          scoringTeam.id
+          scoringTeam.id,
         );
         await setDoc(scoresRef, update, { merge: true });
 
         setTeams((teams) =>
-          teams.map((t) => (t.id === scoringTeam.id ? { ...t, ...update } : t))
+          teams.map((t) => (t.id === scoringTeam.id ? { ...t, ...update } : t)),
         );
 
         setInputScore("");
@@ -1655,19 +2013,27 @@ const getFiConfig = (category: string) => {
   const renderGameCard = ({ item: game }: { item: GameData }) => {
     const getStatusColor = () => {
       switch (game.status) {
-        case 'created': return '#faf9f6';
-        case 'in-progress': return '#fff9c4';
-        case 'finished': return '#c8e6c9';
-        default: return '#faf9f6';
+        case "created":
+          return "#faf9f6";
+        case "in-progress":
+          return "#fff9c4";
+        case "finished":
+          return "#c8e6c9";
+        default:
+          return "#faf9f6";
       }
     };
 
     const getStatusText = () => {
       switch (game.status) {
-        case 'created': return 'Ready to Start';
-        case 'in-progress': return `In Progress (Match ${game.currentMatch}/3)`;
-        case 'finished': return 'Finished';
-        default: return 'Unknown';
+        case "created":
+          return "Ready to Start";
+        case "in-progress":
+          return `In Progress (Match ${game.currentMatch}/3)`;
+        case "finished":
+          return "Finished";
+        default:
+          return "Unknown";
       }
     };
 
@@ -1675,32 +2041,37 @@ const getFiConfig = (category: string) => {
       <TouchableOpacity
         style={[robostyles.gameCard, { backgroundColor: getStatusColor() }]}
         onPress={() => openGameScorer(game)}
-        disabled={game.status === 'finished'}
+        disabled={game.status === "finished"}
       >
         <Text style={robostyles.gameNumber}>Game #{game.gameNumber}</Text>
         <Text style={robostyles.teamsText}>
           {game.team1Name} vs {game.team2Name}
         </Text>
-        
+
         <View style={robostyles.gameDetails}>
           <Text style={robostyles.statusText}>Status: {getStatusText()}</Text>
-          
+
           {game.matchResults.length > 0 && (
             <View style={robostyles.matchResults}>
               <Text style={robostyles.resultsTitle}>Match Results:</Text>
               {game.matchResults.map((result: any, index: number) => (
                 <Text key={index} style={robostyles.resultText}>
-                  M{result.match}: {result.winner ? result.winnerName : 'Tie'} ({result.team1Score} - {result.team2Score})
+                  M{result.match}: {result.winner ? result.winnerName : "Tie"} (
+                  {result.team1Score} - {result.team2Score})
                 </Text>
               ))}
             </View>
           )}
-          
-          {game.status === 'finished' && (
+
+          {game.status === "finished" && (
             <Text style={robostyles.finalResult}>
-              Winner: {game.gameWinner ? 
-                (game.gameWinner === game.team1Id ? game.team1Name : game.team2Name) : 
-                'Tie'} ({game.team1Points} - {game.team2Points} pts)
+              Winner:{" "}
+              {game.gameWinner
+                ? game.gameWinner === game.team1Id
+                  ? game.team1Name
+                  : game.team2Name
+                : "Tie"}{" "}
+              ({game.team1Points} - {game.team2Points} pts)
             </Text>
           )}
         </View>
@@ -1719,7 +2090,7 @@ const getFiConfig = (category: string) => {
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Create New Game</Text>
-          
+
           <View style={{ marginBottom: 20, zIndex: 1000 }}>
             <Text style={robostyles.label}>Team 1:</Text>
             <DropDownPicker
@@ -1727,9 +2098,9 @@ const getFiConfig = (category: string) => {
               setOpen={setTeam1DropdownOpen}
               value={selectedTeam1}
               setValue={setSelectedTeam1}
-              items={teams.map(team => ({ 
-                label: `${team.teamNumber} - ${team.teamName}`, 
-                value: team.id 
+              items={teams.map((team) => ({
+                label: `${team.teamNumber} - ${team.teamName}`,
+                value: team.id,
               }))}
               placeholder="Select Team 1"
               style={robostyles.dropdown}
@@ -1745,10 +2116,10 @@ const getFiConfig = (category: string) => {
               value={selectedTeam2}
               setValue={setSelectedTeam2}
               items={teams
-                .filter(t => t.id !== selectedTeam1)
-                .map(team => ({ 
-                  label: `${team.teamNumber} - ${team.teamName}`, 
-                  value: team.id 
+                .filter((t) => t.id !== selectedTeam1)
+                .map((team) => ({
+                  label: `${team.teamNumber} - ${team.teamName}`,
+                  value: team.id,
                 }))}
               placeholder="Select Team 2"
               style={robostyles.dropdown}
@@ -1763,9 +2134,12 @@ const getFiConfig = (category: string) => {
             >
               <Text style={robostyles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
-              style={[robostyles.createButton, isCreatingGame && robostyles.disabledButton]}
+              style={[
+                robostyles.createButton,
+                isCreatingGame && robostyles.disabledButton,
+              ]}
               onPress={createNewGame}
               disabled={isCreatingGame || !selectedTeam1 || !selectedTeam2}
             >
@@ -1792,7 +2166,14 @@ const getFiConfig = (category: string) => {
   // Show message if no events assigned
   if (assignedEvents.length === 0) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 20,
+        }}
+      >
         <Text style={{ textAlign: "center", fontSize: 16, color: "#666" }}>
           No events assigned to you yet. Please contact the administrator.
         </Text>
@@ -1804,7 +2185,7 @@ const getFiConfig = (category: string) => {
   let filteredTeams = teams
     .filter((team) => !team.disabled)
     .filter((team) =>
-      team.teamName?.toLowerCase().includes(search.toLowerCase())
+      team.teamName?.toLowerCase().includes(search.toLowerCase()),
     );
 
   // Apply status filter
@@ -1814,8 +2195,10 @@ const getFiConfig = (category: string) => {
   if (judgeCategory === "future-eng") {
     if (fePill === "obstacle") {
       filteredTeams = filteredTeams.filter((team) => {
-        const hasOpen1 = team.openScore1 !== null && team.openScore1 !== undefined;
-        const hasOpen2 = team.openScore2 !== null && team.openScore2 !== undefined;
+        const hasOpen1 =
+          team.openScore1 !== null && team.openScore1 !== undefined;
+        const hasOpen2 =
+          team.openScore2 !== null && team.openScore2 !== undefined;
         return hasOpen1 && hasOpen2;
       });
     }
@@ -1831,7 +2214,10 @@ const getFiConfig = (category: string) => {
   // Pagination
   const totalPages = Math.ceil(filteredTeams.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedTeams = filteredTeams.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedTeams = filteredTeams.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
 
   const statusCounts = getStatusCounts();
 
@@ -1841,7 +2227,9 @@ const getFiConfig = (category: string) => {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Score Teams</Text>
           <Text style={styles.headerSubtitle}>
-            {judgeCategory === "robosports" ? "Create and manage games" : "Tap a team card to score"}
+            {judgeCategory === "robosports"
+              ? "Create and manage games"
+              : "Tap a team card to score"}
           </Text>
         </View>
 
@@ -1855,8 +2243,8 @@ const getFiConfig = (category: string) => {
             setOpen={setEventDropdownOpen}
             value={selectedEvent}
             setValue={setSelectedEvent}
-            items={assignedEvents.map(event => ({
-              label: `${event.title}${event.date ? ` (${event.date})` : ''}`,
+            items={assignedEvents.map((event) => ({
+              label: `${event.title}${event.date ? ` (${event.date})` : ""}`,
               value: event.id,
             }))}
             placeholder="Select Event"
@@ -1877,16 +2265,24 @@ const getFiConfig = (category: string) => {
 
         {/* Current Event Info */}
         {selectedEvent && (
-          <View style={{ marginBottom: 15, padding: 10, backgroundColor: "#f0f0f0", borderRadius: 8 }}>
+          <View
+            style={{
+              marginBottom: 15,
+              padding: 10,
+              backgroundColor: "#f0f0f0",
+              borderRadius: 8,
+            }}
+          >
             <Text style={{ fontSize: 14, fontWeight: "bold" }}>
-              Current Event: {assignedEvents.find(e => e.id === selectedEvent)?.title}
+              Current Event:{" "}
+              {assignedEvents.find((e) => e.id === selectedEvent)?.title}
             </Text>
             <Text style={{ fontSize: 12, color: "#666" }}>
-              Category: {judgeCategory} • {assignedEvents.find(e => e.id === selectedEvent)?.date}
+              Category: {judgeCategory} •{" "}
+              {assignedEvents.find((e) => e.id === selectedEvent)?.date}
             </Text>
           </View>
         )}
-
 
         {/* RoboSports Content */}
         {judgeCategory === "robosports" && (
@@ -1896,70 +2292,94 @@ const getFiConfig = (category: string) => {
               <TouchableOpacity
                 style={[
                   robostyles.modeButton,
-                  tournamentMode === 'regular' && robostyles.modeButtonActive
+                  tournamentMode === "regular" && robostyles.modeButtonActive,
                 ]}
-                onPress={() => setTournamentMode('regular')}
+                onPress={() => setTournamentMode("regular")}
               >
-                <Text style={[
-                  robostyles.modeButtonText,
-                  tournamentMode === 'regular' && robostyles.modeButtonTextActive
-                ]}>Regular Games</Text>
+                <Text
+                  style={[
+                    robostyles.modeButtonText,
+                    tournamentMode === "regular" &&
+                      robostyles.modeButtonTextActive,
+                  ]}
+                >
+                  Regular Games
+                </Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[
                   robostyles.modeButton,
-                  tournamentMode === 'tournament' && robostyles.modeButtonActive
+                  tournamentMode === "tournament" &&
+                    robostyles.modeButtonActive,
                 ]}
-                onPress={() => setTournamentMode('tournament')}
+                onPress={() => setTournamentMode("tournament")}
               >
-                <Text style={[
-                  robostyles.modeButtonText,
-                  tournamentMode === 'tournament' && robostyles.modeButtonTextActive
-                ]}>Tournament Mode</Text>
+                <Text
+                  style={[
+                    robostyles.modeButtonText,
+                    tournamentMode === "tournament" &&
+                      robostyles.modeButtonTextActive,
+                  ]}
+                >
+                  Tournament Mode
+                </Text>
               </TouchableOpacity>
             </View>
 
             {/* Regular Games Mode */}
-            {tournamentMode === 'regular' && (
+            {tournamentMode === "regular" && (
               <View>
                 <TouchableOpacity
                   style={styles.createGameButton}
                   onPress={() => setShowCreateModal(true)}
                 >
-                  <Text style={[styles.buttonText, { color: 'white' }]}>+ Create New Game</Text>
+                  <Text style={[styles.buttonText, { color: "white" }]}>
+                    + Create New Game
+                  </Text>
                 </TouchableOpacity>
 
-                <Text style={[robostyles.gamesHeader, { marginVertical: 15, fontSize: 16, fontWeight: "bold" }]}>
-                  Regular Games ({games.filter(g => !g.tournamentId).length})
+                <Text
+                  style={[
+                    robostyles.gamesHeader,
+                    { marginVertical: 15, fontSize: 16, fontWeight: "bold" },
+                  ]}
+                >
+                  Regular Games ({games.filter((g) => !g.tournamentId).length})
                 </Text>
-                
+
                 <FlatList
-                  data={games.filter(g => !g.tournamentId)}
+                  data={games.filter((g) => !g.tournamentId)}
                   keyExtractor={(item) => item.id}
                   renderItem={renderGameCard}
                   ListEmptyComponent={
-                    <Text style={robostyles.emptyText}>No games created yet. Create your first game!</Text>
+                    <Text style={robostyles.emptyText}>
+                      No games created yet. Create your first game!
+                    </Text>
                   }
                 />
               </View>
             )}
 
             {/* Tournament Mode */}
-            {tournamentMode === 'tournament' && (
+            {tournamentMode === "tournament" && (
               <View>
                 {/* Create Tournament Button */}
                 <TouchableOpacity
                   style={styles.createGameButton}
                   onPress={() => setShowTournamentSetup(true)}
                 >
-                  <Text style={[styles.buttonText, { color: 'white' }]}>+ Create Tournament</Text>
+                  <Text style={[styles.buttonText, { color: "white" }]}>
+                    + Create Tournament
+                  </Text>
                 </TouchableOpacity>
 
                 {/* Tournament Selection */}
                 {tournaments.length > 0 && (
                   <View style={robostyles.tournamentSelector}>
-                    <Text style={robostyles.selectorLabel}>Active Tournaments:</Text>
+                    <Text style={robostyles.selectorLabel}>
+                      Active Tournaments:
+                    </Text>
                     <FlatList
                       data={tournaments}
                       keyExtractor={(item) => item.id}
@@ -1967,12 +2387,17 @@ const getFiConfig = (category: string) => {
                         <TouchableOpacity
                           style={[
                             robostyles.tournamentCard,
-                            selectedTournament?.id === item.id && robostyles.tournamentCardSelected
+                            selectedTournament?.id === item.id &&
+                              robostyles.tournamentCardSelected,
                           ]}
                           onPress={() => setSelectedTournament(item)}
                         >
-                          <Text style={robostyles.tournamentName}>{item.name}</Text>
-                          <Text style={robostyles.tournamentInfo}>Single Elimination</Text>
+                          <Text style={robostyles.tournamentName}>
+                            {item.name}
+                          </Text>
+                          <Text style={robostyles.tournamentInfo}>
+                            Single Elimination
+                          </Text>
                           <Text style={robostyles.tournamentStatus}>
                             Status: {item.status} • {item.teams.length} teams
                           </Text>
@@ -1985,12 +2410,23 @@ const getFiConfig = (category: string) => {
                 {/* Ready Tournament Matches */}
                 {selectedTournament && (
                   <View>
-                    <Text style={[robostyles.gamesHeader, { marginVertical: 15, fontSize: 16, fontWeight: "bold" }]}>
+                    <Text
+                      style={[
+                        robostyles.gamesHeader,
+                        {
+                          marginVertical: 15,
+                          fontSize: 16,
+                          fontWeight: "bold",
+                        },
+                      ]}
+                    >
                       Ready Tournament Matches
                     </Text>
-                    
+
                     <FlatList
-                      data={TournamentManager.getReadyMatches(selectedTournament.brackets)}
+                      data={TournamentManager.getReadyMatches(
+                        selectedTournament.brackets,
+                      )}
                       keyExtractor={(item) => item.id}
                       renderItem={({ item: bracket }) => (
                         <TouchableOpacity
@@ -1998,24 +2434,26 @@ const getFiConfig = (category: string) => {
                           onPress={() => createTournamentGame(bracket)}
                         >
                           <Text style={robostyles.matchTitle}>
-                            Round {bracket.roundNumber} - Match {bracket.matchNumber}
+                            Round {bracket.roundNumber} - Match{" "}
+                            {bracket.matchNumber}
                           </Text>
-                          
+
                           <Text style={robostyles.teamsText}>
                             {bracket.team1Name} vs {bracket.team2Name}
                           </Text>
-                          
+
                           <View style={robostyles.matchStatus}>
-                            <Text style={robostyles.statusText}>Ready to Play</Text>
+                            <Text style={robostyles.statusText}>
+                              Ready to Play
+                            </Text>
                           </View>
                         </TouchableOpacity>
                       )}
                       ListEmptyComponent={
                         <Text style={robostyles.emptyText}>
-                          {selectedTournament.status === 'completed' 
-                            ? 'Tournament completed!' 
-                            : 'No matches ready to play.'
-                          }
+                          {selectedTournament.status === "completed"
+                            ? "Tournament completed!"
+                            : "No matches ready to play."}
                         </Text>
                       }
                     />
@@ -2025,16 +2463,29 @@ const getFiConfig = (category: string) => {
                 {/* Tournament Games History */}
                 {selectedTournament && (
                   <View>
-                    <Text style={[robostyles.gamesHeader, { marginVertical: 15, fontSize: 16, fontWeight: "bold" }]}>
+                    <Text
+                      style={[
+                        robostyles.gamesHeader,
+                        {
+                          marginVertical: 15,
+                          fontSize: 16,
+                          fontWeight: "bold",
+                        },
+                      ]}
+                    >
                       Tournament Games
                     </Text>
-                    
+
                     <FlatList
-                      data={games.filter(g => g.tournamentId === selectedTournament.id)}
+                      data={games.filter(
+                        (g) => g.tournamentId === selectedTournament.id,
+                      )}
                       keyExtractor={(item) => item.id}
                       renderItem={renderGameCard}
                       ListEmptyComponent={
-                        <Text style={robostyles.emptyText}>No tournament games yet.</Text>
+                        <Text style={robostyles.emptyText}>
+                          No tournament games yet.
+                        </Text>
                       }
                     />
                   </View>
@@ -2049,14 +2500,14 @@ const getFiConfig = (category: string) => {
               selectedEvent={selectedEvent}
               teams={teams}
               onTournamentCreated={(tournament) => {
-                setTournaments(prev => [...prev, tournament]);
+                setTournaments((prev) => [...prev, tournament]);
                 setSelectedTournament(tournament);
               }}
             />
 
             {/* Keep your existing modals */}
             {renderCreateGameModal()}
-            
+
             {activeGame && (
               <RoboSportsMatchScorer
                 game={activeGame}
@@ -2075,10 +2526,14 @@ const getFiConfig = (category: string) => {
         {judgeCategory !== "robosports" && (
           <>
             {/* Status Filter (only for RoboMission and Future Engineers) */}
-            {(judgeCategory === "robo-elem" || judgeCategory === "robo-junior" || 
-              judgeCategory === "robo-senior" || judgeCategory === "future-eng") && (
+            {(judgeCategory === "robo-elem" ||
+              judgeCategory === "robo-junior" ||
+              judgeCategory === "robo-senior" ||
+              judgeCategory === "future-eng") && (
               <View style={{ marginBottom: 15, zIndex: 999 }}>
-                <Text style={{ fontSize: 14, fontWeight: "bold", marginBottom: 8 }}>
+                <Text
+                  style={{ fontSize: 14, fontWeight: "bold", marginBottom: 8 }}
+                >
                   Filter by Status:
                 </Text>
                 <DropDownPicker
@@ -2086,9 +2541,9 @@ const getFiConfig = (category: string) => {
                   setOpen={setStatusDropdownOpen}
                   value={statusFilter}
                   setValue={setStatusFilter}
-                  items={getStatusFilterOptions().map(option => ({
+                  items={getStatusFilterOptions().map((option) => ({
                     ...option,
-                    label: `${option.label}${option.value !== "all" ? ` (${statusCounts[option.value as keyof typeof statusCounts] || 0})` : ` (${statusCounts.total})`}`
+                    label: `${option.label}${option.value !== "all" ? ` (${statusCounts[option.value as keyof typeof statusCounts] || 0})` : ` (${statusCounts.total})`}`,
                   }))}
                   style={{
                     borderWidth: 1,
@@ -2131,10 +2586,15 @@ const getFiConfig = (category: string) => {
                   ]}
                   onPress={() => setFePill("open")}
                 >
-                  <Text style={[
-                    styles.fePillText,
-                    fePill === "open" && styles.fePillTextActive,
-                  ]}> Open - Qualifying</Text>
+                  <Text
+                    style={[
+                      styles.fePillText,
+                      fePill === "open" && styles.fePillTextActive,
+                    ]}
+                  >
+                    {" "}
+                    Open - Qualifying
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -2143,38 +2603,64 @@ const getFiConfig = (category: string) => {
                   ]}
                   onPress={() => setFePill("obstacle")}
                 >
-                  <Text style={[
-                    styles.fePillText,
-                    fePill === "obstacle" && styles.fePillTextActive,
-                    ]}>Obstacles - Final</Text>
+                  <Text
+                    style={[
+                      styles.fePillText,
+                      fePill === "obstacle" && styles.fePillTextActive,
+                    ]}
+                  >
+                    Obstacles - Final
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: 15 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginBottom: 15,
+                }}
+              >
                 <TouchableOpacity
                   style={[
-                    { padding: 8, marginHorizontal: 5, borderRadius: 5, backgroundColor: "#e0e0e0" },
-                    currentPage === 1 && { opacity: 0.5 }
+                    {
+                      padding: 8,
+                      marginHorizontal: 5,
+                      borderRadius: 5,
+                      backgroundColor: "#e0e0e0",
+                    },
+                    currentPage === 1 && { opacity: 0.5 },
                   ]}
-                  onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  onPress={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
                   disabled={currentPage === 1}
                 >
                   <Text>Previous</Text>
                 </TouchableOpacity>
-                
+
                 <Text style={{ marginHorizontal: 15, fontSize: 16 }}>
-                  Page {currentPage} of {totalPages} ({filteredTeams.length} teams)
+                  Page {currentPage} of {totalPages} ({filteredTeams.length}{" "}
+                  teams)
                 </Text>
-                
+
                 <TouchableOpacity
                   style={[
-                    { padding: 8, marginHorizontal: 5, borderRadius: 5, backgroundColor: "#e0e0e0" },
-                    currentPage === totalPages && { opacity: 0.5 }
+                    {
+                      padding: 8,
+                      marginHorizontal: 5,
+                      borderRadius: 5,
+                      backgroundColor: "#e0e0e0",
+                    },
+                    currentPage === totalPages && { opacity: 0.5 },
                   ]}
-                  onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  onPress={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
                   disabled={currentPage === totalPages}
                 >
                   <Text>Next</Text>
@@ -2189,7 +2675,8 @@ const getFiConfig = (category: string) => {
               renderItem={({ item }) => {
                 const status = getCardStatus(item);
                 const isComplete = status === "complete";
-                const { bestScore, bestTime, bestScoreRound, bestTimeRound } = getBestScoreAndTime(item);
+                const { bestScore, bestTime, bestScoreRound, bestTimeRound } =
+                  getBestScoreAndTime(item);
 
                 // RoboMission: current UI
                 if (
@@ -2199,7 +2686,7 @@ const getFiConfig = (category: string) => {
                 ) {
                   const currentDayScores = [
                     { score: item.day1Round1Score, time: item.day1Round1Time },
-                    { score: item.day1Round2Score, time: item.day1Round2Time }
+                    { score: item.day1Round2Score, time: item.day1Round2Time },
                   ];
                   return (
                     <Pressable
@@ -2274,64 +2761,94 @@ const getFiConfig = (category: string) => {
                         {status === "no-score"
                           ? "No Score yet"
                           : status === "partial"
-                          ? "Partially Scored"
-                          : status === "complete"
-                          ? "Complete"
-                          : "Complete"}
+                            ? "Partially Scored"
+                            : status === "complete"
+                              ? "Complete"
+                              : "Complete"}
                       </Text>
                     </Pressable>
                   );
                 }
 
-// Future Innovators: show current judge's own score sheet only
-               if (
-                    judgeCategory === "fi-elem" ||
-                    judgeCategory === "fi-junior" ||
-                    judgeCategory === "fi-senior"
-                  ) {
-                    const scoresheets = item?.scoresheets || {};
-                    const count = Object.keys(scoresheets).length;
-                    const isFullyComplete = count >= 3;
+                // Future Innovators: show current judge's own score sheet only
+                if (
+                  judgeCategory === "fi-elem" ||
+                  judgeCategory === "fi-junior" ||
+                  judgeCategory === "fi-senior"
+                ) {
+                  const scoresheets = item?.scoresheets || {};
+                  const count = Object.keys(scoresheets).length;
+                  const isFullyComplete = count >= 3;
 
-                    const totals = [1, 2, 3].map((slot) => scoresheets[String(slot)]?.totalPoints ?? null);
-                    const averageTotal = isFullyComplete
-                      ? parseFloat((totals.reduce((a: number, b: number) => a + b, 0) / 3).toFixed(2))
-                      : null;
+                  const totals = [1, 2, 3].map(
+                    (slot) => scoresheets[String(slot)]?.totalPoints ?? null,
+                  );
+                  const averageTotal = isFullyComplete
+                    ? parseFloat(
+                        (
+                          totals.reduce((a: number, b: number) => a + b, 0) / 3
+                        ).toFixed(2),
+                      )
+                    : null;
 
-                    return (
-                      <Pressable
-                        disabled={isFullyComplete}
-                        onPress={() => openScoreModal(item)}
-                        style={({ pressed }) => [
-                          styles.teamCard,
-                          { backgroundColor: isFullyComplete ? "#c8e6c9" : getCardColor(status) },
-                          pressed && styles.buttonPressed,
-                        ]}
-                      >
-                        <Text style={styles.teamCardTeamNumber}>Team no. {item.teamNumber}</Text>
-                        <Text style={styles.teamCardTitle}>{item.teamName}</Text>
-                        <View style={{ marginVertical: 10 }}>
-                          {totals.map((total, i) => (
-                            <Text key={i} style={styles.teamData}>
-                              Scoresheet {i + 1}:{" "}
-                              <Text style={{ fontWeight: "bold", color: "#432344" }}>
-                                {total !== null ? total.toFixed(2) : "pending"}
-                              </Text>
-                            </Text>
-                          ))}
-                          <Text style={[styles.teamData, { marginTop: 6, fontStyle: "italic" }]}>
-                            Average Total:{" "}
-                            <Text style={{ fontWeight: "bold", color: "#388e3c" }}>
-                              {averageTotal !== null ? averageTotal.toFixed(2) : "—"}
+                  return (
+                    <Pressable
+                      disabled={isFullyComplete}
+                      onPress={() => openScoreModal(item)}
+                      style={({ pressed }) => [
+                        styles.teamCard,
+                        {
+                          backgroundColor: isFullyComplete
+                            ? "#c8e6c9"
+                            : getCardColor(status),
+                        },
+                        pressed && styles.buttonPressed,
+                      ]}
+                    >
+                      <Text style={styles.teamCardTeamNumber}>
+                        Team no. {item.teamNumber}
+                      </Text>
+                      <Text style={styles.teamCardTitle}>{item.teamName}</Text>
+                      <View style={{ marginVertical: 10 }}>
+                        {totals.map((total, i) => (
+                          <Text key={i} style={styles.teamData}>
+                            Scoresheet {i + 1}:{" "}
+                            <Text
+                              style={{ fontWeight: "bold", color: "#432344" }}
+                            >
+                              {total !== null ? total.toFixed(2) : "pending"}
                             </Text>
                           </Text>
-                        </View>
-                        <Text style={{ fontFamily: "inter_400Regular", fontStyle: "italic", color: isFullyComplete ? "#2e7d32" : "#6B7280" }}>
-                          Status: {isFullyComplete ? "Complete" : `${count}/3 complete`}
+                        ))}
+                        <Text
+                          style={[
+                            styles.teamData,
+                            { marginTop: 6, fontStyle: "italic" },
+                          ]}
+                        >
+                          Average Total:{" "}
+                          <Text
+                            style={{ fontWeight: "bold", color: "#388e3c" }}
+                          >
+                            {averageTotal !== null
+                              ? averageTotal.toFixed(2)
+                              : "—"}
+                          </Text>
                         </Text>
-                      </Pressable>
-                    );
-                  }
+                      </View>
+                      <Text
+                        style={{
+                          fontFamily: "inter_400Regular",
+                          fontStyle: "italic",
+                          color: isFullyComplete ? "#2e7d32" : "#6B7280",
+                        }}
+                      >
+                        Status:{" "}
+                        {isFullyComplete ? "Complete" : `${count}/3 complete`}
+                      </Text>
+                    </Pressable>
+                  );
+                }
 
                 // Future Engineers
                 if (judgeCategory === "future-eng") {
@@ -2344,16 +2861,16 @@ const getFiConfig = (category: string) => {
                       status === "no-score"
                         ? "No Score yet"
                         : status === "round1-only"
-                        ? "Round 1 Done"
-                        : "Complete";
+                          ? "Round 1 Done"
+                          : "Complete";
                   } else {
                     cardStatusText = isNotQualified
                       ? "Not qualified yet"
                       : status === "no-score"
-                      ? "No Score yet"
-                      : status === "round1-only"
-                      ? "Round 1 Done"
-                      : "Complete";
+                        ? "No Score yet"
+                        : status === "round1-only"
+                          ? "Round 1 Done"
+                          : "Complete";
                   }
 
                   // For obstacle, disable if not qualified or complete
@@ -2362,46 +2879,66 @@ const getFiConfig = (category: string) => {
                     (fePill === "open" && isComplete);
 
                   // For open, show openScore/time; for obstacle, show obstacleScore/time
-                  const score1 = fePill === "open" ? item.openScore1 : item.obstacleScore1;
-                  const score2 = fePill === "open" ? item.openScore2 : item.obstacleScore2;
-                  const time1 = fePill === "open" ? item.openTime1 : item.obstacleTime1;
-                  const time2 = fePill === "open" ? item.openTime2 : item.obstacleTime2;
+                  const score1 =
+                    fePill === "open" ? item.openScore1 : item.obstacleScore1;
+                  const score2 =
+                    fePill === "open" ? item.openScore2 : item.obstacleScore2;
+                  const time1 =
+                    fePill === "open" ? item.openTime1 : item.obstacleTime1;
+                  const time2 =
+                    fePill === "open" ? item.openTime2 : item.obstacleTime2;
 
                   // For open rounds
                   const openScores = [
                     { score: item.openScore1, time: item.openTime1 },
-                    { score: item.openScore2, time: item.openTime2 }
-                  ].filter(v => v.score != null);
+                    { score: item.openScore2, time: item.openTime2 },
+                  ].filter((v) => v.score != null);
 
                   let maxOpenScore: any | null = null;
                   let minOpenTime = null;
                   if (openScores.length) {
-                    maxOpenScore = Math.max(...openScores.map(v => v.score));
+                    maxOpenScore = Math.max(...openScores.map((v) => v.score));
                     // Find all rounds with max score, pick the one with the lowest time
-                    const tied = openScores.filter(v => v.score === maxOpenScore);
-                    minOpenTime = tied.length > 1
-                      ? tied.reduce((min, curr) =>
-                          parseTimeStringToMs(curr.time) < parseTimeStringToMs(min.time) ? curr : min, tied[0]
-                        ).time
-                      : tied[0].time;
+                    const tied = openScores.filter(
+                      (v) => v.score === maxOpenScore,
+                    );
+                    minOpenTime =
+                      tied.length > 1
+                        ? tied.reduce(
+                            (min, curr) =>
+                              parseTimeStringToMs(curr.time) <
+                              parseTimeStringToMs(min.time)
+                                ? curr
+                                : min,
+                            tied[0],
+                          ).time
+                        : tied[0].time;
                   }
 
                   // For obstacle rounds
                   const obsScores = [
                     { score: item.obstacleScore1, time: item.obstacleTime1 },
-                    { score: item.obstacleScore2, time: item.obstacleTime2 }
-                  ].filter(v => v.score != null);
+                    { score: item.obstacleScore2, time: item.obstacleTime2 },
+                  ].filter((v) => v.score != null);
 
                   let maxObsScore: any | null = null;
                   let minObsTime = null;
                   if (obsScores.length) {
-                    maxObsScore = Math.max(...obsScores.map(v => v.score));
-                    const tied = obsScores.filter(v => v.score === maxObsScore);
-                    minObsTime = tied.length > 1
-                      ? tied.reduce((min, curr) =>
-                          parseTimeStringToMs(curr.time) < parseTimeStringToMs(min.time) ? curr : min, tied[0]
-                        ).time
-                      : tied[0].time;
+                    maxObsScore = Math.max(...obsScores.map((v) => v.score));
+                    const tied = obsScores.filter(
+                      (v) => v.score === maxObsScore,
+                    );
+                    minObsTime =
+                      tied.length > 1
+                        ? tied.reduce(
+                            (min, curr) =>
+                              parseTimeStringToMs(curr.time) <
+                              parseTimeStringToMs(min.time)
+                                ? curr
+                                : min,
+                            tied[0],
+                          ).time
+                        : tied[0].time;
                   }
 
                   return (
@@ -2440,11 +2977,17 @@ const getFiConfig = (category: string) => {
                               <Text
                                 style={
                                   score1 != null &&
-                                  (
-                                    (fePill === "open" && score1 === maxOpenScore && time1 === minOpenTime) ||
-                                    (fePill === "obstacle" && score1 === maxObsScore && time1 === minObsTime)
-                                  )
-                                    ? { color: "#388e3c", fontWeight: "bold", textDecorationLine: "underline" }
+                                  ((fePill === "open" &&
+                                    score1 === maxOpenScore &&
+                                    time1 === minOpenTime) ||
+                                    (fePill === "obstacle" &&
+                                      score1 === maxObsScore &&
+                                      time1 === minObsTime))
+                                    ? {
+                                        color: "#388e3c",
+                                        fontWeight: "bold",
+                                        textDecorationLine: "underline",
+                                      }
                                     : {}
                                 }
                               >
@@ -2456,11 +2999,17 @@ const getFiConfig = (category: string) => {
                               <Text
                                 style={
                                   score2 != null &&
-                                  (
-                                    (fePill === "open" && score2 === maxOpenScore && time2 === minOpenTime) ||
-                                    (fePill === "obstacle" && score2 === maxObsScore && time2 === minObsTime)
-                                  )
-                                    ? { color: "#388e3c", fontWeight: "bold", textDecorationLine: "underline" }
+                                  ((fePill === "open" &&
+                                    score2 === maxOpenScore &&
+                                    time2 === minOpenTime) ||
+                                    (fePill === "obstacle" &&
+                                      score2 === maxObsScore &&
+                                      time2 === minObsTime))
+                                    ? {
+                                        color: "#388e3c",
+                                        fontWeight: "bold",
+                                        textDecorationLine: "underline",
+                                      }
                                     : {}
                                 }
                               >
@@ -2490,7 +3039,7 @@ const getFiConfig = (category: string) => {
                                     ? { color: "#1976d2", fontWeight: "bold" }
                                     : {}
                                 }
-                              > 
+                              >
                                 {time2 ? time2 : "—"}
                               </Text>
                             </Text>
@@ -2500,7 +3049,9 @@ const getFiConfig = (category: string) => {
                         {fePill === "obstacle" && (
                           <Text style={styles.teamData}>
                             Documentation:{" "}
-                            <Text style={{ fontWeight: "bold", color: "#432344" }}>
+                            <Text
+                              style={{ fontWeight: "bold", color: "#432344" }}
+                            >
                               {item.docScore ?? "—"}
                             </Text>
                           </Text>
@@ -2543,8 +3094,18 @@ const getFiConfig = (category: string) => {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>{scoringTeam?.teamName}</Text>
-              {(judgeCategory === "fi-elem" || judgeCategory === "fi-junior" || judgeCategory === "fi-senior") && scoresheetNumber ? (
-                <Text style={{ fontSize: 13, color: "#6B7280", fontStyle: "italic", marginBottom: 8 }}>
+              {(judgeCategory === "fi-elem" ||
+                judgeCategory === "fi-junior" ||
+                judgeCategory === "fi-senior") &&
+              scoresheetNumber ? (
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: "#6B7280",
+                    fontStyle: "italic",
+                    marginBottom: 8,
+                  }}
+                >
                   Scoresheet no. {scoresheetNumber}
                 </Text>
               ) : null}
@@ -2556,9 +3117,15 @@ const getFiConfig = (category: string) => {
               ) : null}
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
-                  style={[styles.cancelButton, isSubmitting && { opacity: 0.5 }]}
+                  style={[
+                    styles.cancelButton,
+                    isSubmitting && { opacity: 0.5 },
+                  ]}
                   onPress={() => {
-                    const isFiCategory = judgeCategory === "fi-elem" || judgeCategory === "fi-junior" || judgeCategory === "fi-senior";
+                    const isFiCategory =
+                      judgeCategory === "fi-elem" ||
+                      judgeCategory === "fi-junior" ||
+                      judgeCategory === "fi-senior";
                     if (isFiCategory && fiElemModalStep === 2) {
                       setFiElemModalStep(1);
                       setSubmitError("");
@@ -2573,19 +3140,47 @@ const getFiConfig = (category: string) => {
                   disabled={isSubmitting}
                 >
                   <Text style={[styles.buttonText, { color: "#432344" }]}>
-                    {(judgeCategory === "fi-elem" || judgeCategory === "fi-junior" || judgeCategory === "fi-senior") && fiElemModalStep === 2 ? "Back" : "Cancel"}
+                    {(judgeCategory === "fi-elem" ||
+                      judgeCategory === "fi-junior" ||
+                      judgeCategory === "fi-senior") &&
+                    fiElemModalStep === 2
+                      ? "Back"
+                      : "Cancel"}
                   </Text>
                 </TouchableOpacity>
 
-                {(judgeCategory === "fi-elem" || judgeCategory === "fi-junior" || judgeCategory === "fi-senior") && fiElemModalStep === 1 ? (
+                {(judgeCategory === "fi-elem" ||
+                  judgeCategory === "fi-junior" ||
+                  judgeCategory === "fi-senior") &&
+                fiElemModalStep === 1 ? (
                   <TouchableOpacity
-                    style={[styles.submitButton, isSubmitting && { opacity: 0.7 }]}
+                    style={[
+                      styles.submitButton,
+                      isSubmitting && { opacity: 0.7 },
+                    ]}
                     onPress={() => {
                       const config = getFiConfig(judgeCategory);
-                      const allFields = [...config.project, ...config.robotic, ...config.presentation];
+                      const allFields = [
+                        ...config.project,
+                        ...config.robotic,
+                        ...config.presentation,
+                      ];
 
-                      if (allFields.some(({ key }) => fiScoreFields[key][0].trim() === "")) {
-                        setSubmitError("Please fill in all sub-criteria scores.");
+                      // Allow proceeding even if some sub-criteria are empty — treat empty as 0.
+                      const rawScoresPreview = Object.fromEntries(
+                        allFields.map(({ key }) => [
+                          key,
+                          Number(fiScoreFields[key][0]) || 0,
+                        ]),
+                      );
+
+                      const exceedsMax = Object.values(rawScoresPreview).some(
+                        (v) => Number(v) > 10,
+                      );
+                      if (exceedsMax) {
+                        setSubmitError(
+                          "One or more scores exceed the maximum allowed.",
+                        );
                         return;
                       }
 
@@ -2598,13 +3193,22 @@ const getFiConfig = (category: string) => {
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
-                    style={[styles.submitButton, isSubmitting && { opacity: 0.7 }]}
+                    style={[
+                      styles.submitButton,
+                      isSubmitting && { opacity: 0.7 },
+                    ]}
                     onPress={handleScoreSubmit}
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <ActivityIndicator size="small" color="white" style={{ marginRight: 8 }} />
+                      <View
+                        style={{ flexDirection: "row", alignItems: "center" }}
+                      >
+                        <ActivityIndicator
+                          size="small"
+                          color="white"
+                          style={{ marginRight: 8 }}
+                        />
                         <Text style={styles.buttonText}>Submitting...</Text>
                       </View>
                     ) : (
@@ -2612,8 +3216,6 @@ const getFiConfig = (category: string) => {
                     )}
                   </TouchableOpacity>
                 )}
-
-
               </View>
             </View>
           </View>
